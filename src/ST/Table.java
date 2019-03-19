@@ -1,0 +1,28 @@
+package ST;
+
+import TypeArray.name_type;
+
+import java.util.ArrayList;
+
+public class Table extends Record {
+
+    ArrayList<VarRecord> columns = new ArrayList<>();
+
+    public Table(String id, String type) {
+        super(id, type);
+    }
+
+    public void addColumn(VarRecord col) {
+
+        this.columns.add(col);
+
+    }
+    public boolean containColumn(String col) {
+        // hash map
+        for(int i=0;i<columns.size();i++){
+            if(columns.get(i).id.equals(col)){
+                return true;
+            }
+        }
+        return false;
+    }}
