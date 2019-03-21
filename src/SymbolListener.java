@@ -201,9 +201,9 @@ return;
 
     @Override public void enterSubselect_stmt(HplsqlParser.Subselect_stmtContext ctx) {
 System.out.println("hhhhhh");
-        currentSelect = new Select("Select","Select Statment");
+     //   currentSelect = new Select("Select","Select Statment");
 
-        symbolTable.put("Select", currentSelect);
+       // symbolTable.put("Select", currentSelect);
 
         symbolTable.enterScope();
         // set scope name

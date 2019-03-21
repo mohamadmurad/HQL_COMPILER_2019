@@ -6,24 +6,22 @@ import java.util.ArrayList;
 
 public class Select extends Record {
 
-    public ArrayList<String> columns;
-    public Table tableSource;
-    public ArrayList<Experition> expretion;
+    public ArrayList<SelectCol> columns;
+    public String tableSource;
+    //public ArrayList<Experition> expretion;
     //public ArrayList<String> Orderby;
 
-    public Select(String id, String type) {
-        super(id, type);
+    public Select(String id, String type,String tablename) {
+        super(id, type); this.tableSource = tablename;
     }
 
-    public void addColumn(String col) {
-
-        this.columns.add(col);
-
+    public void setColumn(ArrayList<SelectCol> col) {
+        this.columns = col;
     }
-    public void addExperition(Experition exp) {
+    /*public void addExperition(Experition exp) {
 
         this.expretion.add(exp);
 
-    }
+    }*/
 
 }

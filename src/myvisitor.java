@@ -10,9 +10,9 @@ import java.util.ArrayList;
 public class myvisitor extends HplsqlBaseVisitor<Object> {
     SymbolTable symbolTable;
     FunctionRecord currentFunc;
-    Select currentSelect;
+
     ForRecord currentFor;
-    Table selectTable = new Table("","");
+
 
     boolean debug = true;
 
@@ -53,7 +53,7 @@ public class myvisitor extends HplsqlBaseVisitor<Object> {
 
     @Override
     public Object visitProgram(HplsqlParser.ProgramContext ctx) {
-        symbolTable.setCurrentScopeNameAndType("Global", myvisitor.ScopeTypes.Global.toString());
+        symbolTable.setCurrentScopeNameAndType("Global", ScopeTypes.Global.toString());
         return super.visitProgram(ctx);
     }
 
@@ -104,7 +104,7 @@ public class myvisitor extends HplsqlBaseVisitor<Object> {
 
                     symbolTable.enterScope();
                     // set scope name
-                    symbolTable.setCurrentScopeNameAndType(id_type, myvisitor.ScopeTypes.TABLE.toString());
+                    symbolTable.setCurrentScopeNameAndType(id_type, ScopeTypes.TABLE.toString());
 
                     for(int i =0 ; i<colom.size();i++){
                         currentTable.addColumn(colom.get(i));
@@ -151,16 +151,59 @@ public class myvisitor extends HplsqlBaseVisitor<Object> {
     @Override
     public Object visitNew_select_stmt(HplsqlParser.New_select_stmtContext ctx) {
         String table_name = ctx.new_from_table().from_table_name_clause().table_name().ident().getText();
-        if(types.find_typ(table_name)){
 
+
+        if(types.find_typ(table_name)){
+            boolean isColTrue = true;
             ArrayList<SelectCol> sel_col = new ArrayList<>();
             for(int i =0 ; i<ctx.new_select_col().size();i++){
+                if(!isColTrue) break;
+
                 SelectCol coloms = (SelectCol)visit(ctx.new_select_col(i));
-                sel_col.add(coloms);
+                //System.out.println("gggggggggggggggg");
+                if(!coloms.colname.equals("*")){
+                    if(types.find_col_in_table(coloms.colname,table_name)){
+                        //System.out.println(coloms.colname);
+                        sel_col.add(coloms);
+                    }else {
+                        System.out.println("Error Column :" + coloms.colname + " Not found! In Table " + table_name);
+                        isColTrue = false;
+                    }
+                }else{
+                    sel_col.add(coloms);
+                }
+
                // System.out.println(coloms.func_name);
             }
 
+            if(isColTrue){
 
+                Select currentSelect = new Select("SELECT","SELECT STATMENT",table_name);
+                currentSelect.setColumn(sel_col);
+                symbolTable.put("SELECT", currentSelect);
+
+                symbolTable.enterScope();
+                // set scope name
+                symbolTable.setCurrentScopeNameAndType("SELECT", ScopeTypes.SELECT.toString());
+
+                String alias = "";
+                if(ctx.new_from_table().from_table_name_clause().from_alias_clause() != null){
+                    alias = (String) visit(ctx.new_from_table().from_table_name_clause().from_alias_clause());
+                    VarRecord newTableName = new VarRecord(alias,table_name,"tableOtherName");
+                    symbolTable.put(alias,newTableName);
+                }
+
+                for(int i=0;i<sel_col.size();i++){
+                    System.out.println("ccc "  + sel_col.get(i).aslis);
+                    if(!sel_col.get(i).aslis.equals(null)){
+                        VarRecord newColName = new VarRecord(sel_col.get(i).aslis,sel_col.get(i).colname+ " In [ "+ table_name +" ]","ColOtherName");
+                        symbolTable.put(sel_col.get(i).aslis,newColName);
+                    }
+                }
+
+
+                symbolTable.exitScope();
+            }
 
         }else{
             System.out.println("Error Table :" + table_name + " Not found!");
@@ -187,16 +230,27 @@ public class myvisitor extends HplsqlBaseVisitor<Object> {
     @Override
     public Object visitColom_name(HplsqlParser.Colom_nameContext ctx) {
         String col_name = ctx.ident().getText();
-        Object aslis =  visitChildren(ctx);
+        SelectCol temp = null;
+        if(ctx.select_list_alias() != null){
+            Object aslis =  visitChildren(ctx);
+            temp = new SelectCol(col_name,null, (String) aslis);
+        }else {
+            temp = new SelectCol(col_name,null, null);
+        }
 
-        SelectCol temp = new SelectCol(col_name,null, (String) aslis);
         return  temp;
+
+
         //return super.visitColom_name(ctx);
     }
 
     @Override
     public Object visitSelect_list_alias(HplsqlParser.Select_list_aliasContext ctx) {
+        return ctx.ident().getText();
+    }
 
+    @Override
+    public Object visitFrom_alias_clause(HplsqlParser.From_alias_clauseContext ctx) {
         return ctx.ident().getText();
     }
 
@@ -205,7 +259,15 @@ public class myvisitor extends HplsqlBaseVisitor<Object> {
 
         String table_name = ctx.ident().getText();
         String col_name = ctx.colom_name().ident().getText();
-        Object aslis =  visitChildren(ctx.colom_name());
+        Object aslis = null;
+        if(ctx.colom_name().select_list_alias() != null){
+             aslis =  visit(ctx.colom_name().select_list_alias());
+            //temp = new SelectCol(col_name,null, (String) aslis);
+        }else {
+            //temp = new SelectCol(col_name,null, null);
+        }
+
+
         SelectCol temp = new SelectCol(col_name,table_name, (String) aslis);
         return  temp;
         //return super.visitTabledotcol(ctx);
@@ -215,9 +277,8 @@ public class myvisitor extends HplsqlBaseVisitor<Object> {
     public Object visitCol_func(HplsqlParser.Col_funcContext ctx) {
 
         SelectCol temp = (SelectCol) visit(ctx.expr_agg_window_func());
-        Object aslis =  visitChildren(ctx);
-        temp.aslis = (String)aslis;
-
+       // Object aslis =  visit(ctx.select_list_alias());
+        //temp.aslis = (String)aslis;
 
         return temp;
     }
@@ -226,8 +287,9 @@ public class myvisitor extends HplsqlBaseVisitor<Object> {
     public Object visitExpr_agg_window_func(HplsqlParser.Expr_agg_window_funcContext ctx) {
 
         String func_name = ctx.getChild(0).getText();
+        //System.out.println(func_name);
         String paramiter = ctx.expr().get(0).getText();
-        SelectCol temp = new SelectCol("",func_name, paramiter,"");
+        SelectCol temp = new SelectCol("",func_name, paramiter,null);
         return  temp;
 
 

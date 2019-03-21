@@ -39,8 +39,7 @@ public TypeArray() throws IOException
     store_array(data_type);
 }
 
-public static boolean find_typ(String type)
-{
+public static boolean find_typ(String type) {
     for(int i=0;i<data_type.size();i++)
     {
         if(data_type.get(i).name_typ.equals(type))
@@ -50,15 +49,15 @@ public static boolean find_typ(String type)
     }
     return false;
 }
-public static boolean find_col_in_table(String col,String table)
-{
+
+public static boolean find_col_in_table(String col,String table) {
     for(int i=0;i<data_type.size();i++)
     {
         if(data_type.get(i).name_typ.equals(table))
         {
             for(int j=0;j<data_type.get(i).typ.size();j++)
             {
-                if(data_type.get(i).typ.get(j).name.equals(table))
+                if(data_type.get(i).typ.get(j).name.equals(col))
                 {
                     return true;
                 }

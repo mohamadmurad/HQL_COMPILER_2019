@@ -11,5 +11,12 @@ public class VarRecord extends Record {
 
     }
 
+    public VarRecord(String id, String type,String Kind) {
+
+        super(id, type,Kind);
+
+
+    }
+
     public String getKind(){return this.Kind;}
 }

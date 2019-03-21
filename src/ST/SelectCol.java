@@ -1,6 +1,6 @@
 package ST;
 
-public class SelectCol {
+public class SelectCol extends Record{
 
     public String colname = "";
     public String tablename = "";
@@ -14,6 +14,7 @@ public class SelectCol {
 
 
     public SelectCol(String colname, String tablename, String aslis) {
+        super(colname,"int","select Col");
         this.colname = colname;
         this.tablename = tablename;
         this.aslis = aslis;
@@ -23,6 +24,8 @@ public class SelectCol {
 
 
     public SelectCol(String tablename,String func_name, String param, String aslis) {
+        super(param,"int","select Col");
+
         this.func_name = func_name;
         this.colname = param;
         this.tablename = tablename;

@@ -60,8 +60,8 @@ public class Scope {
                 printLine(pair.getKey().toString() + " : Table" ,  temp.getType(), scopeName+" [ "+scopeType+" ]");
             else if(temp instanceof Select)
                 printLine(pair.getKey().toString() + " : Select" ,  temp.getType(), scopeName+" [ "+scopeType+" ]");
-
-
+            else if(temp instanceof SelectCol)
+                printLine(pair.getKey().toString() + " : Select Col Alias ("+((SelectCol) temp).colname+")" ,  ((SelectCol) temp).aslis, scopeName+" [ "+scopeType+" ]");
 
         }
         // print children

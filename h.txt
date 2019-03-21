@@ -1,2 +1,2 @@
 create table users (id int , username string)
-select sum(id) as d from users
+select username u , id i from users b
