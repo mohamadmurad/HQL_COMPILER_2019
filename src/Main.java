@@ -55,8 +55,6 @@ public class Main {
                 System.out.print("No Symbol Table An Error!");
             }
 
-
-
             //System.out.println("\n\n<<< AST TREE >>>");
            // Node global = new Node();
            // global.setNodeName("Root");
