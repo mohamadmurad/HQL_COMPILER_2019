@@ -1,4 +1,5 @@
 void f(int i){
     int p;
+    int p;
 
 }

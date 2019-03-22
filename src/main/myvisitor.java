@@ -374,7 +374,7 @@ public class myvisitor extends HplsqlBaseVisitor<Object> {
         String typeName = ctx.dtype().getText();
         String varName = ctx.ident().getText();
         if(symbolTable.lookuplocaly(varName)!=null){
-            ErrorPrinter.printSymbolAlreadyDefinedError(myparser, ctx.ident().start, "variable", varName, symbolTable.getCurrentScopeName());
+            ErrorPrinter.printSymbolAlreadyDefinedError(myparser, ctx.ident().start, "variable", varName, "Function "+symbolTable.getCurrentScopeName());
         }
 
         symbolTable.put(varName,new Record(varName,typeName,"variable"));
