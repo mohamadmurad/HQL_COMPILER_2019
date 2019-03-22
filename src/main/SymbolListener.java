@@ -1,3 +1,5 @@
+package main;
+
 import ST.*;
 import antGen.*;
 
@@ -7,7 +9,7 @@ public class SymbolListener extends HplsqlBaseListener {
     FunctionRecord currentFunc;
     Table currentTable;
     Select currentSelect;
-    ForRecord currentFor;
+
     Table selectTable = new Table("","");
 
     boolean debug = true;
@@ -81,7 +83,7 @@ public class SymbolListener extends HplsqlBaseListener {
         type = ctx.dtype().getText(); // get type
         id = ctx.ident().getText(); // get ID
 
-        VarRecord parameter = new VarRecord(id, type,"","colom");
+        Record parameter = new Record(id, type,"colom");
 
         currentFunc.addParameter(parameter);
         symbolTable.put(id, parameter);
@@ -102,7 +104,7 @@ public class SymbolListener extends HplsqlBaseListener {
 
 
         // create record
-        VarRecord newField = new VarRecord(id, type,"","dd");
+        Record newField = new Record(id, type,"dd");
 
         symbolTable.put(id, newField);
 
@@ -112,7 +114,7 @@ public class SymbolListener extends HplsqlBaseListener {
 
 
     @Override public void enterCpp_for_stmt(HplsqlParser.Cpp_for_stmtContext ctx) {
-
+/*
         System.out.println("kkkkkkk");
         currentFor = new ForRecord("For","Loop Statment");
         String name_init = ctx.forhead1.ident().toString();
@@ -149,7 +151,7 @@ return;
         // set scope name
         symbolTable.setCurrentScopeNameAndType("For", ScopeTypes.Loop.toString());
 
-
+*/
     }
 
     @Override public void exitCpp_for_stmt(HplsqlParser.Cpp_for_stmtContext ctx) {
@@ -194,7 +196,7 @@ return;
             System.out.println("dublicates column "+id+" in table "+currentTable.getId().toString());
             return;
         }
-        VarRecord col = new VarRecord(id, type,"","col");
+        Record col = new Record(id, type,"col");
         currentTable.addColumn(col);
         symbolTable.put(id,col);
     }

@@ -6,13 +6,13 @@ import java.util.ArrayList;
 
 public class Table extends Record {
 
-    ArrayList<VarRecord> columns = new ArrayList<>();
+    ArrayList<Record> columns = new ArrayList<>();
 
     public Table(String id, String type) {
         super(id, type);
     }
 
-    public void addColumn(VarRecord col) {
+    public void addColumn(Record col) {
 
         this.columns.add(col);
 

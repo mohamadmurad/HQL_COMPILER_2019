@@ -52,10 +52,10 @@ public class Scope {
             Record temp = (Record) pair.getValue();
             if(temp instanceof FunctionRecord)
             printLine(pair.getKey().toString() + " : Method" ,  temp.getType(), scopeName+" [ "+scopeType+" ]");
-            else if(temp instanceof VarRecord)
+            else if(temp instanceof Record)
                 printLine(pair.getKey().toString() + " : " + ((Record) pair.getValue()).getKind() ,  temp.getType(), scopeName+" [ "+scopeType+" ]");
-            else if(temp instanceof ForRecord)
-                printLine(pair.getKey().toString() + " : Loop" ,  temp.getType(), scopeName+" [ "+scopeType+" ]");
+            //else if(temp instanceof ForRecord)
+               // printLine(pair.getKey().toString() + " : Loop" ,  temp.getType(), scopeName+" [ "+scopeType+" ]");
             else if(temp instanceof Table)
                 printLine(pair.getKey().toString() + " : Table" ,  temp.getType(), scopeName+" [ "+scopeType+" ]");
             else if(temp instanceof Select)

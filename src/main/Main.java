@@ -1,45 +1,62 @@
-import AST.*;
+package main;
+
 import ST.SymbolTable;
-import ST.symboltableVisitor;
+import org.antlr.v4.runtime.atn.PredictionMode;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.*;
-import java.io.IOException;
-
 
 
 import antGen.*;
 import Error.*;
-import org.antlr.v4.runtime.tree.ParseTreeWalker;
 
 
 import static org.antlr.v4.runtime.CharStreams.fromFileName;
 
 public class Main {
 
+    static String FileNmae = "h.txt";
+
     public static void main(String[] args) {
         //System.out.println("Hello World!");
 
-        String FileNmae = "h.txt";
+
         try {
 
             CharStream cs = fromFileName(FileNmae);
             HplsqlLexer lex = new HplsqlLexer(cs);
+            CommonTokenStream token = new CommonTokenStream(lex);
+            HplsqlParser myparser = new HplsqlParser(token);
+           /* myparser.removeParseListeners();
+            //Reports ambiguities or errors in the grammar that have passed Antlr's static analysis of the grammar phase.
+            //http://www.antlr.org/api/Java/org/antlr/v4/runtime/DiagnosticErrorListener.html
+            myparser.addErrorListener(new DiagnosticErrorListener());
+            myparser.getInterpreter()
+                    .setPredictionMode(PredictionMode.LL_EXACT_AMBIG_DETECTION);
+
+            //Reports syntax errors upon construction of the parse tree.
+            //Underlines the offending token and prints the follows set of
+            //(The set of all tokens that can legally follow) the previous token.
+            myparser.addErrorListener(new UnderlineListener());*/
+
+            ParseTree myTree = myparser.program();
+
+            //ErrorPrinter.exitOnErrors();
             //lex.removeErrorListeners();
 
             //lex.addErrorListener(ThrowingErrorListener.INSTANCE);
 
-            CommonTokenStream token = new CommonTokenStream(lex);
-            HplsqlParser myparser = new HplsqlParser(token);
-           // myparser.removeParseListeners();
+
+
+           //
            // myparser.addErrorListener(ThrowingErrorListener.INSTANCE);
 
-            ParseTree myTree = myparser.program();
+
 
 
             SymbolTable symbol = new SymbolTable();
-            //SymbolListener sl = new SymbolListener(symbol);
+            //main.SymbolListener sl = new main.SymbolListener(symbol);
             //ParseTreeWalker walker = new ParseTreeWalker();
            // walker.walk(sl, myTree);
 
@@ -68,5 +85,10 @@ public class Main {
             //System.out.println(e);
         }
 
+    }
+
+    public static String getFileName() {
+
+        return FileNmae;
     }
 }

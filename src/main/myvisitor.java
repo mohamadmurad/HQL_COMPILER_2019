@@ -1,3 +1,5 @@
+package main;
+
 import ST.*;
 import TypeArray.*;
 import Error.*;
@@ -9,12 +11,7 @@ import java.util.ArrayList;
 
 public class myvisitor extends HplsqlBaseVisitor<Object> {
     SymbolTable symbolTable;
-    FunctionRecord currentFunc;
 
-    ForRecord currentFor;
-
-
-    boolean debug = true;
 
     TypeArray types;
 
@@ -75,7 +72,7 @@ public class myvisitor extends HplsqlBaseVisitor<Object> {
 
         }else{
 
-            ArrayList<VarRecord> colom = (ArrayList<VarRecord>) visit(ctx.create_table_definition());
+            ArrayList<Record> colom = (ArrayList<Record>) visit(ctx.create_table_definition());
             ArrayList<name_type> nameType = new ArrayList<>();
             boolean coltype = true;
             for(int i=0;i<colom.size();i++){
@@ -137,7 +134,7 @@ public class myvisitor extends HplsqlBaseVisitor<Object> {
             String id = ctx.create_table_columns_item(i).column_name.ident().getText(); // get ID
 
 
-            VarRecord col = new VarRecord(id, type,"","colom");
+            Record col = new Record(id, type,"colom");
             colom.add(col);
 
         }
@@ -189,14 +186,14 @@ public class myvisitor extends HplsqlBaseVisitor<Object> {
                 String alias = "";
                 if(ctx.new_from_table().from_table_name_clause().from_alias_clause() != null){
                     alias = (String) visit(ctx.new_from_table().from_table_name_clause().from_alias_clause());
-                    VarRecord newTableName = new VarRecord(alias,table_name,"tableOtherName");
+                    Record newTableName = new Record(alias,table_name,"tableOtherName");
                     symbolTable.put(alias,newTableName);
                 }
 
                 for(int i=0;i<sel_col.size();i++){
                     System.out.println("ccc "  + sel_col.get(i).aslis);
                     if(!sel_col.get(i).aslis.equals(null)){
-                        VarRecord newColName = new VarRecord(sel_col.get(i).aslis,sel_col.get(i).colname+ " In [ "+ table_name +" ]","ColOtherName");
+                        Record newColName = new Record(sel_col.get(i).aslis,sel_col.get(i).colname+ " In [ "+ table_name +" ]","ColOtherName");
                         symbolTable.put(sel_col.get(i).aslis,newColName);
                     }
                 }
