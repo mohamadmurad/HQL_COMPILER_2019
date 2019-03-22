@@ -115,14 +115,16 @@ public class Scope {
 
     public Record lookuplocaly(String key) {
 
-        if (records.containsKey(key)) { // is the key in current scope?
+        return records.get(key);
+
+        /*if (records.containsKey(key)) { // is the key in current scope?
             Record rec = (Record) records.get(key);
             // if(true)System.out.println("\tST.Record found on: "+scopeName+" [ "+scopeType+" ]");
             return rec;
         } else {
             // move the scope to parent scope
             return null;
-        }
+        }*/
     }
 
     public Record lookup(String key) {

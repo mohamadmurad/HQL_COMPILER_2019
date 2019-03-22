@@ -1,2 +1,4 @@
-create table users (id int , username string)
-select username u , id i from users b
+void f(int i){
+    int p;
+
+}

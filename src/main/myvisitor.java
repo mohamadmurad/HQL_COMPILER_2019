@@ -12,6 +12,8 @@ import java.util.ArrayList;
 public class myvisitor extends HplsqlBaseVisitor<Object> {
     SymbolTable symbolTable;
 
+    HplsqlParser myparser;
+
 
     TypeArray types;
 
@@ -296,6 +298,89 @@ public class myvisitor extends HplsqlBaseVisitor<Object> {
 
     /* end select */
 
+    /* Start Function */
+    @Override
+    public Object visitFunction_stmt(HplsqlParser.Function_stmtContext ctx) {
+        String type = ctx.dtype().getText(); // get type
+        String funcName = ctx.ident().getText(); // get ID
 
+        if(symbolTable.lookuplocaly(funcName)!=null){
+            ErrorPrinter.printSymbolAlreadyDefinedError(myparser, ctx.ident.start, "method", funcName, symbolTable.getCurrentScopeName());
+        }
+
+        FunctionRecord currentFunc = new FunctionRecord(funcName,type);
+
+        symbolTable.put(funcName, currentFunc);
+
+        symbolTable.enterScope();
+        // set scope name
+        symbolTable.setCurrentScopeNameAndType(funcName, myvisitor.ScopeTypes.METHOD.toString());
+
+        // get paramiters
+        if(ctx.return_param() != null){
+
+            ArrayList<Record>  paramiters = (ArrayList<Record>) visit(ctx.return_param());
+
+            for(int i =0 ;i<paramiters.size();i++){
+                //System.out.println(paramiters.get(i).getId());
+                currentFunc.addParameter(paramiters.get(i));
+                symbolTable.put(paramiters.get(i).getId(), paramiters.get(i));
+            }
+
+        }
+
+
+        visit(ctx.cpp_smt());
+
+
+
+
+
+        symbolTable.exitScope();
+        return null;
+        //return super.visitFunction_stmt(ctx);
+    }
+
+    @Override
+    public Object visitReturn_param(HplsqlParser.Return_paramContext ctx) {
+
+        ArrayList<Record> paramiters = new ArrayList<>();
+
+        for(int i=0;i<ctx.return_param_item().size();i++){
+            String type = ctx.return_param_item(i).dtype().getText(); // get type
+            if(!types.find_typ(type)){
+                //Print undefined type error
+                ErrorPrinter.printFullError(myparser, ctx.return_param_item(i).dtype().start,
+                        "error: cannot find Type. \n symbol:   Type "+type,
+                        "symbol:   Type " + type,
+                        "location: Function " + symbolTable.getCurrentScopeName()
+                );
+            }
+            String name = ctx.return_param_item(i).ident().getText(); // get ID
+
+
+            Record col = new Record(name, type,"Paramiter");
+            paramiters.add(col);
+
+        }
+        return paramiters;
+
+        //return super.visitReturn_param(ctx);
+    }
+
+
+    @Override
+    public Object visitCpp_var_decleration(HplsqlParser.Cpp_var_declerationContext ctx) {
+        String typeName = ctx.dtype().getText();
+        String varName = ctx.ident().getText();
+        if(symbolTable.lookuplocaly(varName)!=null){
+            ErrorPrinter.printSymbolAlreadyDefinedError(myparser, ctx.ident().start, "variable", varName, symbolTable.getCurrentScopeName());
+        }
+
+        symbolTable.put(varName,new Record(varName,typeName,"variable"));
+
+        return null;
+    }
+    /* End Function */
 
 }

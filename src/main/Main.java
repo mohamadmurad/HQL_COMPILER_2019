@@ -28,17 +28,17 @@ public class Main {
             HplsqlLexer lex = new HplsqlLexer(cs);
             CommonTokenStream token = new CommonTokenStream(lex);
             HplsqlParser myparser = new HplsqlParser(token);
-           /* myparser.removeParseListeners();
+            myparser.removeParseListeners();
             //Reports ambiguities or errors in the grammar that have passed Antlr's static analysis of the grammar phase.
             //http://www.antlr.org/api/Java/org/antlr/v4/runtime/DiagnosticErrorListener.html
-            myparser.addErrorListener(new DiagnosticErrorListener());
+            myparser.addErrorListener(new ThrowingErrorListener());
             myparser.getInterpreter()
                     .setPredictionMode(PredictionMode.LL_EXACT_AMBIG_DETECTION);
 
             //Reports syntax errors upon construction of the parse tree.
             //Underlines the offending token and prints the follows set of
             //(The set of all tokens that can legally follow) the previous token.
-            myparser.addErrorListener(new UnderlineListener());*/
+            myparser.addErrorListener(new UnderlineListener());
 
             ParseTree myTree = myparser.program();
 
@@ -65,6 +65,9 @@ public class Main {
 
             myvisitor visitor = new myvisitor(symbol);
             visitor.visit(myTree);
+
+
+            ErrorPrinter.exitOnErrors();
             if(symbol.getRoot().getChildren().size() > 0  ){
                 System.out.println("\n\n<<< Symbol Table >>>\n\n");
                 symbol.printTable();

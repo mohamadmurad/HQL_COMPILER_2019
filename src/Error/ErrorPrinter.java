@@ -31,19 +31,51 @@ public final class ErrorPrinter {
             System.exit(1);
         }
     }
-    /*public static void printFileNameAndLineNumber(Token offendingToken){
+
+
+    public static void printSymbolAlreadyDefinedError(Recognizer recognizer, Token offendingToken, String symbolType, String symbol, String className){
+        ErrorPrinter.printFileNameAndLineNumber(offendingToken);
+        System.err.println("error: " + symbolType + " " + symbol + " already defined in Scoop " + className);
+        //ErrorPrinter.underlineError(recognizer, offendingToken);
+        //System.out.println("dddddd");
+    }
+    public static void printFileNameAndLineNumber(Token offendingToken){
         reportError();
         System.err.print(Main.getFileName()+":"+offendingToken.getLine()+": ");
 
-    }*/
-    /*
+    }
+    public static void underlineError(Recognizer recognizer, Token offendingToken) {
+        int line = offendingToken.getLine();
+        int charPositionInLine = offendingToken.getCharPositionInLine();
+        CommonTokenStream tokens = (CommonTokenStream)recognizer.getInputStream();
+        String input = tokens.getTokenSource().getInputStream().toString();
+        String[] lines = input.split("\n");
+        String errorLine = lines[line - 1];
+        System.err.println(errorLine);
+        for (int i=0; i<charPositionInLine; i++){
+            if(errorLine.charAt(i)=='\t'){
+                System.err.print("\t");
+            }else{
+                System.err.print(" ");
+            }
+        }
+        int start = offendingToken.getStartIndex();
+        int stop = offendingToken.getStopIndex();
+        if ( start>=0 && stop>=0 ) {
+            for (int i=start; i<=stop; i++) System.err.print("^");
+        }
+        System.err.println();
+    }
+
     public static void printFullError(Recognizer recognizer, Token offendingToken, String message, String symbol, String location){
         ErrorPrinter.printFileNameAndLineNumber(offendingToken);
         System.err.println(message);
-        ErrorPrinter.underlineError(recognizer, offendingToken);
-        System.err.println("  " + symbol);
+        //ErrorPrinter.underlineError(recognizer, offendingToken);
+
+        //System.err.println("  " + symbol);
         System.err.println("  " + location);
-    }*//*
+    }
+    /*
     public static void printIncompatibleReturnTypeError(Recognizer recognizer, Token offendingToken, Klass originalKlass, Klass overwritingKlass, Method originalMethod, Method overwritingMethod){
         ErrorPrinter.printFileNameAndLineNumber(offendingToken);
         System.err.println("error: " + overwritingMethod + " in class " + overwritingKlass + " cannot override " + originalMethod + " in class " + originalKlass);

@@ -371,9 +371,9 @@ error_create_database_stmt: T_CREATE (T_IF T_NOT T_EXISTS)? expr create_database
                             |   (T_DATABASE | T_SCHEMA) T_CREATE (T_IF T_NOT T_EXISTS)? expr create_database_option*;
 /* new cpp */
 function_stmt returns [FunctionNode astNode]: {FunChild = new ArrayList<>();}
-            dtype ident parm = return_param  T_OPEN_B cpp_smt? def_return? T_CLOSE_B
+            dtype ident T_OPEN_P parm=return_param? T_CLOSE_P  T_OPEN_B cpp_smt? def_return? T_CLOSE_B
             {
-                if(types.find_typ($dtype.text)){
+                /*if(types.find_typ($dtype.text)){
                     $astNode = new FunctionNode($ident.text,null,null,$parm.varNode,$dtype.text);
                      for(Node n :FunChild){
                       n.setParent($astNode);
@@ -382,7 +382,7 @@ function_stmt returns [FunctionNode astNode]: {FunChild = new ArrayList<>();}
                 }else{
                     $astNode =null;
                     System.out.print("Error Type :" + $dtype.text + " Not found!");
-                }
+                }*/
 
 
 
@@ -393,13 +393,13 @@ function_stmt returns [FunctionNode astNode]: {FunChild = new ArrayList<>();}
 def_return :T_RETURN ident;
 
 return_param returns [ArrayList<VarDecleration> varNode]:
-                  T_OPEN_P T_CLOSE_P
-                | T_OPEN_P p1 = return_param_item {$varNode = $p1.varNode;} (T_COMMA p2 = return_param_item { $varNode.addAll($p2.varNode); })* T_CLOSE_P
+
+                  p1 = return_param_item {$varNode = $p1.varNode;} (T_COMMA p2 = return_param_item { $varNode.addAll($p2.varNode); })*
                 ;
 
 return_param_item returns [ArrayList<VarDecleration> varNode]: dtype ident
    {
-    if(types.find_typ($dtype.text)){
+   /* if(types.find_typ($dtype.text)){
         $varNode = new ArrayList<VarDecleration>();
              VarDecleration n = new VarDecleration($ident.text,$dtype.text);
 
@@ -408,7 +408,7 @@ return_param_item returns [ArrayList<VarDecleration> varNode]: dtype ident
     }else{
 
         System.out.print("Error Type :" + $dtype.text + " Not found!");
-    }
+    }*/
 
    };
 
@@ -455,10 +455,10 @@ op :
 
 
 
-cpp_assignment_stmt: dtype? ident T_EQUAL (ident (T_OPEN_P ident? T_CLOSE_P)? | L_INT | L_DEC | select_stmt )
+cpp_assignment_stmt: ident T_EQUAL (ident (T_OPEN_P ident? T_CLOSE_P)? | L_INT | L_DEC | select_stmt ) T_SEMICOLON
                      ;
 
-cpp_var_decleration returns[VarDecleration VarDecNode]: dtype ident
+cpp_var_decleration returns[VarDecleration VarDecNode]: dtype ident T_SEMICOLON
                                     {
                                         if(types.find_typ($dtype.text)){
                                             $VarDecNode = new VarDecleration($ident.text,$dtype.text);
