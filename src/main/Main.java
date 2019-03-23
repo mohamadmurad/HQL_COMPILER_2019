@@ -68,6 +68,9 @@ public class Main {
 
 
             ErrorPrinter.exitOnErrors();
+
+
+
             if(symbol.getRoot().getChildren().size() > 0  ){
                 System.out.println("\n\n<<< Symbol Table >>>\n\n");
                 symbol.printTable();
