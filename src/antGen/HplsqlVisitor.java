@@ -1,4 +1,4 @@
-// Generated from C:/Users/Husam/Desktop/projects/HQL_COMPILER_2019\Hplsql.g4 by ANTLR 4.7.2
+// Generated from C:/Users/MouAz He/IdeaProjects/HQL_COMPILER_2019\Hplsql.g4 by ANTLR 4.7.2
 package antGen;
 
     import AST.*;
@@ -159,6 +159,24 @@ public interface HplsqlVisitor<T> extends ParseTreeVisitor<T> {
 	 * @return the visitor result
 	 */
 	T visitCreate_table_definition(HplsqlParser.Create_table_definitionContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link HplsqlParser#new_delimiter}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitNew_delimiter(HplsqlParser.New_delimiterContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link HplsqlParser#new_location}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitNew_location(HplsqlParser.New_locationContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link HplsqlParser#new_store}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitNew_store(HplsqlParser.New_storeContext ctx);
 	/**
 	 * Visit a parse tree produced by {@link HplsqlParser#create_table_columns}.
 	 * @param ctx the parse tree

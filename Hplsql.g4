@@ -141,7 +141,7 @@ declare_temporary_table_item :     // DECLARE TEMPORARY TABLE statement
      ;
 
 create_table_stmt returns [CreateTableNode tableNode] :{nameType = new ArrayList<name_type>();}
-        T_CREATE T_TABLE (T_IF T_NOT T_EXISTS)? table_name create_table_preoptions? create_table_definition
+        T_CREATE T_EXTERNAL T_TABLE (T_IF T_NOT T_EXISTS)? table_name create_table_preoptions? create_table_definition T_SEMICOLON
         {
         /*if(types.find_typ($table_name.text)){
                 System.out.print("Error Table :" + $table_name.text + "  found!");
@@ -168,10 +168,16 @@ create_local_temp_table_stmt :
      ;
 
 create_table_definition :
-(T_AS? T_OPEN_P  select_stmt T_CLOSE_P | T_AS? select_stmt | T_OPEN_P create_table_columns T_CLOSE_P) create_table_options?
+(T_AS? T_OPEN_P  select_stmt T_CLOSE_P | T_AS? select_stmt | T_OPEN_P create_table_columns T_CLOSE_P) new_store new_delimiter new_location
 
      ;
 
+new_delimiter:
+        T_ROW T_FORMAT T_DELIMITED T_FIELDS T_TERMINATED T_BY expr
+        ;
+new_location:T_LOCATION expr;
+
+new_store:T_STORED T_AS ident;
 
 create_table_columns :
        create_table_columns_item (T_COMMA create_table_columns_item)*
@@ -271,6 +277,7 @@ create_table_options_td_item :
 create_table_options_hive_item :
        create_table_hive_row_format
      | T_STORED T_AS ident
+     | T_LOCATION expr
      ;
 
 create_table_hive_row_format :
@@ -642,7 +649,7 @@ using_clause :          // USING var,... clause
      ;
 ///////////////////////////////
 new_select_stmt :
-   T_SELECT new_select_col (T_COMMA new_select_col)*  T_FROM new_from_table new_from_join_clause* (T_WHERE new_where_condition)? group_by_clause? having_clause? order_by_clause? select_options?
+   T_SELECT new_select_col (T_COMMA new_select_col)*  T_FROM new_from_table new_from_join_clause* (T_WHERE new_where_condition)? group_by_clause? having_clause? order_by_clause? select_options? T_SEMICOLON
 ;
 
 new_select_col:select_list_asterisk
@@ -1732,7 +1739,7 @@ T_WORK            : W O R K ;
 T_XACT_ABORT      : X A C T '_' A B O R T ;
 T_XML             : X M L ;
 T_YES             : Y E S ;
-
+T_EXTERNAL        :E X T E R N A L;
 T_VOID            : V O I D;
 
 // Functions with specific syntax

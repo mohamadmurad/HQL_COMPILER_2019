@@ -1,4 +1,4 @@
-// Generated from C:/Users/Husam/Desktop/projects/HQL_COMPILER_2019\Hplsql.g4 by ANTLR 4.7.2
+// Generated from C:/Users/MouAz He/IdeaProjects/HQL_COMPILER_2019\Hplsql.g4 by ANTLR 4.7.2
 package antGen;
 
     import AST.*;
@@ -252,6 +252,36 @@ public interface HplsqlListener extends ParseTreeListener {
 	 * @param ctx the parse tree
 	 */
 	void exitCreate_table_definition(HplsqlParser.Create_table_definitionContext ctx);
+	/**
+	 * Enter a parse tree produced by {@link HplsqlParser#new_delimiter}.
+	 * @param ctx the parse tree
+	 */
+	void enterNew_delimiter(HplsqlParser.New_delimiterContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link HplsqlParser#new_delimiter}.
+	 * @param ctx the parse tree
+	 */
+	void exitNew_delimiter(HplsqlParser.New_delimiterContext ctx);
+	/**
+	 * Enter a parse tree produced by {@link HplsqlParser#new_location}.
+	 * @param ctx the parse tree
+	 */
+	void enterNew_location(HplsqlParser.New_locationContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link HplsqlParser#new_location}.
+	 * @param ctx the parse tree
+	 */
+	void exitNew_location(HplsqlParser.New_locationContext ctx);
+	/**
+	 * Enter a parse tree produced by {@link HplsqlParser#new_store}.
+	 * @param ctx the parse tree
+	 */
+	void enterNew_store(HplsqlParser.New_storeContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link HplsqlParser#new_store}.
+	 * @param ctx the parse tree
+	 */
+	void exitNew_store(HplsqlParser.New_storeContext ctx);
 	/**
 	 * Enter a parse tree produced by {@link HplsqlParser#create_table_columns}.
 	 * @param ctx the parse tree

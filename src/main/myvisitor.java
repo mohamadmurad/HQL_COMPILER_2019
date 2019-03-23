@@ -8,6 +8,7 @@ import antGen.HplsqlParser;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.List;
 
 public class myvisitor extends HplsqlBaseVisitor<Object> {
     SymbolTable symbolTable;
@@ -69,14 +70,17 @@ public class myvisitor extends HplsqlBaseVisitor<Object> {
 
 
         id_type  = ctx.table_name.ident().getText();
+
         if(types.find_typ(id_type)){
-            System.out.print("Error Table :" + id_type + "  found!");
+            ErrorPrinter.printSymbolAlreadyDefinedError(myparser, ctx.getStart(), "Table", id_type, symbolTable.getCurrentScopeName());
+
+
 
         }else{
 
             ArrayList<Record> colom = (ArrayList<Record>) visit(ctx.create_table_definition());
             ArrayList<name_type> nameType = new ArrayList<>();
-            boolean coltype = true;
+
             for(int i=0;i<colom.size();i++){
 
                 if(types.find_typ(colom.get(i).getType())){
@@ -85,17 +89,32 @@ public class myvisitor extends HplsqlBaseVisitor<Object> {
 
                 }else{
 
-                    System.out.println("Error Type :" + colom.get(i).getType() + " Not found!");
-                    coltype = false;
+                    ErrorPrinter.printFullError(myparser, ctx.start,
+                            "error: cannot find Type. \n symbol:   Type "+colom.get(i).getType(),
+                            "symbol:   Type " + colom.get(i).getType(),
+                            "location: Function " + symbolTable.getCurrentScopeName()
+                    );
+
+                   // System.out.println("Error Type :" + colom.get(i).getType() + " Not found!");
+
 
                 }
 
             }
 
-            if(coltype){
+
+            String delimeter = (String) visit(ctx.create_table_definition().new_delimiter());
+            delimeter = delimeter.substring(1, delimeter.length()-1);
+            String location = (String) visit(ctx.create_table_definition().new_location());
+            location = location.substring(1, location.length()-1);
+            String store = (String) visit(ctx.create_table_definition().new_store());
+            store = store.substring(1, store.length()-1);
+
+
+            ///System.out.println(delimeter + "  " + location + " " + store);
 
                 try{
-                    types.set(id_type,nameType);
+                    types.set(id_type,nameType,location,delimeter,store);
 
                     Table currentTable = new Table(id_type,id_type);
 
@@ -115,11 +134,11 @@ public class myvisitor extends HplsqlBaseVisitor<Object> {
                     e.printStackTrace();
                 }
 
-            }
+
 
         }
 
-        return super.visitCreate_table_stmt(ctx);
+        return null;
     }
 
     @Override
@@ -143,6 +162,22 @@ public class myvisitor extends HplsqlBaseVisitor<Object> {
         return colom;
     }
 
+    @Override
+    public Object visitNew_delimiter(HplsqlParser.New_delimiterContext ctx) {
+        return ctx.expr().getText();
+    }
+
+    @Override
+    public Object visitNew_location(HplsqlParser.New_locationContext ctx) {
+        return ctx.expr().getText();
+    }
+
+    @Override
+    public Object visitNew_store(HplsqlParser.New_storeContext ctx) {
+        return ctx.ident().getText();
+    }
+
+
     /* end create table */
 
     /* start select  */
@@ -153,10 +188,10 @@ public class myvisitor extends HplsqlBaseVisitor<Object> {
 
 
         if(types.find_typ(table_name)){
-            boolean isColTrue = true;
+
             ArrayList<SelectCol> sel_col = new ArrayList<>();
             for(int i =0 ; i<ctx.new_select_col().size();i++){
-                if(!isColTrue) break;
+
 
                 SelectCol coloms = (SelectCol)visit(ctx.new_select_col(i));
                 //System.out.println("gggggggggggggggg");
@@ -165,8 +200,13 @@ public class myvisitor extends HplsqlBaseVisitor<Object> {
                         //System.out.println(coloms.colname);
                         sel_col.add(coloms);
                     }else {
-                        System.out.println("Error Column :" + coloms.colname + " Not found! In Table " + table_name);
-                        isColTrue = false;
+                        ErrorPrinter.printFullError(myparser, ctx.start,
+                                "error: Column :" + coloms.colname + " Not found! In Table " + table_name,
+                                "symbol:   Type " + table_name,
+                                "location: Function " + symbolTable.getCurrentScopeName()
+                        );
+                        //System.out.println("Error Column :" + coloms.colname + " Not found! In Table " + table_name);
+
                     }
                 }else{
                     sel_col.add(coloms);
@@ -175,7 +215,7 @@ public class myvisitor extends HplsqlBaseVisitor<Object> {
                // System.out.println(coloms.func_name);
             }
 
-            if(isColTrue){
+
 
                 Select currentSelect = new Select("SELECT","SELECT STATMENT",table_name);
                 currentSelect.setColumn(sel_col);
@@ -186,23 +226,33 @@ public class myvisitor extends HplsqlBaseVisitor<Object> {
                 symbolTable.setCurrentScopeNameAndType("SELECT", ScopeTypes.SELECT.toString());
 
                 String alias = "";
+
                 if(ctx.new_from_table().from_table_name_clause().from_alias_clause() != null){
+
                     alias = (String) visit(ctx.new_from_table().from_table_name_clause().from_alias_clause());
                     Record newTableName = new Record(alias,table_name,"tableOtherName");
                     symbolTable.put(alias,newTableName);
+
                 }
 
                 for(int i=0;i<sel_col.size();i++){
-                    System.out.println("ccc "  + sel_col.get(i).aslis);
-                    if(!sel_col.get(i).aslis.equals(null)){
+                    //System.out.println("ccc "  + sel_col.get(i).aslis);
+
+                    String as = sel_col.get(i).aslis;
+
+                    if(sel_col.get(i).aslis!=null){
+                       // System.out.println("eeeeeeee");
                         Record newColName = new Record(sel_col.get(i).aslis,sel_col.get(i).colname+ " In [ "+ table_name +" ]","ColOtherName");
                         symbolTable.put(sel_col.get(i).aslis,newColName);
                     }
+
                 }
 
 
+
+
                 symbolTable.exitScope();
-            }
+
 
         }else{
             System.out.println("Error Table :" + table_name + " Not found!");
@@ -214,8 +264,8 @@ public class myvisitor extends HplsqlBaseVisitor<Object> {
     @Override
     public Object visitNew_select_col(HplsqlParser.New_select_colContext ctx) {
         Object x = visitChildren(ctx);
-       // SelectCol b = (SelectCol)x;
-        //System.out.println(b.aslis);
+        //SelectCol b = (SelectCol)x;
+        ///System.out.println(b.aslis);
         return x;
         //return super.visitNew_select_col(ctx);
     }
@@ -231,9 +281,11 @@ public class myvisitor extends HplsqlBaseVisitor<Object> {
         String col_name = ctx.ident().getText();
         SelectCol temp = null;
         if(ctx.select_list_alias() != null){
+
             Object aslis =  visitChildren(ctx);
             temp = new SelectCol(col_name,null, (String) aslis);
         }else {
+
             temp = new SelectCol(col_name,null, null);
         }
 

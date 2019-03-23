@@ -4,6 +4,8 @@ package TypeArray;/*
  * and open the template in the editor.
  */
 
+import org.stringtemplate.v4.ST;
+
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.LinkedList;
@@ -15,12 +17,45 @@ import java.util.List;
  */
 public class data implements Serializable {
     String name_typ;
+    boolean isTable;
+    String TableLocation = "";
+    String TsbleDELIMITER = "";
+    String store = "";
     ArrayList<name_type> typ = new ArrayList<name_type>();
     
-    public data(String name_typ , ArrayList<name_type> typ)
+    public data(String name_typ , ArrayList<name_type> typ,boolean isTable)
     {
        this.name_typ = name_typ;
        this.typ = typ;
+       this.isTable = isTable;
     }
-    
+
+
+    public void setTableLocation(String tableLocation) {
+        TableLocation = tableLocation;
+    }
+
+    public void setTsbleDELIMITER(String tsbleDELIMITER) {
+        TsbleDELIMITER = tsbleDELIMITER;
+    }
+
+    public boolean isTable() {
+        return isTable;
+    }
+
+    public String getTableLocation() {
+        return TableLocation;
+    }
+
+    public String getTsbleDELIMITER() {
+        return TsbleDELIMITER;
+    }
+
+    public String getName_typ() {
+        return name_typ;
+    }
+
+    public void setStore(String store) {
+        this.store = store;
+    }
 }

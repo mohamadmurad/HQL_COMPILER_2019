@@ -22,21 +22,33 @@ public ArrayList<name_type> bool =  new ArrayList<>();
     public ArrayList<name_type> var =  new ArrayList<>();
     public ArrayList<name_type> voi_d =  new ArrayList<>();
 
-public TypeArray() throws IOException
-{
-    intt.add(new name_type("int","int"));
-    str.add(new name_type("string","string"));
-    reall.add(new name_type("float","float"));
-    bool.add(new name_type("bool","bool"));
-    var.add(new name_type("var","var"));
-    voi_d.add(new name_type("void","void"));
-    data_type.add(new data("int",intt));
-    data_type.add(new data("string",str));
-    data_type.add(new data("float",reall));
-    data_type.add(new data("bool",bool));
-    data_type.add(new data("var",var));
-    data_type.add(new data("void",voi_d));
-    store_array(data_type);
+public TypeArray() throws IOException {
+    File tempFile = new File(fileName);
+    boolean exists = tempFile.exists();
+    if(exists){
+        try {
+            data_type = read_array();
+        } catch (ClassNotFoundException e) {
+            e.printStackTrace();
+        }
+
+    }
+    else{
+        intt.add(new name_type("int","int"));
+        str.add(new name_type("string","string"));
+        reall.add(new name_type("float","float"));
+        bool.add(new name_type("bool","bool"));
+        var.add(new name_type("var","var"));
+        voi_d.add(new name_type("void","void"));
+        data_type.add(new data("int",intt,false));
+        data_type.add(new data("string",str,false));
+        data_type.add(new data("float",reall,false));
+        data_type.add(new data("bool",bool,false));
+        data_type.add(new data("var",var,false));
+        data_type.add(new data("void",voi_d,false));
+        store_array(data_type);
+    }
+
 }
 
 public static boolean find_typ(String type) {
@@ -67,8 +79,8 @@ public static boolean find_col_in_table(String col,String table) {
     return false;
 
 }
-public static void set(String name_typ , ArrayList<name_type> typ) throws IOException
-{
+
+public static void set(String name_typ , ArrayList<name_type> typ,String location,String delimeeter,String store) throws IOException {
     boolean find = true;
     String s;
     if(!find_typ(name_typ))
@@ -84,15 +96,19 @@ public static void set(String name_typ , ArrayList<name_type> typ) throws IOExce
         }
         if(find)
         {
-            data_type.add(new data(name_typ,typ));
+            data d = new data(name_typ,typ,true);
+            d.setTableLocation(location);
+            d.setTsbleDELIMITER(delimeeter);
+            d.setStore(store);
+            data_type.add(d);
             store_array(data_type);
         }
     }
     
     
 }
-public static void get(String name) throws IOException, FileNotFoundException, ClassNotFoundException
-{
+
+public static void get(String name) throws IOException, FileNotFoundException, ClassNotFoundException {
     
     List<data> d = read_array();
     
@@ -132,8 +148,7 @@ public static void get(String name) throws IOException, FileNotFoundException, C
     }
        
 }
-public static void flat(String name) throws IOException, FileNotFoundException, ClassNotFoundException
-{
+public static void flat(String name) throws IOException, FileNotFoundException, ClassNotFoundException {
     
     List<data> d = read_array();
     
@@ -175,8 +190,7 @@ public static void flat(String name) throws IOException, FileNotFoundException, 
     }
        
 }
-public static void flatt(String type ,String name ) throws IOException, FileNotFoundException, ClassNotFoundException
-{
+public static void flatt(String type ,String name ) throws IOException, FileNotFoundException, ClassNotFoundException {
     List<data> d = read_array();
     for(int i=0;i<d.size();i++)
     {
@@ -204,19 +218,19 @@ public static void flatt(String type ,String name ) throws IOException, FileNotF
                     }
     }
 }
-public static void store_array(List<data> d) throws FileNotFoundException, IOException
-{
+
+public static void store_array(List<data> d) throws FileNotFoundException, IOException {
     
 
-    try (ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream(fileName))) 
-    {
+    try (ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream(fileName))) {
     out.writeObject(d);
     out.close();
    
     }
 }
-public static List<data> read_array() throws FileNotFoundException, IOException, ClassNotFoundException
-{
+
+
+public static List<data> read_array() throws FileNotFoundException, IOException, ClassNotFoundException {
     try (ObjectInputStream in = new ObjectInputStream(new FileInputStream(fileName))) 
     {
         
