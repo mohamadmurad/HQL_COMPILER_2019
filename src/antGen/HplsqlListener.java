@@ -673,6 +673,16 @@ public interface HplsqlListener extends ParseTreeListener {
 	 */
 	void exitCpp_var_decleration(HplsqlParser.Cpp_var_declerationContext ctx);
 	/**
+	 * Enter a parse tree produced by {@link HplsqlParser#assigned_stmt}.
+	 * @param ctx the parse tree
+	 */
+	void enterAssigned_stmt(HplsqlParser.Assigned_stmtContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link HplsqlParser#assigned_stmt}.
+	 * @param ctx the parse tree
+	 */
+	void exitAssigned_stmt(HplsqlParser.Assigned_stmtContext ctx);
+	/**
 	 * Enter a parse tree produced by {@link HplsqlParser#cpp_for_stmt}.
 	 * @param ctx the parse tree
 	 */

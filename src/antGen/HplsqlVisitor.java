@@ -412,6 +412,12 @@ public interface HplsqlVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitCpp_var_decleration(HplsqlParser.Cpp_var_declerationContext ctx);
 	/**
+	 * Visit a parse tree produced by {@link HplsqlParser#assigned_stmt}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitAssigned_stmt(HplsqlParser.Assigned_stmtContext ctx);
+	/**
 	 * Visit a parse tree produced by {@link HplsqlParser#cpp_for_stmt}.
 	 * @param ctx the parse tree
 	 * @return the visitor result

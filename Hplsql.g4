@@ -88,7 +88,7 @@ exception_block_item :
      ;
 
 call_stmt :
-       T_CALL ident (T_OPEN_P expr_func_params? T_CLOSE_P | expr_func_params)?
+        ident T_OPEN_P return_param? T_CLOSE_P T_SEMICOLON
      ;
 
 declare_stmt :          // Declaration statement
@@ -465,7 +465,7 @@ op :
 cpp_assignment_stmt: ident T_EQUAL (ident (T_OPEN_P ident? T_CLOSE_P)? | L_INT | L_DEC | select_stmt ) T_SEMICOLON
                      ;
 
-cpp_var_decleration returns[VarDecleration VarDecNode]: dtype ident T_SEMICOLON
+cpp_var_decleration returns[VarDecleration VarDecNode]: dtype ident assigned_stmt? T_SEMICOLON
                                     {
                                         if(types.find_typ($dtype.text)){
                                             $VarDecNode = new VarDecleration($ident.text,$dtype.text);
@@ -476,7 +476,7 @@ cpp_var_decleration returns[VarDecleration VarDecNode]: dtype ident T_SEMICOLON
                                         }
 
                                     };
-
+assigned_stmt :T_EQUAL (ident (T_OPEN_P ident? T_CLOSE_P)? | L_INT | L_DEC | select_stmt );
 
 cpp_for_stmt returns [ForNode forNode]:{ForChild = new ArrayList<>();}
             T_FOR T_OPEN_P  forhead1  T_SEMICOLON ident bool_expr_binary_operator (L_INT | ident (T_DOT ident)?)  T_SEMICOLON for_inc_dec  T_CLOSE_P T_OPEN_B cpp_smt_for T_CLOSE_B

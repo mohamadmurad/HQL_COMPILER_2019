@@ -1,8 +1,1 @@
-CREATE EXTERNAL TABLE page_view(viewTime int, userid float, page_url string, referrer_url string,
- ip string , country string )
- STORED AS 'TEXTFILE'
- ROW FORMAT DELIMITED FIELDS TERMINATED BY ","
- LOCATION 'c:\h' ;
-
-
-select viewTime as d from page_view
+int toto(momo m){}

@@ -7,7 +7,7 @@ import java.util.Map;
 public class FunctionRecord extends Record {
 
     int paramNumber = 0;
-    private HashMap<Integer, Record> parameters = new HashMap<>();
+    public HashMap<Integer, Record> parameters = new HashMap<>();
 
 
 
@@ -22,12 +22,15 @@ public class FunctionRecord extends Record {
         paramNumber++;
     }
 
-    public boolean containParameter(int paramNumber, Record parameter) {
+    public boolean containParameter(Record parameter) {
         // hash map
-        Record paramRec = parameters.get(paramNumber);
-        if(parameter == null || paramRec == null)
-            return false;
-        return parameters.get(paramNumber).getType().equals(parameter.getType());
+        for (Map.Entry entry : parameters.entrySet()) {
+            if(parameter==entry.getValue())
+            {
+                return true;
+            }
+        }
+        return  false;
     }
 
     public int numberOfParameters() {

@@ -813,6 +813,18 @@ public class HplsqlBaseListener implements HplsqlListener {
 	 *
 	 * <p>The default implementation does nothing.</p>
 	 */
+	@Override public void enterAssigned_stmt(HplsqlParser.Assigned_stmtContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void exitAssigned_stmt(HplsqlParser.Assigned_stmtContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
 	@Override public void enterCpp_for_stmt(HplsqlParser.Cpp_for_stmtContext ctx) { }
 	/**
 	 * {@inheritDoc}

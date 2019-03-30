@@ -356,6 +356,14 @@ public class myvisitor extends HplsqlBaseVisitor<Object> {
         String type = ctx.dtype().getText(); // get type
         String funcName = ctx.ident().getText(); // get ID
 
+        if(!types.find_typ(type))
+        {
+            ErrorPrinter.printFullError(myparser, ctx.start,
+                    "error: cannot find Type. \n symbol:   Type "+type,
+                    "symbol:   Type " + type,
+                    "location: Function " + symbolTable.getCurrentScopeName());
+        }
+
         if(symbolTable.lookuplocaly(funcName)!=null){
             ErrorPrinter.printSymbolAlreadyDefinedError(myparser, ctx.ident.start, "method", funcName, symbolTable.getCurrentScopeName());
         }
@@ -374,7 +382,7 @@ public class myvisitor extends HplsqlBaseVisitor<Object> {
             ArrayList<Record>  paramiters = (ArrayList<Record>) visit(ctx.return_param());
 
             for(int i =0 ;i<paramiters.size();i++){
-                //System.out.println(paramiters.get(i).getId());
+             // System.out.println(paramiters.get(i).getId());
                 currentFunc.addParameter(paramiters.get(i));
                 symbolTable.put(paramiters.get(i).getId(), paramiters.get(i));
             }
@@ -420,17 +428,69 @@ public class myvisitor extends HplsqlBaseVisitor<Object> {
         //return super.visitReturn_param(ctx);
     }
 
+    @Override
+    public Object visitCall_stmt(HplsqlParser.Call_stmtContext ctx) {
+
+        String funName = ctx.ident().getText();
+        if(symbolTable.lookuplocaly(funName)==null){
+            ErrorPrinter.printFullError(myparser, ctx.start,
+                    "error: Method :" + funName + " Not found! In Scope ",
+                    "",
+                    "" + symbolTable.getCurrentScopeName()
+            );
+        }
+        FunctionRecord func = (FunctionRecord) symbolTable.lookuplocaly(funName);
+
+        return null;
+    }
 
     @Override
     public Object visitCpp_var_decleration(HplsqlParser.Cpp_var_declerationContext ctx) {
         String typeName = ctx.dtype().getText();
         String varName = ctx.ident().getText();
+        if(!types.find_typ(typeName))
+        {
+            ErrorPrinter.printFullError(myparser, ctx.start,
+                    "error: cannot find Type. \n symbol:   Type "+typeName,
+                    "symbol:   Type " + typeName,
+                    "location: Function " + symbolTable.getCurrentScopeName());
+        }
+        if(ctx.assigned_stmt()==null)
+        {
+            System.out.println("Warning for using unassigned variable " + varName);
+        }
         if(symbolTable.lookuplocaly(varName)!=null){
             ErrorPrinter.printSymbolAlreadyDefinedError(myparser, ctx.ident().start, "variable", varName, "Function "+symbolTable.getCurrentScopeName());
         }
 
 
         symbolTable.put(varName,new Record(varName,typeName,"variable"));
+
+        return null;
+    }
+
+    @Override
+    public Object visitAssigned_stmt(HplsqlParser.Assigned_stmtContext ctx) {
+        return ctx.ident().get(0).getText();
+    }
+
+    //@Override
+    public Object visitCpp_assignment_stmt(HplsqlParser.Cpp_assignment_stmtContext ctx) {
+
+
+        String varName =  ctx.ident().get(0).getText();
+        String varEqual = ctx.ident().get(1).getText();
+        if(symbolTable.lookuplocaly(varName)!=null){
+            Record var = symbolTable.lookuplocaly(varName);
+            String varType = var.getType().toString();
+
+        }else {
+            ErrorPrinter.printFullError(myparser, ctx.start,
+                    "error: Variable :" + varName + " Not found! In Scope ",
+                    "",
+                    "" + symbolTable.getCurrentScopeName()
+            );
+        }
 
         return null;
     }
