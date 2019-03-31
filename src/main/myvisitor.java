@@ -432,14 +432,14 @@ public class myvisitor extends HplsqlBaseVisitor<Object> {
     public Object visitCall_stmt(HplsqlParser.Call_stmtContext ctx) {
 
         String funName = ctx.ident().getText();
-        if(symbolTable.lookuplocaly(funName)==null){
+        if(symbolTable.lookup(funName)==null){
             ErrorPrinter.printFullError(myparser, ctx.start,
                     "error: Method :" + funName + " Not found! In Scope ",
                     "",
                     "" + symbolTable.getCurrentScopeName()
             );
         }
-        FunctionRecord func = (FunctionRecord) symbolTable.lookuplocaly(funName);
+        FunctionRecord func = (FunctionRecord) symbolTable.lookup(funName);
 
         return null;
     }
@@ -455,34 +455,85 @@ public class myvisitor extends HplsqlBaseVisitor<Object> {
                     "symbol:   Type " + typeName,
                     "location: Function " + symbolTable.getCurrentScopeName());
         }
-        if(ctx.assigned_stmt()==null)
-        {
-            System.out.println("Warning for using unassigned variable " + varName);
-        }
         if(symbolTable.lookuplocaly(varName)!=null){
             ErrorPrinter.printSymbolAlreadyDefinedError(myparser, ctx.ident().start, "variable", varName, "Function "+symbolTable.getCurrentScopeName());
         }
 
 
-        symbolTable.put(varName,new Record(varName,typeName,"variable"));
+        symbolTable.put(varName,new Record(varName,typeName,"variable",null));
 
         return null;
     }
 
-    @Override
-    public Object visitAssigned_stmt(HplsqlParser.Assigned_stmtContext ctx) {
-        return ctx.ident().get(0).getText();
-    }
 
     //@Override
     public Object visitCpp_assignment_stmt(HplsqlParser.Cpp_assignment_stmtContext ctx) {
 
 
         String varName =  ctx.ident().get(0).getText();
-        String varEqual = ctx.ident().get(1).getText();
-        if(symbolTable.lookuplocaly(varName)!=null){
-            Record var = symbolTable.lookuplocaly(varName);
-            String varType = var.getType().toString();
+        //System.out.println(ctx.L_INT().getText());
+        String varEqual = null;
+        boolean isString = false;
+        if(ctx.ident(1) != null){
+            //String
+            varEqual = ctx.ident().get(1).getText();
+            isString = true;
+        }else if(visit(ctx.number()) != null ){
+            //Number
+            varEqual = (String) visit(ctx.number());
+        }else{
+            // other
+        }
+
+
+
+
+        if(symbolTable.lookup(varName)!=null){
+            Record var = symbolTable.lookup(varName);
+
+            if(symbolTable.lookup(varEqual) != null){
+                // varible
+                Record ASVar = symbolTable.lookup(varEqual);
+
+                if(ASVar.getValue() != null){
+                    var.setValue(ASVar.getValue());
+         //           System.out.println("varrrrr " + var.getValue());
+                }else{
+                    System.err.println("Warring for using unassigned variable " + varEqual);
+                }
+
+            }else{
+
+
+                //regular for number or string
+
+                String varType = var.getType();
+
+                if(varType.equals("int")){
+
+                    if(!isString){
+                        var.setValue(varEqual);
+                    }else{
+                        // up cast
+
+                    }
+
+                }else if(varType.equals("string")){
+                    if(isString){
+                        var.setValue(varEqual);
+                    }else{
+                        // up cast
+                        var.setValue("\"" + varEqual + "\"");
+
+                    }
+
+
+                }
+
+
+            }
+
+            System.out.println(varName + " = " + var.getValue());
 
         }else {
             ErrorPrinter.printFullError(myparser, ctx.start,
@@ -494,6 +545,12 @@ public class myvisitor extends HplsqlBaseVisitor<Object> {
 
         return null;
     }
+
+    @Override
+    public Object visitNumber(HplsqlParser.NumberContext ctx) {
+        return ctx.L_INT().getText();
+    }
+
     /* End Function */
 
 }

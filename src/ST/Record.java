@@ -5,6 +5,9 @@ public class Record {
     protected String id;
     protected String type;
     public String Kind = "";
+    private String value="";
+
+
 
     public Record (String id, String type){
         this.id = id;
@@ -15,6 +18,21 @@ public class Record {
         this.id = id;
         this.type = type;
         this.Kind = kind;
+    }
+
+    public Record(String id, String type, String kind,String value) {
+        this.id = id;
+        this.type = type;
+        this.Kind = kind;
+        this.value = value;
+    }
+
+    public void setValue(String value) {
+        this.value = value;
+    }
+
+    public String getValue() {
+        return value;
     }
 
     public String getId(){

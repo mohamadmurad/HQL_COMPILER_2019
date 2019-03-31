@@ -801,6 +801,18 @@ public class HplsqlBaseListener implements HplsqlListener {
 	 *
 	 * <p>The default implementation does nothing.</p>
 	 */
+	@Override public void enterNumber(HplsqlParser.NumberContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void exitNumber(HplsqlParser.NumberContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
 	@Override public void enterCpp_var_decleration(HplsqlParser.Cpp_var_declerationContext ctx) { }
 	/**
 	 * {@inheritDoc}
@@ -808,18 +820,6 @@ public class HplsqlBaseListener implements HplsqlListener {
 	 * <p>The default implementation does nothing.</p>
 	 */
 	@Override public void exitCpp_var_decleration(HplsqlParser.Cpp_var_declerationContext ctx) { }
-	/**
-	 * {@inheritDoc}
-	 *
-	 * <p>The default implementation does nothing.</p>
-	 */
-	@Override public void enterAssigned_stmt(HplsqlParser.Assigned_stmtContext ctx) { }
-	/**
-	 * {@inheritDoc}
-	 *
-	 * <p>The default implementation does nothing.</p>
-	 */
-	@Override public void exitAssigned_stmt(HplsqlParser.Assigned_stmtContext ctx) { }
 	/**
 	 * {@inheritDoc}
 	 *

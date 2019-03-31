@@ -1,1 +1,6 @@
-int toto(momo m){}
+int toto(momo m){
+string x;
+int y;
+x = 7;
+
+}
