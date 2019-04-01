@@ -1,4 +1,4 @@
-// Generated from C:/Users/Husam/Desktop/projects/HQL_COMPILER_2019\Hplsql.g4 by ANTLR 4.7.2
+// Generated from C:/Users/MouAz He/IdeaProjects/HQL_COMPILER_2019\Hplsql.g4 by ANTLR 4.7.2
 package antGen;
 
     import AST.*;
@@ -613,16 +613,6 @@ public interface HplsqlListener extends ParseTreeListener {
 	 */
 	void exitCpp_smt(HplsqlParser.Cpp_smtContext ctx);
 	/**
-	 * Enter a parse tree produced by {@link HplsqlParser#cpp_smt_for}.
-	 * @param ctx the parse tree
-	 */
-	void enterCpp_smt_for(HplsqlParser.Cpp_smt_forContext ctx);
-	/**
-	 * Exit a parse tree produced by {@link HplsqlParser#cpp_smt_for}.
-	 * @param ctx the parse tree
-	 */
-	void exitCpp_smt_for(HplsqlParser.Cpp_smt_forContext ctx);
-	/**
 	 * Enter a parse tree produced by {@link HplsqlParser#cpp_if_stmt}.
 	 * @param ctx the parse tree
 	 */
@@ -652,6 +642,16 @@ public interface HplsqlListener extends ParseTreeListener {
 	 * @param ctx the parse tree
 	 */
 	void exitDef_else(HplsqlParser.Def_elseContext ctx);
+	/**
+	 * Enter a parse tree produced by {@link HplsqlParser#return_stmt}.
+	 * @param ctx the parse tree
+	 */
+	void enterReturn_stmt(HplsqlParser.Return_stmtContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link HplsqlParser#return_stmt}.
+	 * @param ctx the parse tree
+	 */
+	void exitReturn_stmt(HplsqlParser.Return_stmtContext ctx);
 	/**
 	 * Enter a parse tree produced by {@link HplsqlParser#ifex}.
 	 * @param ctx the parse tree
@@ -732,6 +732,16 @@ public interface HplsqlListener extends ParseTreeListener {
 	 * @param ctx the parse tree
 	 */
 	void exitForhead1(HplsqlParser.Forhead1Context ctx);
+	/**
+	 * Enter a parse tree produced by {@link HplsqlParser#forcond}.
+	 * @param ctx the parse tree
+	 */
+	void enterForcond(HplsqlParser.ForcondContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link HplsqlParser#forcond}.
+	 * @param ctx the parse tree
+	 */
+	void exitForcond(HplsqlParser.ForcondContext ctx);
 	/**
 	 * Enter a parse tree produced by {@link HplsqlParser#create_function_stmt}.
 	 * @param ctx the parse tree

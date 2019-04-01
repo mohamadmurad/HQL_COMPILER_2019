@@ -1,4 +1,4 @@
-// Generated from C:/Users/Husam/Desktop/projects/HQL_COMPILER_2019\Hplsql.g4 by ANTLR 4.7.2
+// Generated from C:/Users/MouAz He/IdeaProjects/HQL_COMPILER_2019\Hplsql.g4 by ANTLR 4.7.2
 package antGen;
 
     import AST.*;
@@ -376,12 +376,6 @@ public interface HplsqlVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitCpp_smt(HplsqlParser.Cpp_smtContext ctx);
 	/**
-	 * Visit a parse tree produced by {@link HplsqlParser#cpp_smt_for}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitCpp_smt_for(HplsqlParser.Cpp_smt_forContext ctx);
-	/**
 	 * Visit a parse tree produced by {@link HplsqlParser#cpp_if_stmt}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
@@ -399,6 +393,12 @@ public interface HplsqlVisitor<T> extends ParseTreeVisitor<T> {
 	 * @return the visitor result
 	 */
 	T visitDef_else(HplsqlParser.Def_elseContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link HplsqlParser#return_stmt}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitReturn_stmt(HplsqlParser.Return_stmtContext ctx);
 	/**
 	 * Visit a parse tree produced by {@link HplsqlParser#ifex}.
 	 * @param ctx the parse tree
@@ -447,6 +447,12 @@ public interface HplsqlVisitor<T> extends ParseTreeVisitor<T> {
 	 * @return the visitor result
 	 */
 	T visitForhead1(HplsqlParser.Forhead1Context ctx);
+	/**
+	 * Visit a parse tree produced by {@link HplsqlParser#forcond}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitForcond(HplsqlParser.ForcondContext ctx);
 	/**
 	 * Visit a parse tree produced by {@link HplsqlParser#create_function_stmt}.
 	 * @param ctx the parse tree

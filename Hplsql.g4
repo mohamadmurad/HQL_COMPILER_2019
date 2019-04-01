@@ -72,8 +72,9 @@ stmt returns [Node root ] :
      | label
      |cpp_assignment_stmt
      |cpp_var_decleration {$root = $cpp_var_decleration.VarDecNode;}
-     |cpp_for_stmt {$root = $cpp_for_stmt.forNode;}
+     |cpp_for_stmt
      |new_select_stmt
+     |cpp_if_stmt
 
 
      ;
@@ -402,29 +403,21 @@ return_param_item returns [ArrayList<VarDecleration> varNode]: dtype ident
 
 cpp_smt  :
             |cpp_smt cpp_if_stmt
-           |cpp_smt cpp_for_stmt {FunChild.add($cpp_for_stmt.forNode);}
+           |cpp_smt cpp_for_stmt
            |cpp_smt cpp_assignment_stmt
-           |cpp_smt cpp_var_decleration {FunChild.add($cpp_var_decleration.VarDecNode);}
-           |cpp_smt select_stmt {FunChild.add($select_stmt.b);}
+           |cpp_smt cpp_var_decleration
+           |cpp_smt new_select_stmt
            |cpp_smt create_table_stmt {FunChild.add($create_table_stmt.tableNode);}
            ;
 
-cpp_smt_for  :
-            |cpp_smt cpp_if_stmt
-           |cpp_smt  cpp_for_stmt {ForChild.add($cpp_for_stmt.forNode);}
-           |cpp_smt cpp_assignment_stmt
-           |cpp_smt cpp_var_decleration {ForChild.add($cpp_var_decleration.VarDecNode);}
-           |cpp_smt select_stmt {ForChild.add($select_stmt.b);}
-           |cpp_smt create_table_stmt {ForChild.add($create_table_stmt.tableNode);}
-           ;
 
-cpp_if_stmt:T_IF T_OPEN_P (ifex ( (T_AND_AND | T_PIPE) ifex )* ) T_CLOSE_P  cpp_smt def_else_if* def_else?
-            | T_IF T_OPEN_P (ifex ( (T_AND_AND | T_PIPE) ifex )* ) T_CLOSE_P  T_OPEN_B  cpp_smt T_CLOSE_B  def_else_if* def_else?
+
+cpp_if_stmt: T_IF T_OPEN_P (ifex ( (T_AND_AND | T_PIPE) ifex)* ) T_CLOSE_P  T_OPEN_B  cpp_smt return_stmt? T_CLOSE_B  def_else_if* def_else?
             ;
 
 def_else_if :T_ELSE cpp_if_stmt;
-def_else :T_ELSE T_OPEN_B cpp_smt T_CLOSE_B;
-
+def_else :T_ELSE T_OPEN_B cpp_smt return_stmt? T_CLOSE_B;
+return_stmt : T_RETURN (ident | L_INT) T_SEMICOLON;
 ifex: ident op (ident | L_INT);
 
 op :
@@ -460,22 +453,15 @@ cpp_var_decleration returns[VarDecleration VarDecNode]: dtype ident T_SEMICOLON
 
                                     };
 
-cpp_for_stmt returns [ForNode forNode]:{ForChild = new ArrayList<>();}
-            T_FOR T_OPEN_P  forhead1  T_SEMICOLON ident bool_expr_binary_operator (L_INT | ident (T_DOT ident)?)  T_SEMICOLON for_inc_dec  T_CLOSE_P T_OPEN_B cpp_smt_for T_CLOSE_B
-            {
-                $forNode = new ForNode($forhead1.text,$bool_expr_binary_operator.text,$for_inc_dec.text);
-                $forNode.setNodeName("FOR");
-                $forNode.setForChiled(ForChild);
+cpp_for_stmt :
+            T_FOR T_OPEN_P  forhead1 T_SEMICOLON forcond T_SEMICOLON for_inc_dec  T_CLOSE_P T_OPEN_B cpp_smt T_CLOSE_B return_stmt?
 
-
-
-            }
-            |  T_FOR T_OPEN_P    T_SEMICOLON   T_SEMICOLON   T_CLOSE_P cpp_smt
+            |  T_FOR T_OPEN_P    T_SEMICOLON   T_SEMICOLON   T_CLOSE_P cpp_smt return_stmt?
             ;
 
-for_inc_dec:((ident T_ADD T_ADD) | (ident T_SUB T_SUB));
+for_inc_dec: ident (T_ADD T_ADD |  T_SUB T_SUB);
 forhead1:(dtype? ident ) T_EQUAL (L_INT | ident);
-
+forcond : ident op (L_INT | ident (T_DOT ident)?);
 create_function_stmt :
       (T_ALTER | T_CREATE (T_OR T_REPLACE)? | T_REPLACE)? T_FUNCTION ident create_routine_params? create_function_return (T_AS | T_IS)? declare_block_inplace? single_block_stmt
     ;

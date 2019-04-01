@@ -1,11 +1,10 @@
-int x;
-string g;
-int f(int f,string v){
+int i;
+int j;
+if(i<0 || i=j && j="hello")
+{
+string y;
 
-int x;
+select * from c;
+for(i=0;i<10;j++)
+{int r;}
 }
-
-f(x,g);
-
-
-

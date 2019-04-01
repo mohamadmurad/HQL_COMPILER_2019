@@ -23,6 +23,10 @@ public class SymbolTable {
         return this.current.getScopeType();
     }
 
+    public Scope getCurrentScope(){
+        return this.current;
+    }
+
     public void setCurrentScopeNameAndType(String scopeName, String scopeType){
         this.current.setScopeNameAndType(scopeName, scopeType);
     }
