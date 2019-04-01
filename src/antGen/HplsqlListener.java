@@ -1,4 +1,4 @@
-// Generated from C:/Users/MouAz He/IdeaProjects/HQL_COMPILER_2019\Hplsql.g4 by ANTLR 4.7.2
+// Generated from C:/Users/Husam/Desktop/projects/HQL_COMPILER_2019\Hplsql.g4 by ANTLR 4.7.2
 package antGen;
 
     import AST.*;
@@ -112,6 +112,26 @@ public interface HplsqlListener extends ParseTreeListener {
 	 * @param ctx the parse tree
 	 */
 	void exitCall_stmt(HplsqlParser.Call_stmtContext ctx);
+	/**
+	 * Enter a parse tree produced by {@link HplsqlParser#call_param}.
+	 * @param ctx the parse tree
+	 */
+	void enterCall_param(HplsqlParser.Call_paramContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link HplsqlParser#call_param}.
+	 * @param ctx the parse tree
+	 */
+	void exitCall_param(HplsqlParser.Call_paramContext ctx);
+	/**
+	 * Enter a parse tree produced by {@link HplsqlParser#call_param_item}.
+	 * @param ctx the parse tree
+	 */
+	void enterCall_param_item(HplsqlParser.Call_param_itemContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link HplsqlParser#call_param_item}.
+	 * @param ctx the parse tree
+	 */
+	void exitCall_param_item(HplsqlParser.Call_param_itemContext ctx);
 	/**
 	 * Enter a parse tree produced by {@link HplsqlParser#declare_stmt}.
 	 * @param ctx the parse tree

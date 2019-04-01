@@ -16,7 +16,7 @@ import static org.antlr.v4.runtime.CharStreams.fromFileName;
 
 public class Main {
 
-    static String FileNmae = "h.txt";
+    static String FileNmae = "test.txt";
 
     public static void main(String[] args) {
         //System.out.println("Hello World!");

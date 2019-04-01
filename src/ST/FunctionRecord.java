@@ -7,7 +7,7 @@ import java.util.Map;
 public class FunctionRecord extends Record {
 
     int paramNumber = 0;
-    public HashMap<Integer, Record> parameters = new HashMap<>();
+    private HashMap<Integer, Record> parameters = new HashMap<>();
 
 
 
@@ -36,6 +36,9 @@ public class FunctionRecord extends Record {
     public int numberOfParameters() {
         return parameters.size();
     }
+
+    public String getParamType(int i){
+        return parameters.get(i).getType() ;}
 
     public void printParameters() {
         System.out.print("( ");

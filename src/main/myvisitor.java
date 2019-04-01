@@ -11,6 +11,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class myvisitor extends HplsqlBaseVisitor<Object> {
+
+    String numberREG = "^[-+]?\\d+(\\.\\d+)?$";
+
     SymbolTable symbolTable;
 
     HplsqlParser myparser;
@@ -365,7 +368,7 @@ public class myvisitor extends HplsqlBaseVisitor<Object> {
         }
 
         if(symbolTable.lookuplocaly(funcName)!=null){
-            ErrorPrinter.printSymbolAlreadyDefinedError(myparser, ctx.ident.start, "method", funcName, symbolTable.getCurrentScopeName());
+            ErrorPrinter.printSymbolAlreadyDefinedError(myparser, ctx.ident().start, "method", funcName, symbolTable.getCurrentScopeName());
         }
 
         FunctionRecord currentFunc = new FunctionRecord(funcName,type);
@@ -377,7 +380,9 @@ public class myvisitor extends HplsqlBaseVisitor<Object> {
         symbolTable.setCurrentScopeNameAndType(funcName, myvisitor.ScopeTypes.METHOD.toString());
 
         // get paramiters
-        if(ctx.return_param() != null){
+       // System.out.println(ctx.return_param().return_param_item().size());
+       // visit(ctx.return_param());
+       if(ctx.return_param() != null){
 
             ArrayList<Record>  paramiters = (ArrayList<Record>) visit(ctx.return_param());
 
@@ -407,7 +412,9 @@ public class myvisitor extends HplsqlBaseVisitor<Object> {
         ArrayList<Record> paramiters = new ArrayList<>();
 
         for(int i=0;i<ctx.return_param_item().size();i++){
+
             String type = ctx.return_param_item(i).dtype().getText(); // get type
+
             if(!types.find_typ(type)){
                 //Print undefined type error
                 ErrorPrinter.printFullError(myparser, ctx.return_param_item(i).dtype().start,
@@ -432,6 +439,7 @@ public class myvisitor extends HplsqlBaseVisitor<Object> {
     public Object visitCall_stmt(HplsqlParser.Call_stmtContext ctx) {
 
         String funName = ctx.ident().getText();
+
         if(symbolTable.lookup(funName)==null){
             ErrorPrinter.printFullError(myparser, ctx.start,
                     "error: Method :" + funName + " Not found! In Scope ",
@@ -440,6 +448,119 @@ public class myvisitor extends HplsqlBaseVisitor<Object> {
             );
         }
         FunctionRecord func = (FunctionRecord) symbolTable.lookup(funName);
+
+
+        if(ctx.call_param() != null){
+            if(func.numberOfParameters() != ctx.call_param().call_param_item().size()){
+                ErrorPrinter.printFullError(myparser, ctx.start,
+                        "error: Number of Parmeters ",
+                        "" ,
+                        "location: in Call Function " + funName
+                );
+            }else{
+
+                for(int i=0;i<ctx.call_param().call_param_item().size();i++){
+                    String p =null;
+                    String typeParam = "";
+                    if(ctx.call_param().call_param_item().get(i).ident() != null){
+
+                        p = ctx.call_param().call_param_item().get(i).ident().getText();
+                        if( (p.startsWith("\"") && p.endsWith("\"")) || (p.startsWith("'") && p.endsWith("'")) ){
+                            typeParam = "string";
+                        }else{
+                            typeParam = "var";
+                        }
+
+
+                    }else if(ctx.call_param().call_param_item().get(i).number() != null){
+
+                        p = ctx.call_param().call_param_item().get(i).number().getText();
+
+                        if(p.matches(numberREG)){
+                            typeParam = "numb";
+                        }
+
+                    }else{
+                        ErrorPrinter.printFullError(myparser, ctx.start,
+                                "error:",
+                                "" ,
+                                "location: in Call Function " + funName
+                        );
+                    }
+
+                    switch (typeParam){
+                        case "numb":{
+
+                            //System.out.println("number");
+                            if(func.getParamType(i).equals("int")){
+
+                                //System.out.println("yes");
+
+                            }else{
+                                ErrorPrinter.printFullError(myparser, ctx.start,
+                                        "error: Parameter "+ (i+1) +" Type must be ("+func.getParamType(i) + ") Not (int)" ,
+                                        "" ,
+                                        "location: in Call Function " + funName
+                                );
+                            }
+
+                        }break;
+                        case "var":{
+                           // System.out.println("var");
+                            if(symbolTable.lookup(p) != null){ // var
+
+                                Record pp = symbolTable.lookup(p);
+                                System.out.println(pp.getType());
+                                if(func.getParamType(i).equals(pp.getType())){
+
+                                   // System.out.println("yes");
+
+                                }else{
+                                    ErrorPrinter.printFullError(myparser, ctx.start,
+                                            "error: Parameter "+ (i+1) +" Type must be ("+func.getParamType(i) + ") Not ("+ pp.getType() + ")" ,
+                                            "" ,
+                                            "location: in Call Function " + funName
+                                    );
+                                }
+
+                            }else{
+
+                                ErrorPrinter.printFullError(myparser, ctx.start,
+                                        "error: Variable :" + p + " Not found! In Scope ",
+                                        "",
+                                        "" + symbolTable.getCurrentScopeName()
+                                );
+
+                            }
+
+
+                        }break;
+                        case "string":{
+                            System.out.println("string");
+                            if(func.getParamType(i).equals("string")){
+
+                                //System.out.println("yes");
+
+                            }else{
+                                ErrorPrinter.printFullError(myparser, ctx.start,
+                                        "error: Parameter "+ (i+1) +" Type must be ("+func.getParamType(i) + ") Not (string)" ,
+                                        "" ,
+                                        "location: in Call Function " + funName
+                                );
+                            }
+
+                        }break;
+                        default: break;
+                    }
+
+
+                }
+
+            }
+
+        }
+
+
 
         return null;
     }
@@ -456,7 +577,7 @@ public class myvisitor extends HplsqlBaseVisitor<Object> {
                     "location: Function " + symbolTable.getCurrentScopeName());
         }
         if(symbolTable.lookuplocaly(varName)!=null){
-            ErrorPrinter.printSymbolAlreadyDefinedError(myparser, ctx.ident().start, "variable", varName, "Function "+symbolTable.getCurrentScopeName());
+            ErrorPrinter.printSymbolAlreadyDefinedError(myparser, ctx.ident().start, "variable", varName, ""+symbolTable.getCurrentScopeName());
         }
 
 

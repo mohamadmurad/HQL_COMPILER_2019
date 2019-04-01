@@ -1,0 +1,11 @@
+int x;
+string g;
+int f(int f,string v){
+
+int x;
+}
+
+f(x,g);
+
+
+

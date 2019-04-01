@@ -1,6 +1,6 @@
-int toto(momo m){
-string x;
-int y;
-x = 7;
+create external table c ( id int , usernn string)
+stored as textfile
+ROW FORMAT DELIMITED FIELDS TERMINATED BY ','
+LOCATION "c:\";
 
-}
+select o from c;
