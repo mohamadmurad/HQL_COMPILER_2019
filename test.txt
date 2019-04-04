@@ -1,8 +1,6 @@
-int func(int x){
-int i;
-if(i>0){
-int t;
-return i;
-}
-}
 
+int t;
+for(string i=5; i<0;t++){
+if("s" == "s".size){select id from c;}
+}
+int x;

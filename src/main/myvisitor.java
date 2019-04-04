@@ -704,28 +704,31 @@ public class myvisitor extends HplsqlBaseVisitor<Object> {
                 if(ctx.ifex(i).L_INT()!=null){
                     exp2 = ctx.ifex(i).L_INT().getText();
                 }else if(ctx.ifex(i).ident(1)!=null){
+
                     exp2 = ctx.ifex(i).ident(1).getText();
                     isExp = true;
                 }
                 if(!isExp &&( (exp1.startsWith("\"") && exp1.endsWith("\"")) || (exp1.startsWith("'") && exp1.endsWith("'")) )){
                     ErrorPrinter.printFullError(myparser, ctx.start,
-                            "error: Cannot Be Applied Operation! ",
+                            "error: Operator "+op+" Cannot Be Applied To Int , String",
                             "",
                             "" + symbolTable.getCurrentScope().getParent().getScopeName()
                     );
 
                 }
                 if( ((exp1.startsWith("\"") && exp1.endsWith("\"")) || (exp1.startsWith("'") && exp1.endsWith("'")))
-                        && (op.equals("<") || op.equals(">"))) {
+                        && (!op.equals("=="))) {
 
                     ErrorPrinter.printFullError(myparser, ctx.start,
-                            "error: " + exp1 + " Must Be Variable Type Of Int!",
+                            "error: Operator "+op+" Cannot Be Applied To Int , String",
                             "",
                             "" + symbolTable.getCurrentScope().getParent().getScopeName()
                     );
 
                 }
+
                 if(!((exp1.startsWith("\"") && exp1.endsWith("\"")) || (exp1.startsWith("'") && exp1.endsWith("'")))) {
+
                     if(symbolTable.lookup(exp1)==null){
                         ErrorPrinter.printFullError(myparser, ctx.start,
                                 "error: Variable :" + exp1 + " Not found! In Scope ",
@@ -735,17 +738,17 @@ public class myvisitor extends HplsqlBaseVisitor<Object> {
                     }
                 }
 
-                Record exper1 = symbolTable.lookup(exp1);
-                if(exper1.getValue()==null){
-                    System.err.println("Warring for using unassigned variable " + exper1.getId());
-                }
+            Record exper1 = symbolTable.lookup(exp1);
+            if(exper1 != null && exper1.getValue()==null){
+                System.err.println("Warring for using unassigned variable " + exper1.getId());
+            }
 
                 if(isExp){
                     if( ((exp2.startsWith("\"") && exp2.endsWith("\"")) || (exp2.startsWith("'") && exp2.endsWith("'")))
-                            && (op.equals("<") || op.equals(">"))) {
+                            && (!op.equals("=="))) {
 
                         ErrorPrinter.printFullError(myparser, ctx.start,
-                                "error: " + exp2 + " Must Be Variable Type Of Int Or Number!",
+                                "error: Operator "+op+" Cannot Be Applied To Int , String",
                                 "",
                                 "" + symbolTable.getCurrentScope().getParent().getScopeName()
                         );
@@ -762,15 +765,17 @@ public class myvisitor extends HplsqlBaseVisitor<Object> {
                     }
 
                         Record exper2 = symbolTable.lookup(exp2);
-                        if(exper2.getValue()==null){
+                        if(exper2 != null && exper2.getValue()==null){
                             System.err.println("Warring for using unassigned variable " + exper2.getId());
                         }
-                        if(!exper1.getType().equals(exper2.getType())){
-                            ErrorPrinter.printFullError(myparser, ctx.start,
-                                    "error: Variable " + exper1.getId()+  " Type must be ("+exper2.getType() + ") Not ("+ exper1.getType() + ")" ,
-                                    "" ,
-                                    "location: in Scope " + symbolTable.getCurrentScopeName()
-                            );
+                        if(exper1 != null && exper2 != null) {
+                            if (!exper1.getType().equals(exper2.getType())) {
+                                ErrorPrinter.printFullError(myparser, ctx.start,
+                                        "error: Operator " + op + " Cannot Be Applied To " + exper1.getType() + "," + exper2.getType(),
+                                        "",
+                                        "location: in Scope " + symbolTable.getCurrentScopeName()
+                                );
+                            }
                         }
 
 
@@ -780,6 +785,8 @@ public class myvisitor extends HplsqlBaseVisitor<Object> {
 
         }
 
+        visit(ctx.cpp_smt());
+
         for(int i=0;i<ctx.def_else_if().size();i++){
             visit(ctx.def_else_if(i).cpp_if_stmt());
 
@@ -787,11 +794,12 @@ public class myvisitor extends HplsqlBaseVisitor<Object> {
         if(ctx.def_else()!=null){
             visit(ctx.def_else());
         }
-        visit(ctx.cpp_smt());
-        if(ctx.return_stmt()!=null){
+       /* if(ctx.return_stmt()!=null){
             visit(ctx.return_stmt());
-        }
+        }*/
         symbolTable.exitScope();
+
+
         return null;
     }
 
@@ -799,9 +807,9 @@ public class myvisitor extends HplsqlBaseVisitor<Object> {
     public Object visitDef_else(HplsqlParser.Def_elseContext ctx) {
 
         visit(ctx.cpp_smt());
-        if(ctx.return_stmt()!=null){
+        /*if(ctx.return_stmt()!=null){
             visit(ctx.return_stmt());
-        }
+        }*/
         return null;
     }
 
@@ -914,7 +922,6 @@ public class myvisitor extends HplsqlBaseVisitor<Object> {
 
         if(ctx.dtype()==null){
             if(symbolTable.lookup(varname)==null){
-
                 ErrorPrinter.printFullError(myparser, ctx.start,
                         "error: Variable :" + varname + " Not found! In Scope ",
                         "",
@@ -933,10 +940,9 @@ public class myvisitor extends HplsqlBaseVisitor<Object> {
                         "symbol:   Type " + type,
                         "location: Function " + symbolTable.getCurrentScopeName());
             }
-            if(symbolTable.lookup(varname)!=null){
+            if(symbolTable.getCurrentScope().getParent().lookuplocaly(varname)!=null){
                 ErrorPrinter.printSymbolAlreadyDefinedError(myparser, ctx.ident(0).start, "variable", varname, ""+symbolTable.getCurrentScope().getParent().getScopeName());
             }
-
 
             symbolTable.put(varname,new Record(varname,type,"variable",null));
 
@@ -944,118 +950,183 @@ public class myvisitor extends HplsqlBaseVisitor<Object> {
         }
         Record var = symbolTable.lookup(varname);
 
-        if(symbolTable.lookup(varEqual) != null){
-            // varible
-            Record ASVar = symbolTable.lookup(varEqual);
+        if(isString && !((varEqual.startsWith("\"") && varEqual.endsWith("\""))
+                || (varEqual.startsWith("'") && varEqual.endsWith("'")))){
+//var
+            if(symbolTable.lookup(varEqual) != null){
+                // varible
+                Record ASVar = symbolTable.lookup(varEqual);
 
-            if(ASVar.getValue() != null){
-                if(ASVar.getType().equals(var.getType())){
-                    var.setValue(ASVar.getValue());
+                if(ASVar.getValue() != null){
+                    if(ASVar.getType().equals(var.getType())){
+                        var.setValue(ASVar.getValue());
+                    }else{
+                        ErrorPrinter.printFullError(myparser, ctx.start,
+                                "error: Variable " + varname+  " Type must be ("+ASVar.getType() + ") Not ("+ var.getType() + ")" ,
+                                "" ,
+                                "location: in Scope " + symbolTable.getCurrentScopeName()
+                        );
+                    }
+
+                    //           System.out.println("varrrrr " + var.getValue());
                 }else{
-                    ErrorPrinter.printFullError(myparser, ctx.start,
-                            "error: Variable " + varname+  " Type must be ("+ASVar.getType() + ") Not ("+ var.getType() + ")" ,
-                            "" ,
-                            "location: in Scope " + symbolTable.getCurrentScopeName()
-                    );
+                    System.err.println("Warring for using unassigned variable " + varEqual);
                 }
 
-                //           System.out.println("varrrrr " + var.getValue());
             }else{
-                System.err.println("Warring for using unassigned variable " + varEqual);
-            }
-
-        }else{
 
 
-            //regular for number or string
+                //regular for number or string
 
-            String varType = var.getType();
+                String varType = var.getType();
 
-            if(varType.equals("int")){
 
-                if(!isString){
-                    var.setValue(varEqual);
-                }else{
-                    // up cast
+                if(varType.equals("int")){
+
+                    if(!isString){
+                        var.setValue(varEqual);
+
+                    }else{
+                        // up cast
+                    }
+
+                }else if(varType.equals("string")){
+                    if(isString){
+                        var.setValue(varEqual);
+                    }else{
+                        // up cast
+                        //var.setValue("\"" + varEqual + "\"");
+
+                    }
+
 
                 }
 
-            }else if(varType.equals("string")){
-                if(isString){
-                    var.setValue(varEqual);
-                }else{
-                    // up cast
-                    var.setValue("\"" + varEqual + "\"");
-
-                }
-
 
             }
 
+
+        }else if(isString && ((varEqual.startsWith("\"") && varEqual.endsWith("\""))
+                || (varEqual.startsWith("'") && varEqual.endsWith("'")))){
+            if(var.getType().equals("string")){
+                var.setValue(varEqual);
+            }else {
+
+                ErrorPrinter.printFullError(myparser, ctx.start,
+                        "error: Variable " + varname+  " Type must be (String) Not ("+ var.getType() + ")" ,
+                        "" ,
+                        "location: in Scope " + symbolTable.getCurrentScopeName()
+                );
+
+            }
+        }else if(!isString){
+            // number
+            if(var.getType().equals("int")){
+                var.setValue(varEqual);
+            }else {
+
+                ErrorPrinter.printFullError(myparser, ctx.start,
+                        "error: Variable " + varname+  " Type must be (Int) Not ("+ var.getType() + ")" ,
+                        "" ,
+                        "location: in Scope " + symbolTable.getCurrentScopeName()
+                );
+
+            }
 
         }
 
-        System.out.println(varname + " = " + var.getValue());
+
+
+       System.out.println(var.getValue() + " = " + var.getValue());
         return null;
     }
 
     @Override
     public Object visitForcond(HplsqlParser.ForcondContext ctx) {
 
+        String op = ctx.op().getText();
         String exp1 = ctx.ident(0).getText();
         String exp2 = null;
         boolean isExp = false;
-        if(symbolTable.lookup(exp1)==null){
-            ErrorPrinter.printFullError(myparser, ctx.start,
-                    "error: Variable :" + exp1 + " Not found! In Scope ",
-                    "",
-                    "" + symbolTable.getCurrentScope().getParent().getScopeName()
-            );
-        }
-        Record exper1 = symbolTable.lookup(exp1);
-        if(exper1.getValue()==null){
-            System.err.println("Warring for using unassigned variable " + exper1.getId());
-        }
-        if(!exper1.getType().equals("int")){
-            ErrorPrinter.printFullError(myparser, ctx.start,
-                    "error: Variable " + exper1.getId()+  " Type must be (int) Not ("+ exper1.getType() + ")" ,
-                    "" ,
-                    "location: in Scope " + symbolTable.getCurrentScopeName()
-            );
-        }
         if(ctx.L_INT()!=null){
             exp2 = ctx.L_INT().getText();
         }else if(ctx.ident(1)!=null){
+
             exp2 = ctx.ident(1).getText();
             isExp = true;
         }
-        if(isExp){
-            if(symbolTable.lookup(exp2)==null){
+        if(!isExp &&( (exp1.startsWith("\"") && exp1.endsWith("\"")) || (exp1.startsWith("'") && exp1.endsWith("'")) )){
+            ErrorPrinter.printFullError(myparser, ctx.start,
+                    "error: Operator "+op+" Cannot Be Applied To Int , String",
+                    "",
+                    "" + symbolTable.getCurrentScope().getParent().getScopeName()
+            );
+
+        }
+        if( ((exp1.startsWith("\"") && exp1.endsWith("\"")) || (exp1.startsWith("'") && exp1.endsWith("'")))
+                && (!op.equals("=="))) {
+
+            ErrorPrinter.printFullError(myparser, ctx.start,
+                    "error: Operator "+op+" Cannot Be Applied To Int , String",
+                    "",
+                    "" + symbolTable.getCurrentScope().getParent().getScopeName()
+            );
+
+        }
+
+        if(!((exp1.startsWith("\"") && exp1.endsWith("\"")) || (exp1.startsWith("'") && exp1.endsWith("'")))) {
+
+            if(symbolTable.lookup(exp1)==null){
                 ErrorPrinter.printFullError(myparser, ctx.start,
-                        "error: Variable :" + exp2 + " Not found! In Scope ",
+                        "error: Variable :" + exp1 + " Not found! In Scope ",
                         "",
                         "" + symbolTable.getCurrentScope().getParent().getScopeName()
                 );
             }
+        }
+
+        Record exper1 = symbolTable.lookup(exp1);
+        if(exper1 != null && exper1.getValue()==null){
+            System.err.println("Warring for using unassigned variable " + exper1.getId());
+        }
+
+        if(isExp){
+            if( ((exp2.startsWith("\"") && exp2.endsWith("\"")) || (exp2.startsWith("'") && exp2.endsWith("'")))
+                    && (!op.equals("=="))) {
+
+                ErrorPrinter.printFullError(myparser, ctx.start,
+                        "error: Operator "+op+" Cannot Be Applied To Int , String",
+                        "",
+                        "" + symbolTable.getCurrentScope().getParent().getScopeName()
+                );
+
+            }
+            if(!((exp2.startsWith("\"") && exp2.endsWith("\"")) || (exp2.startsWith("'") && exp2.endsWith("'")))) {
+                if(symbolTable.lookup(exp2)==null){
+                    ErrorPrinter.printFullError(myparser, ctx.start,
+                            "error: Variable :" + exp2 + " Not found! In Scope ",
+                            "",
+                            "" + symbolTable.getCurrentScope().getParent().getScopeName()
+                    );
+                }
+            }
 
             Record exper2 = symbolTable.lookup(exp2);
-            if(exper2.getValue()==null){
+            if(exper2 != null && exper2.getValue()==null){
                 System.err.println("Warring for using unassigned variable " + exper2.getId());
             }
-            if(!exper2.getType().equals("int")){
-                ErrorPrinter.printFullError(myparser, ctx.start,
-                        "error: Variable " + exper2.getId()+  " Type must be (int) Not ("+ exper2.getType() + ")" ,
-                        "" ,
-                        "location: in Scope " + symbolTable.getCurrentScopeName()
-                );
+            if(exper1 != null && exper2 != null) {
+                if (!exper1.getType().equals(exper2.getType())) {
+                    ErrorPrinter.printFullError(myparser, ctx.start,
+                            "error: Operator " + op + " Cannot Be Applied To " + exper1.getType() + "," + exper2.getType(),
+                            "",
+                            "location: in Scope " + symbolTable.getCurrentScopeName()
+                    );
+                }
             }
-            if(!exper1.getType().equals(exper2.getType())){
-                ErrorPrinter.printFullError(myparser, ctx.start,
-                        "error: Variable " + exper1.getId()+  " Type must be ("+exper2.getType() + ") Not ("+ exper1.getType() + ")" ,
-                        "" ,
-                        "location: in Scope " + symbolTable.getCurrentScopeName()
-                );
-            }
+
+
+
         }
 
         return null;
@@ -1065,21 +1136,26 @@ public class myvisitor extends HplsqlBaseVisitor<Object> {
     public Object visitFor_inc_dec(HplsqlParser.For_inc_decContext ctx) {
 
         String exp = ctx.ident().getText();
-        if(symbolTable.lookup(exp)==null){
-            ErrorPrinter.printFullError(myparser, ctx.start,
-                    "error: Variable :" + exp + " Not found! In Scope ",
-                    "",
-                    "" + symbolTable.getCurrentScope().getParent().getScopeName()
-            );
+        if(!((exp.startsWith("\"") && exp.endsWith("\"")) || (exp.startsWith("'") && exp.endsWith("'")))){
+
+            if(symbolTable.lookup(exp)==null){
+                ErrorPrinter.printFullError(myparser, ctx.start,
+                        "error: Variable :" + exp + " Not found! In Scope ",
+                        "",
+                        "" + symbolTable.getCurrentScope().getParent().getScopeName()
+                );
+            }
+            Record exper = symbolTable.lookup(exp);
+            if(!exper.getType().equals("int")){
+                ErrorPrinter.printFullError(myparser, ctx.start,
+                        "error: Variable " + exper.getId()+  " Type must be (int) Not ("+ exper.getType() + ")" ,
+                        "" ,
+                        "location: in Scope " + symbolTable.getCurrentScopeName()
+                );
+            }
+
         }
-       Record exper = symbolTable.lookup(exp);
-        if(!exper.getType().equals("int")){
-            ErrorPrinter.printFullError(myparser, ctx.start,
-                    "error: Variable " + exper.getId()+  " Type must be (int) Not ("+ exper.getType() + ")" ,
-                    "" ,
-                    "location: in Scope " + symbolTable.getCurrentScopeName()
-            );
-        }
+
         return null;
     }
 

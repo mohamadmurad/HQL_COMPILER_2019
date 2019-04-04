@@ -384,12 +384,11 @@ error_create_database_stmt: T_CREATE (T_IF T_NOT T_EXISTS)? expr create_database
                             |   (T_DATABASE | T_SCHEMA) T_CREATE (T_IF T_NOT T_EXISTS)? expr create_database_option*;
 /* new cpp */
 function_stmt returns [FunctionNode astNode]: {FunChild = new ArrayList<>();}
-            dtype ident T_OPEN_P return_param? T_CLOSE_P  T_OPEN_B cpp_smt? def_return? T_CLOSE_B
+            dtype ident T_OPEN_P return_param? T_CLOSE_P  T_OPEN_B cpp_smt T_CLOSE_B
 
 
            ;
 
-def_return :T_RETURN ident;
 
 return_param returns [ArrayList<VarDecleration> varNode]:
 
@@ -408,25 +407,21 @@ cpp_smt  :
            |cpp_smt cpp_var_decleration
            |cpp_smt new_select_stmt
            |cpp_smt create_table_stmt {FunChild.add($create_table_stmt.tableNode);}
+           |cpp_smt return_stmt
            ;
 
 
 
-cpp_if_stmt: T_IF T_OPEN_P (ifex ( (T_AND_AND | T_PIPE) ifex)* ) T_CLOSE_P  T_OPEN_B  cpp_smt return_stmt? T_CLOSE_B  def_else_if* def_else?
+cpp_if_stmt: T_IF T_OPEN_P (ifex ( (T_AND_AND | T_PIPE) ifex)* ) T_CLOSE_P  T_OPEN_B  cpp_smt T_CLOSE_B  def_else_if* def_else?
             ;
 
 def_else_if :T_ELSE cpp_if_stmt;
-def_else :T_ELSE T_OPEN_B cpp_smt return_stmt? T_CLOSE_B;
+def_else :T_ELSE T_OPEN_B cpp_smt T_CLOSE_B;
 return_stmt : T_RETURN (ident | L_INT) T_SEMICOLON;
-ifex: ident op (ident | L_INT);
+ifex: ident op (ident (T_DOT ident)? | L_INT);
 
 op :
     |T_EQUAL2
-    |T_AND_AND
-    |T_PIPE
-    |T_EQUAL
-     |T_ADD
-    |T_SUB
     |T_NOTEQUAL2
     |T_GREATER
     |T_GREATEREQUAL
@@ -461,7 +456,7 @@ cpp_for_stmt :
 
 for_inc_dec: ident (T_ADD T_ADD |  T_SUB T_SUB);
 forhead1:(dtype? ident ) T_EQUAL (L_INT | ident);
-forcond : ident op (L_INT | ident (T_DOT ident)?);
+forcond : ident op (ident (T_DOT ident)? | L_INT);
 create_function_stmt :
       (T_ALTER | T_CREATE (T_OR T_REPLACE)? | T_REPLACE)? T_FUNCTION ident create_routine_params? create_function_return (T_AS | T_IS)? declare_block_inplace? single_block_stmt
     ;
@@ -1045,7 +1040,7 @@ timestamp_literal :                       // TIMESTAMP 'YYYY-MM-DD HH:MI:SS.FFF'
      ;
 
 ident :
-       (L_ID) ('.' (L_ID))*
+       (L_ID)
      ;
 
 string :                                   // String literal (single or double quoted)

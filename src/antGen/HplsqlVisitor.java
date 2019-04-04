@@ -352,12 +352,6 @@ public interface HplsqlVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitFunction_stmt(HplsqlParser.Function_stmtContext ctx);
 	/**
-	 * Visit a parse tree produced by {@link HplsqlParser#def_return}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitDef_return(HplsqlParser.Def_returnContext ctx);
-	/**
 	 * Visit a parse tree produced by {@link HplsqlParser#return_param}.
 	 * @param ctx the parse tree
 	 * @return the visitor result

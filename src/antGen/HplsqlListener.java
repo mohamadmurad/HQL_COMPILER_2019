@@ -573,16 +573,6 @@ public interface HplsqlListener extends ParseTreeListener {
 	 */
 	void exitFunction_stmt(HplsqlParser.Function_stmtContext ctx);
 	/**
-	 * Enter a parse tree produced by {@link HplsqlParser#def_return}.
-	 * @param ctx the parse tree
-	 */
-	void enterDef_return(HplsqlParser.Def_returnContext ctx);
-	/**
-	 * Exit a parse tree produced by {@link HplsqlParser#def_return}.
-	 * @param ctx the parse tree
-	 */
-	void exitDef_return(HplsqlParser.Def_returnContext ctx);
-	/**
 	 * Enter a parse tree produced by {@link HplsqlParser#return_param}.
 	 * @param ctx the parse tree
 	 */
