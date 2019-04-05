@@ -189,7 +189,7 @@ public class myvisitor extends HplsqlBaseVisitor<Object> {
     @Override
     public Object visitNew_select_stmt(HplsqlParser.New_select_stmtContext ctx) {
         String table_name = ctx.new_from_table().from_table_name_clause().table_name().ident().getText();
-
+        Select currentSelect = null;
 
         if(types.find_typ(table_name)){
 
@@ -198,10 +198,10 @@ public class myvisitor extends HplsqlBaseVisitor<Object> {
 
 
                 SelectCol coloms = (SelectCol)visit(ctx.new_select_col(i));
-                //System.out.println("gggggggggggggggg");
+
                 if(!coloms.colname.equals("*")){
                     if(types.find_col_in_table(coloms.colname,table_name)){
-                        //System.out.println(coloms.colname);
+
                         sel_col.add(coloms);
                     }else {
                         ErrorPrinter.printFullError(myparser, ctx.start,
@@ -209,19 +209,19 @@ public class myvisitor extends HplsqlBaseVisitor<Object> {
                                 "symbol:   Type " + table_name,
                                 "location: Function " + symbolTable.getCurrentScopeName()
                         );
-                        //System.out.println("Error Column :" + coloms.colname + " Not found! In Table " + table_name);
+
 
                     }
                 }else{
                     sel_col.add(coloms);
                 }
 
-               // System.out.println(coloms.func_name);
+
             }
 
 
 
-                Select currentSelect = new Select("SELECT","SELECT STATMENT",table_name);
+                currentSelect = new Select("SELECT","SELECT STATMENT",table_name);
                 currentSelect.setColumn(sel_col);
                 symbolTable.put("SELECT", currentSelect);
 
@@ -266,7 +266,25 @@ public class myvisitor extends HplsqlBaseVisitor<Object> {
                     "location: Function " + symbolTable.getCurrentScopeName()
             );
         }
+        if(ctx.group_by_clause()!=null){
+            int count =0;
+            ArrayList<String> colom = (ArrayList<String>) visit(ctx.group_by_clause());
+            for(int i=0;i<colom.size();i++){
+                for(int j=0;j<currentSelect.columns.size();j++){
+                    if(colom.get(i).equals(currentSelect.columns.get(j).colname)){
+                        count++;
+                    }
+                }
+            }
+            if(count!=colom.size()){
 
+                ErrorPrinter.printFullError(myparser, ctx.start,
+                        "error: In Group By Statment ",
+                        "symbol:   Type Table",
+                        "location: Function " + symbolTable.getCurrentScopeName()
+                );
+            }
+        }
         return ctx;
     }
 
@@ -356,6 +374,18 @@ public class myvisitor extends HplsqlBaseVisitor<Object> {
         //return super.visitExpr_agg_window_func(ctx);
     }
 
+    @Override
+    public Object visitGroup_by_clause(HplsqlParser.Group_by_clauseContext ctx) {
+
+        ArrayList<Object> colom = new ArrayList<>();
+        for(int i=0;i<ctx.ident().size();i++){
+            String col = ctx.ident(i).getText();
+            colom.add(col);
+
+        }
+        return colom;
+
+    }
 
     /* end select */
 
@@ -386,8 +416,7 @@ public class myvisitor extends HplsqlBaseVisitor<Object> {
         symbolTable.setCurrentScopeNameAndType(funcName, myvisitor.ScopeTypes.METHOD.toString());
 
         // get paramiters
-       // System.out.println(ctx.return_param().return_param_item().size());
-       // visit(ctx.return_param());
+
        if(ctx.return_param() != null){
 
             ArrayList<Record>  paramiters = (ArrayList<Record>) visit(ctx.return_param());
@@ -402,6 +431,31 @@ public class myvisitor extends HplsqlBaseVisitor<Object> {
 
 
         visit(ctx.cpp_smt());
+
+        if (type.equals("void")) {
+            if (ctx.cpp_smt().return_stmt() != null) {
+
+                ErrorPrinter.printFullError(myparser, ctx.start,
+                        "error: Cannot return a value from a method with void result type",
+                        "symbol:   Type " + type,
+                        "location: Function " + symbolTable.getCurrentScopeName());
+            }
+        }else if(type.equals("int")){
+
+        }else if(type.equals("string")){
+
+        }else if(type.equals("float")){
+
+        }
+        if(type.equals("int") || type.equals("string") || type.equals("float")){
+            if (ctx.cpp_smt().return_stmt() == null){
+                ErrorPrinter.printFullError(myparser, ctx.start,
+                        "error: Missing return statement",
+                        "symbol:   Type " + type,
+                        "location: Function " + symbolTable.getCurrentScopeName());
+            }
+
+        }
 
 
 

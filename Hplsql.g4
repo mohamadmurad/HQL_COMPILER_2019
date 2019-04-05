@@ -384,7 +384,7 @@ error_create_database_stmt: T_CREATE (T_IF T_NOT T_EXISTS)? expr create_database
                             |   (T_DATABASE | T_SCHEMA) T_CREATE (T_IF T_NOT T_EXISTS)? expr create_database_option*;
 /* new cpp */
 function_stmt returns [FunctionNode astNode]: {FunChild = new ArrayList<>();}
-            dtype ident T_OPEN_P return_param? T_CLOSE_P  T_OPEN_B cpp_smt T_CLOSE_B
+            dtype ident T_OPEN_P return_param? T_CLOSE_P  T_OPEN_B cpp_smt return_stmt? T_CLOSE_B
 
 
            ;
@@ -799,7 +799,7 @@ error_where_clause:
         T_WHERE ident
             ;
 group_by_clause :
-       T_GROUP T_BY expr (T_COMMA expr)*
+       T_GROUP T_BY ident (T_COMMA ident)*
      ;
 
 having_clause :

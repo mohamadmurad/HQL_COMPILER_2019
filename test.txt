@@ -1,6 +1,1 @@
-
-int t;
-for(string i=5; i<0;t++){
-if("s" == "s".size){select id from c;}
-}
-int x;
+string x(int y){return h;}
