@@ -1,4 +1,4 @@
-// Generated from C:/Users/MouAz He/IdeaProjects/HQL_COMPILER_2019\Hplsql.g4 by ANTLR 4.7.2
+// Generated from C:/Users/Husam/Desktop/projects/HQL_COMPILER_2019\Hplsql.g4 by ANTLR 4.7.2
 package antGen;
 
     import AST.*;
@@ -855,6 +855,12 @@ public interface HplsqlVisitor<T> extends ParseTreeVisitor<T> {
 	 * @return the visitor result
 	 */
 	T visitHaving_clause(HplsqlParser.Having_clauseContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link HplsqlParser#having_conditions}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitHaving_conditions(HplsqlParser.Having_conditionsContext ctx);
 	/**
 	 * Visit a parse tree produced by {@link HplsqlParser#qualify_clause}.
 	 * @param ctx the parse tree

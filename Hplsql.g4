@@ -407,17 +407,17 @@ cpp_smt  :
            |cpp_smt cpp_var_decleration
            |cpp_smt new_select_stmt
            |cpp_smt create_table_stmt {FunChild.add($create_table_stmt.tableNode);}
-           |cpp_smt return_stmt
+
            ;
 
 
 
-cpp_if_stmt: T_IF T_OPEN_P (ifex ( (T_AND_AND | T_PIPE) ifex)* ) T_CLOSE_P  T_OPEN_B  cpp_smt T_CLOSE_B  def_else_if* def_else?
+cpp_if_stmt: T_IF T_OPEN_P (ifex ( (T_AND_AND | T_PIPE) ifex)* ) T_CLOSE_P  T_OPEN_B  cpp_smt return_stmt? T_CLOSE_B  def_else_if* def_else?
             ;
 
 def_else_if :T_ELSE cpp_if_stmt;
-def_else :T_ELSE T_OPEN_B cpp_smt T_CLOSE_B;
-return_stmt : T_RETURN (ident | L_INT) T_SEMICOLON;
+def_else :T_ELSE T_OPEN_B cpp_smt return_stmt? T_CLOSE_B;
+return_stmt : T_RETURN (ident | L_INT | L_DEC) T_SEMICOLON;
 ifex: ident op (ident (T_DOT ident)? | L_INT);
 
 op :
@@ -449,7 +449,7 @@ cpp_var_decleration returns[VarDecleration VarDecNode]: dtype ident T_SEMICOLON
                                     };
 
 cpp_for_stmt :
-            T_FOR T_OPEN_P  forhead1 T_SEMICOLON forcond T_SEMICOLON for_inc_dec  T_CLOSE_P T_OPEN_B cpp_smt T_CLOSE_B return_stmt?
+            T_FOR T_OPEN_P  forhead1 T_SEMICOLON forcond T_SEMICOLON for_inc_dec  T_CLOSE_P T_OPEN_B cpp_smt return_stmt? T_CLOSE_B
 
             |  T_FOR T_OPEN_P    T_SEMICOLON   T_SEMICOLON   T_CLOSE_P cpp_smt return_stmt?
             ;
@@ -799,12 +799,15 @@ error_where_clause:
         T_WHERE ident
             ;
 group_by_clause :
-       T_GROUP T_BY ident (T_COMMA ident)*
+       T_GROUP T_BY ( expr_agg_window_func |ident)(T_COMMA (ident | expr_agg_window_func))*
      ;
 
+
 having_clause :
-       T_HAVING bool_expr
+       T_HAVING having_conditions (T_COMMA having_conditions)*
      ;
+
+having_conditions:(expr_agg_window_func |ident) op number;
 
 qualify_clause :
        T_QUALIFY bool_expr

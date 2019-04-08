@@ -70,13 +70,8 @@ public class Main {
             ErrorPrinter.exitOnErrors();
 
 
-
-            if(symbol.getRoot().getChildren().size() > 0  ){
-                System.out.println("\n\n<<< Symbol Table >>>\n\n");
-                symbol.printTable();
-            }else{
-                System.out.print("No Symbol Table An Error!");
-            }
+            System.out.println("\n\n<<< Symbol Table >>>\n\n");
+            symbol.printTable();
 
             //System.out.println("\n\n<<< AST TREE >>>");
            // Node global = new Node();

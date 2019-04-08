@@ -1,4 +1,4 @@
-// Generated from C:/Users/MouAz He/IdeaProjects/HQL_COMPILER_2019\Hplsql.g4 by ANTLR 4.7.2
+// Generated from C:/Users/Husam/Desktop/projects/HQL_COMPILER_2019\Hplsql.g4 by ANTLR 4.7.2
 package antGen;
 
     import AST.*;
@@ -1696,6 +1696,18 @@ public class HplsqlBaseListener implements HplsqlListener {
 	 * <p>The default implementation does nothing.</p>
 	 */
 	@Override public void exitHaving_clause(HplsqlParser.Having_clauseContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void enterHaving_conditions(HplsqlParser.Having_conditionsContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void exitHaving_conditions(HplsqlParser.Having_conditionsContext ctx) { }
 	/**
 	 * {@inheritDoc}
 	 *
