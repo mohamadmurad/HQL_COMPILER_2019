@@ -9,8 +9,8 @@ public class SelectCol extends Record{
     public String func_name = "";
 
 
-    public boolean is_colom;
-    public boolean is_func;
+    public boolean is_colom = false;
+    public boolean is_func = false;
 
 
     public SelectCol(String colname, String tablename, String aslis) {

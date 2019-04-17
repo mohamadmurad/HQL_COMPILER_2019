@@ -256,17 +256,72 @@ public class myvisitor extends HplsqlBaseVisitor<Object> {
 
                 }
 
-                if(ctx.group_by_clause()!=null){
-                    int count =0;
-                    ArrayList<String> colom = (ArrayList<String>) visit(ctx.group_by_clause());
-                    for(int i=0;i<colom.size();i++){
-                        for(int j=0;j<currentSelect.columns.size();j++){
-                            if(colom.get(i).equals(currentSelect.columns.get(j).colname)){
-                                count++;
-                            }
+                if(ctx.new_where_condition()!=null){
+                    if(ctx.new_where_condition().bool_expr().bool_expr_atom()
+                            .bool_expr_binary().expr(0).expr_agg_window_func()!=null){
+                        ErrorPrinter.printFullError(myparser, ctx.start,
+                                "error: function :" + ctx.new_where_condition().bool_expr().bool_expr_atom()
+                                        .bool_expr_binary().expr(0).expr_agg_window_func().getText() + " should not contian in Where ",
+                                "",
+                                "location: select"
+                        );
+                    }
+                    if(ctx.new_where_condition().bool_expr().bool_expr_atom()
+                            .bool_expr_binary().expr(0).expr_atom().ident().getText()!=null)
+                    {
+                        String col_where = ctx.new_where_condition().bool_expr().bool_expr_atom()
+                                .bool_expr_binary().expr(0).expr_atom().ident().getText();
+                        if(types.find_col_in_table(col_where,table_name)){
+
+
+                        }else{
+                            ErrorPrinter.printFullError(myparser, ctx.start,
+                                    "error: Column :" +col_where + " Not found! In Table " + table_name,
+                                    "symbol:   Type " + table_name,
+                                    "location: Function " + symbolTable.getCurrentScopeName()
+                            );
                         }
                     }
-                    if(count!=colom.size()){
+
+
+                }
+
+                boolean iscol = false;
+                boolean isfun = false;
+                for(int j=0;j<currentSelect.columns.size();j++){
+                    if(currentSelect.columns.get(j).is_func){
+                        isfun = true;
+                    }else if(currentSelect.columns.get(j).is_colom){
+                        iscol = true;
+                    }
+                }
+
+                if(ctx.group_by_clause()!=null){
+                    ArrayList<String> colom_groupby = new ArrayList<>();
+                    int count_groupby =0;
+                    int count_select =0;
+                    ArrayList<String> colom = (ArrayList<String>) visit(ctx.group_by_clause());
+                    for(int i=0;i<colom.size();i++){
+                        if(!colom_groupby.contains(colom.get(i))){
+                            for(int j=0;j<currentSelect.columns.size();j++){
+                                if(!currentSelect.columns.get(j).is_func){
+                                    if(colom.get(i).equals(currentSelect.columns.get(j).colname)){
+                                        colom_groupby.add(colom.get(i));
+                                        count_groupby++;
+                                    }
+                                }
+
+                            }
+                        }
+
+                    }
+                    for(int j=0;j<currentSelect.columns.size();j++){
+                        if(!currentSelect.columns.get(j).is_func){
+                            count_select++;
+                        }
+
+                    }
+                    if(count_groupby!=colom.size() || count_groupby!=count_select){
 
                         ErrorPrinter.printFullError(myparser, ctx.start,
                                 "error: In Group By Statment ",
@@ -274,6 +329,13 @@ public class myvisitor extends HplsqlBaseVisitor<Object> {
                                 "location: Function " + symbolTable.getCurrentScopeName()
                         );
                     }
+                }else if(ctx.group_by_clause()==null && iscol && isfun){
+
+                    ErrorPrinter.printFullError(myparser, ctx.start,
+                            "error: In Group By Statment ",
+                            "symbol:   Type Table",
+                            "location: Function " + symbolTable.getCurrentScopeName()
+                    );
                 }
 
                 if(ctx.group_by_clause()!=null && ctx.having_clause() != null ){
@@ -449,6 +511,12 @@ public class myvisitor extends HplsqlBaseVisitor<Object> {
         return c;
     }
 
+    @Override
+    public Object visitNew_where_condition(HplsqlParser.New_where_conditionContext ctx) {
+
+
+        return null;
+    }
 
     /* end select */
 
@@ -1059,6 +1127,7 @@ public class myvisitor extends HplsqlBaseVisitor<Object> {
 
     /* Start If */
 
+
     @Override
     public Object visitCpp_if_stmt(HplsqlParser.Cpp_if_stmtContext ctx) {
         numbOfIfElseFor++ ;
@@ -1068,6 +1137,13 @@ public class myvisitor extends HplsqlBaseVisitor<Object> {
         for(int i=0;i<ctx.ifex().size();i++){
 
                 String op = ctx.ifex(i).op().getText();
+                if(op.equals("+") || op.equals("-")|| op.equals("*") ||op.equals("/")){
+                    ErrorPrinter.printFullError(myparser, ctx.start,
+                            "error: Result Condition Must Be Boolean",
+                            "",
+                            "location: in Scope " + symbolTable.getCurrentScopeName()
+                    );
+                }
                 String exp1 = ctx.ifex(i).ident(0).getText();
                 String exp2 = null;
                 boolean isExp = false;

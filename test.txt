@@ -1,9 +1,5 @@
-int x(string s){
+int x(){
 int y;
-if(y>5){
-return 5;
-}else{
+if(y==4){
 
-}
-
-}
+}}

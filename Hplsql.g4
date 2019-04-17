@@ -426,7 +426,9 @@ op :
     |T_GREATER
     |T_GREATEREQUAL
     |T_LESS
-    |T_LESSEQUAL;
+    |T_LESSEQUAL
+    | T_ADD
+    |T_SUB;
 
 
 
@@ -612,7 +614,7 @@ using_clause :          // USING var,... clause
      ;
 ///////////////////////////////
 new_select_stmt :
-   T_SELECT new_select_col (T_COMMA new_select_col)*  T_FROM new_from_table new_from_join_clause* (T_WHERE new_where_condition)? group_by_clause? having_clause? order_by_clause? select_options? T_SEMICOLON
+   T_SELECT new_select_col (T_COMMA new_select_col)*  T_FROM new_from_table new_from_join_clause* ( new_where_condition)? group_by_clause? having_clause? order_by_clause? select_options? T_SEMICOLON
 ;
 
 new_select_col:select_list_asterisk
@@ -638,7 +640,7 @@ new_from_join_clause :
 
 new_join_condition: table_name T_DOT ident op table_name T_DOT ident;
 
-new_where_condition:bool_expr
+new_where_condition:T_WHERE bool_expr
                    ;
 
 //////////////////////////////
@@ -807,7 +809,7 @@ having_clause :
        T_HAVING having_conditions (T_COMMA having_conditions)*
      ;
 
-having_conditions:(expr_agg_window_func |ident) op number;
+having_conditions:(expr_agg_window_func |ident) bool_expr number;
 
 qualify_clause :
        T_QUALIFY bool_expr
@@ -873,6 +875,7 @@ bool_expr_binary_operator :
      | T_GREATER
      | T_GREATEREQUAL
      | T_NOT? (T_LIKE | T_RLIKE | T_REGEXP)
+     | T_IS
      ;
 
 expr :
