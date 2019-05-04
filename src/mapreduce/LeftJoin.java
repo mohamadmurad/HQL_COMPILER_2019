@@ -6,15 +6,14 @@ import java.util.HashMap;
 import java.util.Map;
 
 
-public class innerJoin {
+public class LeftJoin {
 
-    String sql = "SELECT dep.dep_id , SUM(emp.salary) FROM emp INNER JOIN dep ON dep.dep_id = emp.dep_id GROUP by dep.dep_id";
+    String sql = "SELECT dep.dep_id , SUM(emp.salary) FROM emp LEFT JOIN dep ON dep.dep_id = emp.dep_id GROUP by dep.dep_id";
     static String directory = "temp";
     static String empdirectory = "emp";
     static String depdirectory = "dep";
     static String lineSeparator = System.getProperty("line.separator");
 
-    //static ArrayList<mymap> ss = new ArrayList<>();
 
     public static void main(String[] args) {
         boolean dirFlag = false;
@@ -49,16 +48,16 @@ public class innerJoin {
 
 
 
-       // System.out.println("Hello World!");
+        // System.out.println("Hello World!");
 
         ArrayList<String> empFileName = new ArrayList<>();
         empFileName.add("emp.csv");
-        empFileName.add("emp2.csv");
+         empFileName.add("emp2.csv");
 
         ArrayList<String> depFileName = new ArrayList<>();
         depFileName.add("dep.csv");
         depFileName.add("dep2.csv");
-       // FilesName.add("temperature2.csv");
+        // FilesName.add("temperature2.csv");
 
 
         try {
@@ -98,6 +97,7 @@ public class innerJoin {
             }
         });
 
+        System.out.println("\n\n------------outPut-------------\n");
         String absolutePath = directory + File.separator + "redu.txt";
         try(BufferedReader br = new BufferedReader(new FileReader(absolutePath))) {
 
@@ -278,6 +278,14 @@ public class innerJoin {
 
                             }
                         }
+                    }else{
+                        String output = "NULL"  + "/" + KeyAndVal[1]+System.lineSeparator();
+                        String shuflevel1 = directory + File.separator + "shuffllevel1Result.txt";
+
+                        try (BufferedWriter fileOutputStream = new BufferedWriter(new FileWriter(shuflevel1, true))) {
+                            fileOutputStream.write(output);
+                        }
+
                     }
 
                 }
@@ -288,7 +296,7 @@ public class innerJoin {
 
     public static  void shuffle2() throws IOException {
 
-        Map<ArrayList<Integer>,ArrayList<Integer>> mmm = new HashMap<>();
+        Map<ArrayList<Object>,ArrayList<Integer>> mmm = new HashMap<>();
 
         File stockDir = new File(directory);
         String[] list = stockDir.list();
@@ -302,9 +310,14 @@ public class innerJoin {
                     String[] KeyAndVal = line.split("/");
                     String[] Keys = KeyAndVal[0].split(",");
 
-                    ArrayList<Integer> ALKeys = new ArrayList<>();
+                    ArrayList<Object> ALKeys = new ArrayList<>();
                     for(String k :Keys){
-                        ALKeys.add(Integer.parseInt(k));
+                        if(k.matches("NULL") || k.matches("null")){
+                            ALKeys.add(k);
+                        }else{
+                            ALKeys.add(Integer.parseInt(k));
+                        }
+
                     }
 
 
@@ -344,11 +357,11 @@ public class innerJoin {
         try(BufferedWriter fileOutputStream = new BufferedWriter(new FileWriter(shuffl,true))) {
 
 
-            for (Map.Entry<ArrayList<Integer>, ArrayList<Integer>> entry : mmm.entrySet()) {
+            for (Map.Entry<ArrayList<Object>, ArrayList<Integer>> entry : mmm.entrySet()) {
                 System.out.println(entry.getKey()+" : "+entry.getValue());
                 String output = "";
 
-                for(int key : entry.getKey()){
+                for(Object key : entry.getKey()){
                     output += key + ",";
                 }
                 output +="/";
@@ -377,7 +390,6 @@ public class innerJoin {
     public static void reducer(MyFunction obj){
 
 
-        ArrayList<mymap> result = new ArrayList<>();
         String shuffl = directory + File.separator +"shufflResult.txt";
         try (BufferedReader br = new BufferedReader(new FileReader(shuffl))) {
 

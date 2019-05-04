@@ -6,15 +6,15 @@ import java.util.HashMap;
 import java.util.Map;
 
 
-public class innerJoin {
+public class RightJoin {
 
-    String sql = "SELECT dep.dep_id , SUM(emp.salary) FROM emp INNER JOIN dep ON dep.dep_id = emp.dep_id GROUP by dep.dep_id";
+    String sql = "SELECT dep.dep_id , SUM(emp.salary) FROM emp RIGHT JOIN dep ON dep.dep_id = emp.dep_id GROUP by dep.dep_id";
     static String directory = "temp";
     static String empdirectory = "emp";
     static String depdirectory = "dep";
+    static String numberREG = "^[-+]?\\d+(\\.\\d+)?$";
     static String lineSeparator = System.getProperty("line.separator");
 
-    //static ArrayList<mymap> ss = new ArrayList<>();
 
     public static void main(String[] args) {
         boolean dirFlag = false;
@@ -49,7 +49,7 @@ public class innerJoin {
 
 
 
-       // System.out.println("Hello World!");
+        // System.out.println("Hello World!");
 
         ArrayList<String> empFileName = new ArrayList<>();
         empFileName.add("emp.csv");
@@ -58,7 +58,7 @@ public class innerJoin {
         ArrayList<String> depFileName = new ArrayList<>();
         depFileName.add("dep.csv");
         depFileName.add("dep2.csv");
-       // FilesName.add("temperature2.csv");
+        // FilesName.add("temperature2.csv");
 
 
         try {
@@ -98,6 +98,7 @@ public class innerJoin {
             }
         });
 
+        System.out.println("\n\n------------outPut-------------\n");
         String absolutePath = directory + File.separator + "redu.txt";
         try(BufferedReader br = new BufferedReader(new FileReader(absolutePath))) {
 
@@ -232,53 +233,74 @@ public class innerJoin {
         File dep = new File(directory+File.separator+depdirectory);
         String[] list = emp.list();
         String[] depList = dep.list();
-        for(String name : list) {
+        for(String name : depList) {
 
-            String absolutePath = directory + File.separator + empdirectory + File.separator + name;
+            String absolutePath = directory + File.separator + depdirectory + File.separator + name;
             try (BufferedReader br = new BufferedReader(new FileReader(absolutePath))) {
 
                 String line;
 
                 while ((line = br.readLine()) != null) {
+                    boolean flag = false;
+                    boolean isnull = false;
+                    String[] depKeyAndVal = line.split("/");
+                    String[] depKeys = depKeyAndVal[0].split(",");
 
-                    String[] KeyAndVal = line.split("/");
-                    String[] Keys = KeyAndVal[0].split(",");
 
-                    if(!(Keys[1].matches("null") || Keys[1].matches("NULL"))){
-                        int dep_id = Integer.parseInt(Keys[1]);
-                        for (String depname : depList) {
-                            String deppath = directory + File.separator + depdirectory + File.separator + depname;
+                    System.out.println(" sdsds   "+depKeys[0]);
+
+                        int dep_id = Integer.parseInt(depKeys[0]);
+                        for (String depname : list) {
+                            String deppath = directory + File.separator + empdirectory + File.separator + depname;
 
                             try (BufferedReader depbr = new BufferedReader(new FileReader(deppath))) {
                                 String dep_line;
 
                                 while ((dep_line = depbr.readLine()) != null) {
 
-                                    String[] depKeyAndVal = dep_line.split("/");
-                                    String[] depKeys = depKeyAndVal[0].split(",");
+                                    String[] empKeyAndVal = dep_line.split("/");
+                                    String[] empKeys = empKeyAndVal[0].split(",");
 
-                                    int depdep_key = Integer.parseInt(depKeys[0]);
-                                    System.out.println(depdep_key);
-                                    // on Condion
-                                    if (depdep_key == dep_id) {
 
-                                        String output = dep_id  + "/" + KeyAndVal[1]+System.lineSeparator();
-                                        String shuflevel1 = directory + File.separator + "shuffllevel1Result.txt";
+                                    if(!(empKeys[1].matches("NULL") || empKeys[1].matches("null"))){
 
-                                        try (BufferedWriter fileOutputStream = new BufferedWriter(new FileWriter(shuflevel1, true))) {
-                                            fileOutputStream.write(output);
+                                        int empdep_key = Integer.parseInt(empKeys[1]);
+
+                                        // on Condion
+                                        if (empdep_key == dep_id) {
+                                            flag = true;
+                                            String output = dep_id  + "/" + empKeyAndVal[1]+System.lineSeparator();
+                                            String shuflevel1 = directory + File.separator + "shuffllevel1Result.txt";
+
+                                            try (BufferedWriter fileOutputStream = new BufferedWriter(new FileWriter(shuflevel1, true))) {
+                                                fileOutputStream.write(output);
+                                            }
+
+
                                         }
 
+                                    }else
+                                        isnull = true;
 
+
+
+                                }
+                                if(!flag && !isnull){
+                                    // if select dep.dep_id
+                                    // else if select emp.dep_id replase dep_id to "NULL"
+                                    String output = dep_id  + "/" + "NULL" + System.lineSeparator();
+                                    String shuflevel1 = directory + File.separator + "shuffllevel1Result.txt";
+
+                                    try (BufferedWriter fileOutputStream = new BufferedWriter(new FileWriter(shuflevel1, true))) {
+                                        fileOutputStream.write(output);
                                     }
-
 
                                 }
 
 
                             }
                         }
-                    }
+
 
                 }
 
@@ -288,7 +310,7 @@ public class innerJoin {
 
     public static  void shuffle2() throws IOException {
 
-        Map<ArrayList<Integer>,ArrayList<Integer>> mmm = new HashMap<>();
+        Map<ArrayList<Object>,ArrayList<Object>> mmm = new HashMap<>();
 
         File stockDir = new File(directory);
         String[] list = stockDir.list();
@@ -302,21 +324,30 @@ public class innerJoin {
                     String[] KeyAndVal = line.split("/");
                     String[] Keys = KeyAndVal[0].split(",");
 
-                    ArrayList<Integer> ALKeys = new ArrayList<>();
+                    ArrayList<Object> ALKeys = new ArrayList<>();
                     for(String k :Keys){
-                        ALKeys.add(Integer.parseInt(k));
+                        if(k.matches("NULL") || k.matches("null")){
+                            ALKeys.add(k);
+                        }else{
+                            ALKeys.add(Integer.parseInt(k));
+                        }
+
                     }
 
 
                     if(mmm.containsKey(ALKeys)){
                         System.out.println("con");
+/*
+                        if(KeyAndVal[1].matches("null") || KeyAndVal[1].matches("NULL")){}else{
 
-                        mmm.get(ALKeys).add(Integer.parseInt(KeyAndVal[1]));
+                        }*/
+
+                        mmm.get(ALKeys).add(KeyAndVal[1]);
 
                     }else {
 
-                        ArrayList<Integer> dd = new ArrayList<>();
-                        dd.add(Integer.parseInt(KeyAndVal[1]));
+                        ArrayList<Object> dd = new ArrayList<>();
+                        dd.add(KeyAndVal[1]);
                         mmm.put(ALKeys,dd);
                     }
                 }
@@ -344,17 +375,17 @@ public class innerJoin {
         try(BufferedWriter fileOutputStream = new BufferedWriter(new FileWriter(shuffl,true))) {
 
 
-            for (Map.Entry<ArrayList<Integer>, ArrayList<Integer>> entry : mmm.entrySet()) {
+            for (Map.Entry<ArrayList<Object>, ArrayList<Object>> entry : mmm.entrySet()) {
                 System.out.println(entry.getKey()+" : "+entry.getValue());
                 String output = "";
 
-                for(int key : entry.getKey()){
+                for(Object key : entry.getKey()){
                     output += key + ",";
                 }
                 output +="/";
                 output = output.replaceFirst(",/","/");
 
-                for(int val :entry.getValue()){
+                for(Object val :entry.getValue()){
                     output+=","+val;
                 }
                 output += System.lineSeparator();
@@ -377,7 +408,6 @@ public class innerJoin {
     public static void reducer(MyFunction obj){
 
 
-        ArrayList<mymap> result = new ArrayList<>();
         String shuffl = directory + File.separator +"shufflResult.txt";
         try (BufferedReader br = new BufferedReader(new FileReader(shuffl))) {
 
@@ -389,17 +419,36 @@ public class innerJoin {
 
                 String[] vlas = KeyAndVal[1].split(",");
                 ArrayList<Integer> values = new ArrayList<>();
-
+                boolean isNum = false;
                 for(String s : vlas){
-                    values.add(Integer.parseInt(s));
+                    if(s.matches(numberREG)){
+                        isNum = true;
+                        values.add(Integer.parseInt(s));
+                    }else{
+
+                    }
+
                 }
 
-                int opResult = obj.operation(values);
-                String reduce = directory + File.separator +"redu.txt";
-                try(BufferedWriter fileOutputStream = new BufferedWriter(new FileWriter(reduce,true))) {
-                    fileOutputStream.write(KeyAndVal[0] + "/" + opResult+System.lineSeparator());
-                    fileOutputStream.close();
+                if(isNum){
+                    int opResult = obj.operation(values);
+                    String reduce = directory + File.separator +"redu.txt";
+                    try(BufferedWriter fileOutputStream = new BufferedWriter(new FileWriter(reduce,true))) {
+                        fileOutputStream.write(KeyAndVal[0] + "/" + opResult+System.lineSeparator());
+                        fileOutputStream.close();
+                    }
+                }else{
+
+                    String reduce = directory + File.separator +"redu.txt";
+                    try(BufferedWriter fileOutputStream = new BufferedWriter(new FileWriter(reduce,true))) {
+                        fileOutputStream.write(line+System.lineSeparator());
+                        fileOutputStream.close();
+                    }
+
                 }
+
+
+
 
 
 
