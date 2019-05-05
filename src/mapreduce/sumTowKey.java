@@ -8,23 +8,56 @@ import java.util.Map;
 
 public class sumTowKey {
 
+    public interface MyFunction {
+        int operation(ArrayList<Integer> c);
+    }
+
     String sql = "Select id,date , sum(temp) from temp group by id,date";
-    static String directory = "temp";
+    static String tempdirectory = "temp";
     static String lineSeparator = System.getProperty("line.separator");
+
+    static String tableLocation = "temperature";
+    static String tableSpilt  = ",";
 
     //static ArrayList<mymap> ss = new ArrayList<>();
 
     public static void main(String[] args) {
-        boolean dirFlag = false;
 
-// create File object
-        File stockDir = new File(directory);
+
+
+        initFIleDir();
+
+/*
+        ArrayList<String> FilesName = new ArrayList<>();
+        FilesName.add("temperature.csv");
+        FilesName.add("temperature2.csv");*/
+        File tableDir = new File(tableLocation);
+
+        if(tableDir.exists() && tableDir.isDirectory()){
+
+            try {
+                map_reduce(tableDir.list());
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+
+        }
+
+
+
+
+    }
+
+
+    public static void initFIleDir(){
+        File stockDir = new File(tempdirectory);
 
         try {
 
             delete(stockDir);
 
-            dirFlag = stockDir.mkdir();
+            stockDir.mkdir();
         } catch (SecurityException Se) {
 
             System.out.println("Error while creating directory in Java:" + Se);
@@ -33,32 +66,10 @@ public class sumTowKey {
             e.printStackTrace();
         }
 
-        if (dirFlag)
-            System.out.println("Directory created successfully");
-        else
-            System.out.println("Directory was not created successfully");
-
-
-
-
-        System.out.println("Hello World!");
-
-        ArrayList<String> FilesName = new ArrayList<>();
-        FilesName.add("temperature.csv");
-        FilesName.add("temperature2.csv");
-
-
-        try {
-            map_reduce(FilesName);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
-
     }
 
 
-    public static void map_reduce(ArrayList<String> FilesName) throws IOException {
+    public static void map_reduce(String[] FilesName) throws IOException {
         // sum
 
 
@@ -79,7 +90,7 @@ public class sumTowKey {
             }
         });
 
-        String absolutePath = directory + File.separator + "redu.txt";
+        String absolutePath = tempdirectory + File.separator + "redu.txt";
         try(BufferedReader br = new BufferedReader(new FileReader(absolutePath))) {
 
             String line;
@@ -100,19 +111,18 @@ public class sumTowKey {
 
     }
 
+
+
     public static void mapper(String filename){
 
-        try (BufferedReader br = new BufferedReader(new FileReader(filename))) {
+        try (BufferedReader br = new BufferedReader(new FileReader(tableLocation+File.separator+filename))) {
             String line =  br.readLine();
             while ((line ) != null) {
 
-                // use comma as separator
-                String[] country = line.split(",");
-                // ss.add(new mymap(Integer.parseInt(country[0]),Integer.parseInt(country[2])));
-                // Reopen the file but for appending:
+                String[] country = line.split(tableSpilt);
 
                 String FileName = filename + ".txt";
-                String absolutePath = directory + File.separator + FileName;
+                String absolutePath = tempdirectory + File.separator + FileName;
 
                 try(FileOutputStream fileOutputStream = new FileOutputStream(absolutePath,true)) {
 
@@ -132,14 +142,11 @@ public class sumTowKey {
                     fileOutputStream.close();
 
                 } catch (FileNotFoundException e) {
-                    // exception handling
+
                 } catch (IOException e) {
-                    // exception handling
+
                 }
 
-
-
-                //System.out.println("Country [code= " + Integer.parseInt(country[0]) + " , name=" + Integer.parseInt(country[2]) + "]");
 
             }
 
@@ -153,10 +160,10 @@ public class sumTowKey {
 
         Map<ArrayList<Integer>,ArrayList<Integer>> mmm = new HashMap<>();
 
-        File stockDir = new File(directory);
+        File stockDir = new File(tempdirectory);
         String[] list = stockDir.list();
         for(String name : list){
-            String absolutePath = directory + File.separator + name;
+            String absolutePath = tempdirectory + File.separator + name;
             try(BufferedReader br = new BufferedReader(new FileReader(absolutePath))) {
 
                 String line;
@@ -171,8 +178,6 @@ public class sumTowKey {
 
 
                     if(mmm.containsKey(ALKeys)){
-                        System.out.println("con");
-
                         mmm.get(ALKeys).add(Integer.parseInt(KeyAndVal[1]));
 
                     }else {
@@ -185,12 +190,6 @@ public class sumTowKey {
 
                 br.close();
 
-
-
-
-
-
-
             } catch (FileNotFoundException e) {
                 // exception handling
             } catch (IOException e) {
@@ -201,7 +200,7 @@ public class sumTowKey {
 
         }
 
-        String shuffl = directory + File.separator +"shufflResult.txt";
+        String shuffl = tempdirectory + File.separator +"shufflResult.txt";
 
         try(BufferedWriter fileOutputStream = new BufferedWriter(new FileWriter(shuffl,true))) {
 
@@ -241,7 +240,7 @@ public class sumTowKey {
 
 
         ArrayList<mymap> result = new ArrayList<>();
-        String shuffl = directory + File.separator +"shufflResult.txt";
+        String shuffl = tempdirectory + File.separator +"shufflResult.txt";
         try (BufferedReader br = new BufferedReader(new FileReader(shuffl))) {
 
             String line;
@@ -258,7 +257,7 @@ public class sumTowKey {
                 }
 
                 int opResult = obj.operation(values);
-                String reduce = directory + File.separator +"redu.txt";
+                String reduce = tempdirectory + File.separator +"redu.txt";
                 try(BufferedWriter fileOutputStream = new BufferedWriter(new FileWriter(reduce,true))) {
                     fileOutputStream.write(KeyAndVal[0] + "/" + opResult+System.lineSeparator());
                     fileOutputStream.close();
@@ -311,8 +310,7 @@ public class sumTowKey {
             if(file.list().length==0){
 
                 file.delete();
-                System.out.println("Directory is deleted : "
-                        + file.getAbsolutePath());
+
 
             }else{
 
@@ -330,15 +328,13 @@ public class sumTowKey {
                 //check the directory again, if empty then delete it
                 if(file.list().length==0){
                     file.delete();
-                    System.out.println("Directory is deleted : "
-                            + file.getAbsolutePath());
+
                 }
             }
 
         }else{
             //if file, then delete it
             file.delete();
-            System.out.println("File is deleted : " + file.getAbsolutePath());
         }
     }
 

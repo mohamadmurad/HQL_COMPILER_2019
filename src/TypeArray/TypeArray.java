@@ -108,7 +108,7 @@ public static void set(String name_typ , ArrayList<name_type> typ,String locatio
     
 }
 
-public static void get(String name) throws IOException, FileNotFoundException, ClassNotFoundException {
+public static data get(String name) throws IOException, FileNotFoundException, ClassNotFoundException {
     
     List<data> d = read_array();
     
@@ -116,38 +116,17 @@ public static void get(String name) throws IOException, FileNotFoundException, C
     {
         if(d.get(i).name_typ.equals(name))
         {
-            data newtype = d.get(i);
-            System.out.print(name + " : ");
-            System.out.print( "[ ");
-            
-                 for(int j=0;j<newtype.typ.size();j++)
-                 {
-                     if(j!=0) System.out.print(" , ");
-                     if(newtype.typ.get(j).type.equals("int") || newtype.typ.get(j).type.equals("real") || 
-                     newtype.typ.get(j).type.equals("bool") || newtype.typ.get(j).type.equals("string"))
-                     {
-                        System.out.print("{ " + "name : " + newtype.typ.get(j).name + " , " + " type : " + newtype.typ.get(j).type);
-                    
-                     }
-                     else
-                     {
-                        System.out.print("{ " + "name : " + newtype.typ.get(j).name + " , " + " type : " + newtype.typ.get(j).type);
-                        System.out.print(" , details : ");
-                        System.out.print("\n");
-                        get(newtype.typ.get(j).type);
-                     }
-                     System.out.print(" } ");
-                
-                 
-            }
-            
-            
-            System.out.print( "]");
-            
+
+            return d.get(i);
+
         }
     }
+
+    return null;
        
 }
+
+
 public static void flat(String name) throws IOException, FileNotFoundException, ClassNotFoundException {
     
     List<data> d = read_array();

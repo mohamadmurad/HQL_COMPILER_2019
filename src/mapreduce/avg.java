@@ -7,7 +7,10 @@ import java.util.Map;
 
 
 public class avg {
+    public interface MyFunction {
 
+        int operation(ArrayList<Integer> c);
+    }
     String sql = "Select id , avg(temp) from temporetior group by id";
     static String directory = "temp";
     static String lineSeparator = System.getProperty("line.separator");

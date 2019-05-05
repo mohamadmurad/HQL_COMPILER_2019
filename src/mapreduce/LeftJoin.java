@@ -7,7 +7,10 @@ import java.util.Map;
 
 
 public class LeftJoin {
+    public interface MyFunction {
 
+        int operation(ArrayList<Integer> c);
+    }
     String sql = "SELECT dep.dep_id , SUM(emp.salary) FROM emp LEFT JOIN dep ON dep.dep_id = emp.dep_id GROUP by dep.dep_id";
     static String directory = "temp";
     static String empdirectory = "emp";

@@ -29,6 +29,14 @@ public class data implements Serializable {
        this.typ = typ;
        this.isTable = isTable;
     }
+    public int getIndexCol(String col){
+        for(int i=0;i<typ.size();i++){
+            if(typ.get(i).name.equals(col)){
+                return i;
+            }
+        }
+        return -1;
+    }
 
 
     public void setTableLocation(String tableLocation) {

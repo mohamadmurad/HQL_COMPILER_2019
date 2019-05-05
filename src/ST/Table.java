@@ -25,4 +25,16 @@ public class Table extends Record {
             }
         }
         return false;
-    }}
+    }
+
+    public int getIndexOfCol(String col){
+
+        System.out.println(col);
+        for(int i=0;i<columns.size();i++){
+            if(columns.get(i).id.equals(col)){
+                return i;
+            }
+        }
+        return -1;
+    }
+}

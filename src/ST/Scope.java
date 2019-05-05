@@ -70,6 +70,23 @@ public class Scope {
         }
     }
 
+    public Record lookup2(String key){
+        System.out.println("Sdsds");
+        if (records.containsKey(key)) { // is the key in current scope?
+            Record rec = (Record) records.get(key);
+            System.out.println("r");
+            //if(true)System.out.println("\tST.Record found on: "+scopeName+" [ "+scopeType+" ]");
+            return rec;
+        }
+        for (Scope scopeIt : children) {
+            Record rec = scopeIt.lookup2(key);
+            if(rec != null){
+                return rec;
+            }
+        }
+        return null;
+    }
+
     public void printScopeDebug(){
         System.out.println("SCOPE: "+scopeName+" | "+scopeType+" \t");
         System.out.println(" RECORDS: ");

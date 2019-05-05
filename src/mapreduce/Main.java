@@ -8,7 +8,10 @@ import java.util.Map;
 
 public class Main {
 
+    public interface MyFunction {
 
+        int operation(ArrayList<Integer> c);
+    }
 
     /*static MyFunction myfunction = (c) -> {
         int sum = 0;

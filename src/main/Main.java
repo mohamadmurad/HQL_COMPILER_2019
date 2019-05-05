@@ -1,5 +1,6 @@
 package main;
 
+import ST.Record;
 import ST.SymbolTable;
 import org.antlr.v4.runtime.atn.PredictionMode;
 import org.antlr.v4.runtime.tree.ParseTree;
@@ -70,8 +71,16 @@ public class Main {
             ErrorPrinter.exitOnErrors();
 
 
+/*
+
             System.out.println("\n\n<<< Symbol Table >>>\n\n");
             symbol.printTable();
+*/
+
+
+
+            CodeGenerator cg = new CodeGenerator(symbol);
+            cg.visit(myTree);
 
             //System.out.println("\n\n<<< AST TREE >>>");
            // Node global = new Node();

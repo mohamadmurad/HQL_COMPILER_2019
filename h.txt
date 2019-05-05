@@ -1,6 +1,5 @@
-create external table c ( id int , usernn string)
+create external table temperature ( id int , t_date string,temp int)
 stored as textfile
 ROW FORMAT DELIMITED FIELDS TERMINATED BY ','
-LOCATION "c:\";
+LOCATION "C:\Users\MouAz He\IdeaProjects\HQL_COMPILER_2019\temperature";
 
-select o from c;

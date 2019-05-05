@@ -6,7 +6,10 @@ import java.util.HashMap;
 import java.util.Map;
 
 
-public class RightJoin {
+public class RightJoin { public interface MyFunction {
+
+    int operation(ArrayList<Integer> c);
+}
 
     String sql = "SELECT dep.dep_id , SUM(emp.salary) FROM emp RIGHT JOIN dep ON dep.dep_id = emp.dep_id GROUP by dep.dep_id";
     static String directory = "temp";

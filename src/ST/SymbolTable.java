@@ -50,6 +50,13 @@ public class SymbolTable {
     }
 
 
+    public Record lookup2(String key) {
+        //if(debug)System.out.println("\t Current SCOPE: "+current.getScopeName()+" | "+current.getScopeType());
+
+        return root.lookup2(key);
+    }
+
+
     public Record lookuplocaly(String key) {
         //if(debug)System.out.println("\t Current SCOPE: "+current.getScopeName()+" | "+current.getScopeType());
         return current.lookuplocaly(key);

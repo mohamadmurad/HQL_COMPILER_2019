@@ -1,3 +1,1 @@
-
-
-select id , sum(usernn) from c group by usernn;
+Select id,t_date , sum(temp) from temperature group by id , t_date;
