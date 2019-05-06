@@ -28,7 +28,7 @@ public class CodeGenerator extends HplsqlBaseVisitor<Object> {
 
 
     String output = "";
-    String diroutput = "src";
+    String diroutput = "src//CG";
     String fileName = "cg.java";
 
 
@@ -40,7 +40,8 @@ public class CodeGenerator extends HplsqlBaseVisitor<Object> {
         f.delete();
 
 
-        output += "import java.io.*;\n" +
+        output += "package CG;\n" +
+                "import java.io.*;\n" +
                 "import java.util.ArrayList;\n" +
                 "import java.util.HashMap;\n" +
                 "import java.util.Map;\n";
@@ -178,7 +179,7 @@ public class CodeGenerator extends HplsqlBaseVisitor<Object> {
                 output = "";
 
                 ArrayList<SelectCol> sel_col_keys = new ArrayList<>();
-                ArrayList<name_type> s = new ArrayList<>();
+
 
                 data tab = types.get(table_name);
 
@@ -186,7 +187,7 @@ public class CodeGenerator extends HplsqlBaseVisitor<Object> {
                for(int i =0 ; i<ctx.new_select_col().size();i++){
                     SelectCol coloms = (SelectCol)visit(ctx.new_select_col(i));
 
-                    if(types.find_col_in_table(coloms.colname,table_name) || coloms.tablename.equals(table_name)){
+                    if(types.find_col_in_table(coloms.colname,table_name)){
                         if(coloms.is_colom){
                             sel_col_keys.add(coloms);
 
@@ -203,8 +204,6 @@ public class CodeGenerator extends HplsqlBaseVisitor<Object> {
 
                 for(SelectCol b:sel_col_keys){
                     int i = tab.getIndexCol(b.colname);
-
-                   System.out.println(i);
 
                    output+= "country["+i+"] + \",\" +";
 
@@ -244,7 +243,7 @@ public class CodeGenerator extends HplsqlBaseVisitor<Object> {
 
 
 
-                output+="}";
+                //output+="}";
 
 
 
@@ -268,6 +267,102 @@ public class CodeGenerator extends HplsqlBaseVisitor<Object> {
         } catch (ClassNotFoundException e) {
             e.printStackTrace();
         }
+        if(ctx.group_by_clause()!=null){
+
+            output+="public static  void shuffle() throws IOException {\n" +
+                    "\n" +
+                    "        Map<ArrayList<Integer>,ArrayList<Integer>> mmm = new HashMap<>();\n" +
+                    "\n" +
+                    "        File stockDir = new File(tempdirectory);\n" +
+                    "        String[] list = stockDir.list();\n" +
+                    "        for(String name : list){\n" +
+                    "            String absolutePath = tempdirectory + File.separator + name;\n" +
+                    "            try(BufferedReader br = new BufferedReader(new FileReader(absolutePath))) {\n" +
+                    "\n" +
+                    "                String line;\n" +
+                    "\n" +
+                    "                while ((line = br.readLine()) != null){\n" +
+                    "                    String[] KeyAndVal = line.split(\"/\");\n" +
+                    "                    String[] Keys = KeyAndVal[0].split(\",\");\n" +
+                    "                    ArrayList<Integer> ALKeys = new ArrayList<>();\n" +
+                    "                    for(String k :Keys){\n" +
+                    "                        ALKeys.add(Integer.parseInt(k));\n" +
+                    "                    }\n" +
+                    "\n" +
+                    "\n" +
+                    "                    if(mmm.containsKey(ALKeys)){\n" +
+                    "                        mmm.get(ALKeys).add(Integer.parseInt(KeyAndVal[1]));\n" +
+                    "\n" +
+                    "                    }else {\n" +
+                    "\n" +
+                    "                        ArrayList<Integer> dd = new ArrayList<>();\n" +
+                    "                        dd.add(Integer.parseInt(KeyAndVal[1]));\n" +
+                    "                        mmm.put(ALKeys,dd);\n" +
+                    "                    }\n" +
+                    "                }\n" +
+                    "\n" +
+                    "                br.close();\n" +
+                    "\n" +
+                    "            } catch (FileNotFoundException e) {\n" +
+                    "                // exception handling\n" +
+                    "            } catch (IOException e) {\n" +
+                    "                // exception handling\n" +
+                    "            }\n" +
+                    "\n" +
+                    "\n" +
+                    "\n" +
+                    "        }\n" +
+                    "\n" +
+                    "        String shuffl = tempdirectory + File.separator +\"shufflResult.txt\";\n" +
+                    "\n" +
+                    "        try(BufferedWriter fileOutputStream = new BufferedWriter(new FileWriter(shuffl,true))) {\n" +
+                    "\n" +
+                    "\n" +
+                    "            for (Map.Entry<ArrayList<Integer>, ArrayList<Integer>> entry : mmm.entrySet()) {\n" +
+                    "                System.out.println(entry.getKey()+\" : \"+entry.getValue());\n" +
+                    "                String output = \"\";\n" +
+                    "\n" +
+                    "                for(int key : entry.getKey()){\n" +
+                    "                    output += key + \",\";\n" +
+                    "                }\n" +
+                    "                output +=\"/\";\n" +
+                    "                output = output.replaceFirst(\",/\",\"/\");\n" +
+                    "\n" +
+                    "                for(int val :entry.getValue()){\n" +
+                    "                    output+=\",\"+val;\n" +
+                    "                }\n" +
+                    "                output += System.lineSeparator();\n" +
+                    "                output = output.replaceFirst(\"/,\",\"/\");\n" +
+                    "                fileOutputStream.write(output);\n" +
+                    "\n" +
+                    "            }\n" +
+                    "\n" +
+                    "            fileOutputStream.close();\n" +
+                    "\n" +
+                    "        } catch (FileNotFoundException e) {\n" +
+                    "            // exception handling\n" +
+                    "        } catch (IOException e) {\n" +
+                    "            // exception handling\n" +
+                    "        }\n" +
+                    "\n" +
+                    "    }\n\n";
+            output+=" public static void main(String[] args) {System.out.println(\"hello cg\");}";
+
+            output+="}";
+
+            try(BufferedWriter fileOutputStream = new BufferedWriter(new FileWriter(diroutput+ File.separator+fileName,true))){
+
+                fileOutputStream.write(output);
+
+                fileOutputStream.close();
+
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+            output = "";
+        }
+
 
         return null;
     }

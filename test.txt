@@ -1,1 +1,1 @@
-Select id,t_date , sum(temp) from temperature group by id , t_date;
+Select tem.id,t_date , sum(temp) from temperature group by id , t_date;

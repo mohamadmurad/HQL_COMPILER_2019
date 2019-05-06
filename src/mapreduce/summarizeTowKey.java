@@ -1,18 +1,15 @@
 package mapreduce;
 
 import java.io.*;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
-
-public class sumTowKey {
+public class summarizeTowKey {
 
     public interface MyFunction {
-        int operation(ArrayList<Integer> c);
+        Object operation(ArrayList<Integer> c);
     }
 
-    String sql = "Select id,date , sum(temp) from temp group by id,date";
+    String sql = "Select id,date , SUMMARIZE(temp) from temp group by id,date";
     static String tempdirectory = "temp";
     static String lineSeparator = System.getProperty("line.separator");
 
@@ -80,33 +77,91 @@ public class sumTowKey {
         shuffle();
         reducer(new MyFunction() {
             @Override
-            public int operation(ArrayList<Integer> c) {
-                int sum = 0;
-                for(int i=0;i<c.size();i++){
-
-                    sum+=c.get(i);
+            public ArrayList<Object> operation(ArrayList<Integer> c) {
+                ArrayList<Object> summarize = new ArrayList<>();
+                //calculate count
+                summarize.add(c.size());
+                //calculate mean(avg)
+                double sum = 0.0;
+                for(double num : c){
+                    sum+=num;
                 }
-                return sum;
+                double avg = sum/c.size();
+                avg = Math.floor(avg);
+                summarize.add(avg);
+                //calculate median
+                Collections.sort(c);
+                double median;
+                if (c.size() % 2 == 0)
+                { median = (double)(c.get(c.size()/2) + c.get(c.size()/2 - 1))/2;}
+                else
+                { median = (double)c.get(c.size()/2);}
+                summarize.add(median);
+                //calculate mode
+                final List<Integer> modes = new ArrayList<Integer>();
+                final Map<Integer, Integer> countMap = new HashMap<Integer, Integer>();
+
+                int max = -1;
+
+                for (final int n : c) {
+                    int count = 0;
+
+                    if (countMap.containsKey(n)) {
+                        count = countMap.get(n) + 1;
+                    } else {
+                        count = 1;
+                    }
+
+                    countMap.put(n, count);
+
+                    if (count > max) {
+                        max = count;
+                    }
+                }
+
+                for (final Map.Entry<Integer, Integer> tuple : countMap.entrySet()) {
+                    if (tuple.getValue() == max) {
+                        modes.add(tuple.getKey());
+                    }
+                }
+                summarize.add(modes);
+                //max value
+                int maxVal = c.get(0);
+                for(int i=1;i < c.size();i++){
+                    if(c.get(i) > maxVal){
+                        maxVal = c.get(i);
+                    }
+                }
+                summarize.add(maxVal);
+                //min value
+                int minValue = c.get(0);
+                for(int i=1;i<c.size();i++){
+                    if(c.get(i) < minValue){
+                        minValue = c.get(i);
+                    }
+                }
+                summarize.add(minValue);
+                //calculate std
+                double summ = 0.0, standardDeviation = 0.0;
+                int length = c.size();
+
+                for(double num : c) {
+                    summ += num;
+                }
+
+                double mean = summ/length;
+
+                for(double num: c) {
+                    standardDeviation += Math.pow(num - mean, 2);
+                }
+                summarize.add(Math.sqrt(standardDeviation/length));
+
+
+                return summarize;
             }
         });
 
-        String absolutePath = tempdirectory + File.separator + "redu.txt";
-        try(BufferedReader br = new BufferedReader(new FileReader(absolutePath))) {
 
-            String line;
-
-            while ((line = br.readLine()) != null) {
-                String[] r = line.split("/");
-                String[] k = r[0].split(",");
-
-                for(String kk:k){
-                    System.out.print(kk + "  ");
-                }
-
-                System.out.println( r[1]);
-
-            }
-        }
 
 
     }
@@ -239,10 +294,16 @@ public class sumTowKey {
     public static void reducer(MyFunction obj){
 
 
+        ArrayList<mymap> result = new ArrayList<>();
         String shuffl = tempdirectory + File.separator +"shufflResult.txt";
         try (BufferedReader br = new BufferedReader(new FileReader(shuffl))) {
 
             String line;
+            try(BufferedWriter fileOutputStream = new BufferedWriter(new FileWriter(tempdirectory + File.separator +"redu.txt",true))){
+                fileOutputStream.write("\t\t\t\t"+"Count"+"\t\t"+"Mean"+"\t\t"+"Median"+"\t\t\t"+"Mode"+"\t\t"
+                        +"Max"+"\t\t\t"+"Min"+"\t\t\t"+"STD"+System.lineSeparator());
+
+            }
 
             while ((line = br.readLine()) != null){
 
@@ -255,23 +316,34 @@ public class sumTowKey {
                     values.add(Integer.parseInt(s));
                 }
 
-                int opResult = obj.operation(values);
+                ArrayList<Object> opResult = (ArrayList<Object>) obj.operation(values);
                 String reduce = tempdirectory + File.separator +"redu.txt";
                 try(BufferedWriter fileOutputStream = new BufferedWriter(new FileWriter(reduce,true))) {
-                    fileOutputStream.write(KeyAndVal[0] + "/" + opResult+System.lineSeparator());
+
+                    fileOutputStream.write(KeyAndVal[0] + "/" + "\t");
+
+                    for(int i=0;i<opResult.size();i++){
+                        if(opResult.get(i) instanceof ArrayList){
+                            String output_mode = "";
+                            fileOutputStream.write("\t[");
+                            for(int k=0;k<((ArrayList) opResult.get(i)).size();k++){
+                                output_mode+= ((ArrayList) opResult.get(i)).get(k) + ",";
+                            }
+                            output_mode+="]\t\t";
+                            output_mode = output_mode.replaceFirst(",]","]");
+                            fileOutputStream.write(output_mode);
+
+                        }else {
+                            fileOutputStream.write("     " + opResult.get(i) + "     ");
+                        }
+
+                    }
+                    fileOutputStream.write(System.lineSeparator());
+
                     fileOutputStream.close();
                 }
 
-
-
-
-
-
-
-
             }
-
-
 
         } catch (FileNotFoundException e) {
             e.printStackTrace();
@@ -294,8 +366,6 @@ public class sumTowKey {
 
 
         //   }
-
-
 
     }
 

@@ -7,7 +7,7 @@ import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.*;
-
+//import CG.cg;
 
 import antGen.*;
 import Error.*;
@@ -71,17 +71,18 @@ public class Main {
             ErrorPrinter.exitOnErrors();
 
 
-/*
+
 
             System.out.println("\n\n<<< Symbol Table >>>\n\n");
             symbol.printTable();
-*/
 
 
 
-            CodeGenerator cg = new CodeGenerator(symbol);
-            cg.visit(myTree);
 
+            CodeGenerator code_g = new CodeGenerator(symbol);
+            code_g.visit(myTree);
+
+            //cg.main(args);
             //System.out.println("\n\n<<< AST TREE >>>");
            // Node global = new Node();
            // global.setNodeName("Root");

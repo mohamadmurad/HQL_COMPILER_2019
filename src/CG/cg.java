@@ -1,3 +1,4 @@
+package CG;
 import java.io.*;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -110,4 +111,82 @@ fileContent = fileContent.replace(",/","/");                    fileOutputStream
         }
 
     }
-}
+public static  void shuffle() throws IOException {
+
+        Map<ArrayList<Integer>,ArrayList<Integer>> mmm = new HashMap<>();
+
+        File stockDir = new File(tempdirectory);
+        String[] list = stockDir.list();
+        for(String name : list){
+            String absolutePath = tempdirectory + File.separator + name;
+            try(BufferedReader br = new BufferedReader(new FileReader(absolutePath))) {
+
+                String line;
+
+                while ((line = br.readLine()) != null){
+                    String[] KeyAndVal = line.split("/");
+                    String[] Keys = KeyAndVal[0].split(",");
+                    ArrayList<Integer> ALKeys = new ArrayList<>();
+                    for(String k :Keys){
+                        ALKeys.add(Integer.parseInt(k));
+                    }
+
+
+                    if(mmm.containsKey(ALKeys)){
+                        mmm.get(ALKeys).add(Integer.parseInt(KeyAndVal[1]));
+
+                    }else {
+
+                        ArrayList<Integer> dd = new ArrayList<>();
+                        dd.add(Integer.parseInt(KeyAndVal[1]));
+                        mmm.put(ALKeys,dd);
+                    }
+                }
+
+                br.close();
+
+            } catch (FileNotFoundException e) {
+                // exception handling
+            } catch (IOException e) {
+                // exception handling
+            }
+
+
+
+        }
+
+        String shuffl = tempdirectory + File.separator +"shufflResult.txt";
+
+        try(BufferedWriter fileOutputStream = new BufferedWriter(new FileWriter(shuffl,true))) {
+
+
+            for (Map.Entry<ArrayList<Integer>, ArrayList<Integer>> entry : mmm.entrySet()) {
+                System.out.println(entry.getKey()+" : "+entry.getValue());
+                String output = "";
+
+                for(int key : entry.getKey()){
+                    output += key + ",";
+                }
+                output +="/";
+                output = output.replaceFirst(",/","/");
+
+                for(int val :entry.getValue()){
+                    output+=","+val;
+                }
+                output += System.lineSeparator();
+                output = output.replaceFirst("/,","/");
+                fileOutputStream.write(output);
+
+            }
+
+            fileOutputStream.close();
+
+        } catch (FileNotFoundException e) {
+            // exception handling
+        } catch (IOException e) {
+            // exception handling
+        }
+
+    }
+
+ public static void main(String[] args) {System.out.println("hello cg");}}

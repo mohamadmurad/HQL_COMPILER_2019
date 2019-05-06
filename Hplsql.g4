@@ -975,6 +975,7 @@ expr_agg_window_func :
      | T_SUM T_OPEN_P expr_func_all_distinct? expr T_CLOSE_P expr_func_over_clause?
      | T_VAR T_OPEN_P expr_func_all_distinct? expr T_CLOSE_P expr_func_over_clause?
      | T_VARIANCE T_OPEN_P expr_func_all_distinct? expr T_CLOSE_P expr_func_over_clause?
+     | T_SUMMARIZE T_OPEN_P expr_func_all_distinct? expr T_CLOSE_P
      ;
 
 expr_func_all_distinct :
@@ -1710,6 +1711,7 @@ T_XML             : X M L ;
 T_YES             : Y E S ;
 T_EXTERNAL        :E X T E R N A L;
 T_VOID            : V O I D;
+T_SUMMARIZE         : S U M M A R I Z E;
 
 // Functions with specific syntax
 T_ACTIVITY_COUNT       : A C T I V I T Y '_' C O U N T ;
