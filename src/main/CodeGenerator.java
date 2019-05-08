@@ -17,6 +17,7 @@ public class CodeGenerator extends HplsqlBaseVisitor<Object> {
     TypeArray types;
     SymbolTable symbolTable;
     int mapNum = 0;
+    boolean isReduce = false;
 
     {
         try {
@@ -30,6 +31,8 @@ public class CodeGenerator extends HplsqlBaseVisitor<Object> {
     String output = "";
     String diroutput = "src//CG";
     String fileName = "cg.java";
+
+    SelectCol val = null;
 
 
 
@@ -183,7 +186,7 @@ public class CodeGenerator extends HplsqlBaseVisitor<Object> {
 
                 data tab = types.get(table_name);
 
-                SelectCol val = null;
+
                for(int i =0 ; i<ctx.new_select_col().size();i++){
                     SelectCol coloms = (SelectCol)visit(ctx.new_select_col(i));
 
@@ -209,7 +212,13 @@ public class CodeGenerator extends HplsqlBaseVisitor<Object> {
 
 
                 }
-                output+= "\"/\" + country["+ tab.getIndexCol(val.colname) +"];\n\n";
+                if(val != null){
+                    output+= "\"/\" + country["+ tab.getIndexCol(val.colname) +"];\n\n";
+
+                }else{
+                    output+= "\"/\" + 1;\n\n";
+
+                }
 
 
                 output+="\nfileContent = fileContent.replace(\",/\",\"/\");" +
@@ -268,7 +277,7 @@ public class CodeGenerator extends HplsqlBaseVisitor<Object> {
             e.printStackTrace();
         }
         if(ctx.group_by_clause()!=null){
-
+            isReduce = true;
             output+="public static  void shuffle() throws IOException {\n" +
                     "\n" +
                     "        Map<ArrayList<Integer>,ArrayList<Integer>> mmm = new HashMap<>();\n" +
@@ -346,9 +355,47 @@ public class CodeGenerator extends HplsqlBaseVisitor<Object> {
                     "        }\n" +
                     "\n" +
                     "    }\n\n";
-            output+=" public static void main(String[] args) {System.out.println(\"hello cg\");}";
 
-            output+="}";
+
+
+
+
+            output+="   public static void reducer(MyFunction obj){\n" +
+                    "        \n" +
+                    "        String shuffl = tempdirectory + File.separator +\"shufflResult.txt\";\n" +
+                    "        try (BufferedReader br = new BufferedReader(new FileReader(shuffl))) {\n" +
+                    "\n" +
+                    "            String line;\n" +
+                    "\n" +
+                    "            while ((line = br.readLine()) != null){\n" +
+                    "\n" +
+                    "                String[] KeyAndVal = line.split(\"/\");\n" +
+                    "\n" +
+                    "                String[] vlas = KeyAndVal[1].split(\",\");\n" +
+                    "                ArrayList<Integer> values = new ArrayList<>();\n" +
+                    "\n" +
+                    "                for(String s : vlas){\n" +
+                    "                    values.add(Integer.parseInt(s));\n" +
+                    "                }\n" +
+                    "\n" +
+                    "                int opResult = obj.operation(values);\n" +
+                    "                String reduce = tempdirectory + File.separator +\"redu.txt\";\n" +
+                    "                try(BufferedWriter fileOutputStream = new BufferedWriter(new FileWriter(reduce,true))) {\n" +
+                    "                    fileOutputStream.write(KeyAndVal[0] + \"/\" + opResult+System.lineSeparator());\n" +
+                    "                    fileOutputStream.close();\n" +
+                    "                }\n" +
+                    "\n" +
+                    "            }\n" +
+                    "            \n" +
+                    "\n" +
+                    "        } catch (FileNotFoundException e) {\n" +
+                    "            e.printStackTrace();\n" +
+                    "        } catch (IOException e) {\n" +
+                    "            e.printStackTrace();\n" +
+                    "        }\n" +
+                    "        \n" +
+                    "    }\n\n";
+
 
             try(BufferedWriter fileOutputStream = new BufferedWriter(new FileWriter(diroutput+ File.separator+fileName,true))){
 
@@ -361,9 +408,124 @@ public class CodeGenerator extends HplsqlBaseVisitor<Object> {
             }
 
             output = "";
+
+
+        }
+
+        output+= "public static void map_reduce( ";
+        for(int i=1;i<=mapNum;i++){
+            output+= "String[] FilesName"+i;
+            if(i!=mapNum){output+=",";}
+
         }
 
 
+
+
+        output+= ") throws IOException {\n";
+
+        for(int i=1;i<=mapNum;i++){
+            output+= "for(String name"+i+" : FilesName"+i+"){\n" +
+                    "            mapper"+i+"(name"+i+");\n" +
+                    "        }\n\n";
+
+        }
+
+        if(isReduce){
+            output+="\n" +
+                    "        shuffle();\n" +
+                    "        reducer(new MyFunction() {\n" +
+                    "            @Override\n" +
+                    "            public int operation(ArrayList<Integer> c) {";
+            System.out.println(val.func_name);
+            switch (val.func_name){
+                case "sum":{
+                    output+="int sum = 0;\n" +
+                            "                for(int i=0;i<c.size();i++){\n" +
+                            "\n" +
+                            "                    sum+=c.get(i);\n" +
+                            "                }\n" +
+                            "                return sum;\n" +
+                            "            }\n" +
+                            "        });";
+                }break;
+                case "avg":{}break;
+            }
+
+
+            output+="        String absolutePath = tempdirectory + File.separator + \"redu.txt\";\n" +
+                    "        try(BufferedReader br = new BufferedReader(new FileReader(absolutePath))) {\n" +
+                    "\n" +
+                    "            String line;\n" +
+                    "\n" +
+                    "            while ((line = br.readLine()) != null) {\n" +
+                    "                String[] r = line.split(\"/\");\n" +
+                    "                String[] k = r[0].split(\",\");\n" +
+                    "\n" +
+                    "                for(String kk:k){\n" +
+                    "                    System.out.print(kk + \"  \");\n" +
+                    "                }\n" +
+                    "\n" +
+                    "                System.out.println( r[1]);\n" +
+                    "\n" +
+                    "            }\n" +
+                    "        }\n" +
+                    "\n" +
+                    "\n" +
+                    "    }";
+
+
+
+        }
+
+
+
+
+
+
+        try(BufferedWriter fileOutputStream = new BufferedWriter(new FileWriter(diroutput+ File.separator+fileName,true))){
+
+            fileOutputStream.write(output);
+
+            fileOutputStream.close();
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        output = "";
+
+        // main
+        output+= "    public static void main(String[] args) {\n" +
+                "        \n" +
+                "        initFIleDir();\n" +
+                "        File tableDir = new File(tableLocation);\n" +
+                "        if(tableDir.exists() && tableDir.isDirectory()){\n" +
+                "\n" +
+                "            try {\n" +
+                "                map_reduce(tableDir.list());\n" +
+                "            } catch (IOException e) {\n" +
+                "                e.printStackTrace();\n" +
+                "            }\n" +
+                "\n" +
+                "\n" +
+                "        }\n" +
+                "    }";
+
+
+        output+="}";
+
+
+
+        try(BufferedWriter fileOutputStream = new BufferedWriter(new FileWriter(diroutput+ File.separator+fileName,true))){
+
+            fileOutputStream.write(output);
+
+            fileOutputStream.close();
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
         return null;
     }
 

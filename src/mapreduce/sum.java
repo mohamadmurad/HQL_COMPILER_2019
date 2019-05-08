@@ -6,33 +6,23 @@ import java.util.HashMap;
 import java.util.Map;
 
 
-public class sumTowKey {
+public class sum {
 
     public interface MyFunction {
         int operation(ArrayList<Integer> c);
     }
 
-    String sql = "Select id,date , sum(temp) from temp group by id,date";
+    String sql = "Select id ,date, sum(temp) from temp group by id,date";
     static String tempdirectory = "temp";
     static String lineSeparator = System.getProperty("line.separator");
 
     static String tableLocation = "temperature";
     static String tableSpilt  = ",";
 
-    //static ArrayList<mymap> ss = new ArrayList<>();
-
     public static void main(String[] args) {
 
-
-
         initFIleDir();
-
-/*
-        ArrayList<String> FilesName = new ArrayList<>();
-        FilesName.add("temperature.csv");
-        FilesName.add("temperature2.csv");*/
         File tableDir = new File(tableLocation);
-
         if(tableDir.exists() && tableDir.isDirectory()){
 
             try {
@@ -43,10 +33,6 @@ public class sumTowKey {
 
 
         }
-
-
-
-
     }
 
 
@@ -70,15 +56,18 @@ public class sumTowKey {
 
 
     public static void map_reduce(String[] FilesName) throws IOException {
-        // sum
 
+
+        File stockDir1 = new File(tempdirectory+File.separator+"temperature");
+        if(!stockDir1.exists()){stockDir1.mkdir();}
 
         for(String name : FilesName){
-            mapper(name);
+            mapper1(name);
         }
 
-        shuffle();
-        reducer(new MyFunction() {
+        shuffle1();
+
+        String red1 = reducer1(new MyFunction() {
             @Override
             public int operation(ArrayList<Integer> c) {
                 int sum = 0;
@@ -90,8 +79,13 @@ public class sumTowKey {
             }
         });
 
-        String absolutePath = tempdirectory + File.separator + "redu.txt";
-        try(BufferedReader br = new BufferedReader(new FileReader(absolutePath))) {
+
+       // String re1 = concatReducer(red1,red2,tempdirectory+File.separator+"temperature"+File.separator+"red1",tempdirectory+File.separator+"temperature"+File.separator+"red2");
+
+      //  System.out.println(re1);
+
+       // String absolutePath = tempdirectory + File.separator +re1;
+       /* try(BufferedReader br = new BufferedReader(new FileReader(absolutePath))) {
 
             String line;
 
@@ -103,17 +97,21 @@ public class sumTowKey {
                     System.out.print(kk + "  ");
                 }
 
-                System.out.println( r[1]);
+                System.out.println( r[1].split(","));
 
             }
         }
 
-
+*/
     }
 
 
+    public static void mapper1(String filename){
 
-    public static void mapper(String filename){
+        String maperPath = tempdirectory+File.separator+"temperature"+File.separator+"map1";
+
+        File stockDir1 = new File(maperPath);
+        if(!stockDir1.exists()){stockDir1.mkdir();}
 
         try (BufferedReader br = new BufferedReader(new FileReader(tableLocation+File.separator+filename))) {
             String line =  br.readLine();
@@ -121,12 +119,12 @@ public class sumTowKey {
 
                 String[] country = line.split(tableSpilt);
 
-                String FileName = filename + ".txt";
-                String absolutePath = tempdirectory + File.separator + FileName;
+                String FileName = filename + "1.txt";
+                String absolutePath = maperPath + File.separator + FileName;
 
                 try(FileOutputStream fileOutputStream = new FileOutputStream(absolutePath,true)) {
 
-                    String fileContent = country[0] + ","+ country[1] + "/" + country[2];
+                    String fileContent = country[0] +","+country[1] + "/" + country[2];
 
                     fileOutputStream.write(fileContent.getBytes());
 
@@ -156,14 +154,19 @@ public class sumTowKey {
 
     }
 
-    public static  void shuffle() throws IOException {
+    public static  void shuffle1() throws IOException {
+        String maperPath = tempdirectory+File.separator+"temperature"+File.separator+"map1";
+        String shuffPath = tempdirectory+File.separator+"temperature"+File.separator+"shuff1";
+
+        File stockDir1 = new File(shuffPath);
+        if(!stockDir1.exists()){stockDir1.mkdir();}
 
         Map<ArrayList<Integer>,ArrayList<Integer>> mmm = new HashMap<>();
 
-        File stockDir = new File(tempdirectory);
+        File stockDir = new File(maperPath);
         String[] list = stockDir.list();
         for(String name : list){
-            String absolutePath = tempdirectory + File.separator + name;
+            String absolutePath = maperPath + File.separator + name;
             try(BufferedReader br = new BufferedReader(new FileReader(absolutePath))) {
 
                 String line;
@@ -200,7 +203,7 @@ public class sumTowKey {
 
         }
 
-        String shuffl = tempdirectory + File.separator +"shufflResult.txt";
+        String shuffl = shuffPath + File.separator +"shufflResult1.txt";
 
         try(BufferedWriter fileOutputStream = new BufferedWriter(new FileWriter(shuffl,true))) {
 
@@ -235,70 +238,56 @@ public class sumTowKey {
     }
 
 
+    public static String reducer1(MyFunction obj1){
+        String shuffPath = tempdirectory+File.separator+"temperature"+File.separator+"shuff1";
+        String redusPath = tempdirectory+File.separator+"temperature"+File.separator+"red1";
+        String FileName = "redu1.txt";
+        File stockDir1 = new File(redusPath);
+        if(!stockDir1.exists()){stockDir1.mkdir();}
 
-    public static void reducer(MyFunction obj){
+        File stockDir = new File(shuffPath);
+        String[] list = stockDir.list();
+        for(String name : list){
 
+            String shuffl = shuffPath + File.separator +name;
+            try (BufferedReader br = new BufferedReader(new FileReader(shuffl))) {
 
-        String shuffl = tempdirectory + File.separator +"shufflResult.txt";
-        try (BufferedReader br = new BufferedReader(new FileReader(shuffl))) {
+                String line;
 
-            String line;
+                while ((line = br.readLine()) != null){
 
-            while ((line = br.readLine()) != null){
+                    String[] KeyAndVal = line.split("/");
 
-                String[] KeyAndVal = line.split("/");
+                    String[] vlas = KeyAndVal[1].split(",");
+                    ArrayList<Integer> values = new ArrayList<>();
 
-                String[] vlas = KeyAndVal[1].split(",");
-                ArrayList<Integer> values = new ArrayList<>();
+                    for(String s : vlas){
+                        values.add(Integer.parseInt(s));
+                    }
 
-                for(String s : vlas){
-                    values.add(Integer.parseInt(s));
+                    int opResult1 = obj1.operation(values);
+
+                    String reduce = redusPath + File.separator +FileName;
+                    try(BufferedWriter fileOutputStream = new BufferedWriter(new FileWriter(reduce,true))) {
+                        fileOutputStream.write(KeyAndVal[0] + "/" + opResult1+ System.lineSeparator());
+                        fileOutputStream.close();
+                    }
+
                 }
 
-                int opResult = obj.operation(values);
-                String reduce = tempdirectory + File.separator +"redu.txt";
-                try(BufferedWriter fileOutputStream = new BufferedWriter(new FileWriter(reduce,true))) {
-                    fileOutputStream.write(KeyAndVal[0] + "/" + opResult+System.lineSeparator());
-                    fileOutputStream.close();
-                }
 
-
-
-
-
-
-
-
+            } catch (FileNotFoundException e) {
+                e.printStackTrace();
+            } catch (IOException e) {
+                e.printStackTrace();
             }
 
 
-
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
         }
-
-/*
-        for (Map.Entry<Integer, ArrayList<Integer>> entry : mmm.entrySet()) {
-            //System.out.println(entry.getKey()+" : "+entry.getValue());
-            /*int sum = 0;
-            for(int i=0;i<entry.getValue().size();i++){
-
-                sum+=entry.getValue().get(i);
-            }
-//reducer(() -> Sum());
-            */
-
-        //    result.add(new mymap(entry.getKey(),obj.operation(entry.getValue())));
-
-
-        //   }
-
+        return FileName;
 
 
     }
-
 
     public static void delete(File file)
             throws IOException{
