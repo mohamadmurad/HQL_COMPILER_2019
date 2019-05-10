@@ -42,16 +42,42 @@ public class innerJoin {
 
     }
 
+    public static void map(String[] line){
+        String maperPath = tempdirectory+File.separator+"map1";
+        File stockDir1 = new File(maperPath);
+        if(!stockDir1.exists()){stockDir1.mkdir();}
+        String FileName = "1.txt";
+        String outPath = maperPath + File.separator + FileName;
+        try(FileOutputStream fileOutputStream = new FileOutputStream(outPath,true)) {
+
+            String fileContent = line[4] +","+line[3];
+
+            fileOutputStream.write(fileContent.getBytes());
+
+
+            fileOutputStream.flush();
+
+            fileOutputStream.close();
+
+        } catch (FileNotFoundException e) {
+
+        } catch (IOException e) {
+
+        }
+
+
+    }
+
 
     public static void map_reduce(String[] FilesName1,String[] FilesName2) throws IOException {
         // sum
-        File stockDir1 = new File(tempdirectory+File.separator+"emp");
+        /*File stockDir1 = new File(tempdirectory+File.separator+"emp");
         if(!stockDir1.exists()){stockDir1.mkdir();}
 
         File stockDir2 = new File(tempdirectory+File.separator+"dep");
-        if(!stockDir2.exists()){stockDir2.mkdir();}
+        if(!stockDir2.exists()){stockDir2.mkdir();}*/
         /* start join */
-        int i=0;
+       /* int i=0;
         for(String name : FilesName1){
 
             JoinMap1(name,i++);
@@ -59,20 +85,20 @@ public class innerJoin {
         i=0;
         for(String name : FilesName2){
             JoinMap2(name,i++);
-        }
+        }*/
 
 
-        tableLocation1 = innerJoin();
+        innerJoin1();
 
 
 
 
         /* end join */
 
-        File joinDir = new File(tableLocation1);
+       /* File joinDir = new File(tableLocation1);
         for(String name : joinDir.list()){
             mapper1(name);
-        }
+        }*/
         shuffle1();
        // shuffle2();
         //shuffle();
@@ -135,13 +161,14 @@ public class innerJoin {
             while ((line ) != null) {
 
                 String[] country = line.split(tableSpilt1);
-                for(int i=0;i<country.length;i++){
-                    country[i] = country[i].replace("\"","");
-                }
+                for(int i=0;i<country.length;i++) {
+                    country[i] = country[i].replace("\"", "");
 
+                }
                 try(FileOutputStream fileOutputStream = new FileOutputStream(absolutePath,true)) {
 
                     String fileContent = country[2] +","+country[3];
+
 
 
 
@@ -238,10 +265,64 @@ public class innerJoin {
 
     }
 
+    public static void innerJoin1() {
+
+        String Table_1_path = tableLocation1;
+        String Table_2_path = tableLocation2;
+        File table1 = new File(Table_1_path);
+        File table2 = new File(Table_2_path);
+        String[] Table_1_list = table1.list();
+        String[] Table_2_list = table2.list();
+        for(String name1 : Table_1_list) {
+            String absolutePath1 = Table_1_path + File.separator + name1;
+            try (BufferedReader br = new BufferedReader(new FileReader(absolutePath1))) {
+                String line;
+
+                while ((line = br.readLine()) != null) {
+
+                    String[] country1 = line.split(tableSpilt1);
+                    if (!(country1[2].matches("null") || country1[2].matches("NULL"))) {
+                        for (String name2 : Table_2_list) {
+                            String absolutePath2 = Table_2_path + File.separator + name2;
+                            try (BufferedReader depbr = new BufferedReader(new FileReader(absolutePath2))) {
+                                String dep_line;
+
+                                while ((dep_line = depbr.readLine()) != null) {
+                                    String[] country2 = dep_line.split(tableSpilt2);
+                                    String[] concat_Line =new String[country1.length+country2.length];
+                                    for (int i = 0; i < country1.length; i++) {
+                                        concat_Line[i] = country1[i];
+                                    }
+
+                                    for (int i = country1.length; i < country2.length; i++) {
+                                        concat_Line[i]= country2[i];
+                                    }
+                                    if (country1[2].equals(country2[0])){
+                                        map(concat_Line);
+
+                                    }
+
+                                }
+                                }
+                        }
+                    }
+                }
+            } catch (FileNotFoundException e) {
+                e.printStackTrace();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+
+
+
+    }
 
     public static  String innerJoin() throws IOException {
         String outPath = tempdirectory + File.separator + "emp_dep";
        // Map<ArrayList<Integer>,ArrayList<Integer>> mmm = new HashMap<>();
+        //String Table_1_path = tempdirectory+File.separator+"emp"+File.separator+"JoinMap";
+        //String Table_2_path = tempdirectory+File.separator+"dep"+File.separator+"JoinMap";
         String Table_1_path = tempdirectory+File.separator+"emp"+File.separator+"JoinMap";
         String Table_2_path = tempdirectory+File.separator+"dep"+File.separator+"JoinMap";
         File table1 = new File(Table_1_path);
@@ -403,8 +484,8 @@ public class innerJoin {
 
 
     public static  void shuffle1() throws IOException {
-        String maperPath = tempdirectory+File.separator+"emp_dep"+File.separator+"map1";
-        String shuffPath = tempdirectory+File.separator+"emp_dep"+File.separator+"shuff1";
+        String maperPath = tempdirectory+File.separator+"map1";
+        String shuffPath = tempdirectory+File.separator+"shuff1";
 
         File stockDir1 = new File(shuffPath);
         if(!stockDir1.exists()){stockDir1.mkdir();}
@@ -486,8 +567,8 @@ public class innerJoin {
     }
 
     public static String reducer1(MyFunction obj1){
-        String shuffPath = tempdirectory+File.separator+"emp_dep"+File.separator+"shuff1";
-        String redusPath = tempdirectory+File.separator+"emp_dep"+File.separator+"red1";
+        String shuffPath = tempdirectory+File.separator+"shuff1";;
+        String redusPath = tempdirectory+File.separator+"red1";
         String FileName = "redu1.txt";
         File stockDir1 = new File(redusPath);
         if(!stockDir1.exists()){stockDir1.mkdir();}
