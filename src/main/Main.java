@@ -77,11 +77,11 @@ public class Main {
 
 
 
-/*
+
             CodeGenerator code_g = new CodeGenerator(symbol);
-            code_g.visit(myTree);*/
-            codeGen code_g = new codeGen(symbol);
             code_g.visit(myTree);
+            //codeGen code_g = new codeGen(symbol);
+           // code_g.visit(myTree);
 
 
            // CG.cg.main(args);

@@ -1,1 +1,1 @@
-Select id ,t_date,sum(temp),avg(temp),count(t_date) from temperature group by id,t_date ;
+Select id ,t_date,sum(temp),summarize(temp) from temperature group by id,t_date;

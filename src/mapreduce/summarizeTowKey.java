@@ -6,7 +6,7 @@ import java.util.*;
 public class summarizeTowKey {
 
     public interface MyFunction {
-        Object operation(ArrayList<Integer> c);
+        String operation(ArrayList<Integer> c);
     }
 
     String sql = "Select id,date , SUMMARIZE(temp) from temp group by id,date";
@@ -77,10 +77,10 @@ public class summarizeTowKey {
         shuffle();
         reducer(new MyFunction() {
             @Override
-            public ArrayList<Object> operation(ArrayList<Integer> c) {
-                ArrayList<Object> summarize = new ArrayList<>();
+            public String operation(ArrayList<Integer> c) {
+                String output="";
                 //calculate count
-                summarize.add(c.size());
+                output+=c.size() + " \t\t ";
                 //calculate mean(avg)
                 double sum = 0.0;
                 for(double num : c){
@@ -88,7 +88,7 @@ public class summarizeTowKey {
                 }
                 double avg = sum/c.size();
                 avg = Math.floor(avg);
-                summarize.add(avg);
+                output+=avg + " \t\t ";
                 //calculate median
                 Collections.sort(c);
                 double median;
@@ -96,9 +96,8 @@ public class summarizeTowKey {
                 { median = (double)(c.get(c.size()/2) + c.get(c.size()/2 - 1))/2;}
                 else
                 { median = (double)c.get(c.size()/2);}
-                summarize.add(median);
+                output+=median + " \t\t ";
                 //calculate mode
-                final List<Integer> modes = new ArrayList<Integer>();
                 final Map<Integer, Integer> countMap = new HashMap<Integer, Integer>();
 
                 int max = -1;
@@ -118,13 +117,14 @@ public class summarizeTowKey {
                         max = count;
                     }
                 }
-
+                output+="[";
                 for (final Map.Entry<Integer, Integer> tuple : countMap.entrySet()) {
                     if (tuple.getValue() == max) {
-                        modes.add(tuple.getKey());
+                        output+=tuple.getKey()+ " \t\t ";
                     }
                 }
-                summarize.add(modes);
+                output+="]"+ " \t\t ";
+
                 //max value
                 int maxVal = c.get(0);
                 for(int i=1;i < c.size();i++){
@@ -132,7 +132,8 @@ public class summarizeTowKey {
                         maxVal = c.get(i);
                     }
                 }
-                summarize.add(maxVal);
+
+                output+=maxVal+ " \t\t ";
                 //min value
                 int minValue = c.get(0);
                 for(int i=1;i<c.size();i++){
@@ -140,7 +141,7 @@ public class summarizeTowKey {
                         minValue = c.get(i);
                     }
                 }
-                summarize.add(minValue);
+                output+=minValue+ " \t\t ";
                 //calculate std
                 double summ = 0.0, standardDeviation = 0.0;
                 int length = c.size();
@@ -154,10 +155,10 @@ public class summarizeTowKey {
                 for(double num: c) {
                     standardDeviation += Math.pow(num - mean, 2);
                 }
-                summarize.add(Math.sqrt(standardDeviation/length));
+                output+=Math.sqrt(standardDeviation/length)+ " \t\t ";
 
 
-                return summarize;
+                return output;
             }
         });
 
@@ -316,13 +317,13 @@ public class summarizeTowKey {
                     values.add(Integer.parseInt(s));
                 }
 
-                ArrayList<Object> opResult = (ArrayList<Object>) obj.operation(values);
+                String opResult = obj.operation(values);
                 String reduce = tempdirectory + File.separator +"redu.txt";
                 try(BufferedWriter fileOutputStream = new BufferedWriter(new FileWriter(reduce,true))) {
 
                     fileOutputStream.write(KeyAndVal[0] + "/" + "\t");
 
-                    for(int i=0;i<opResult.size();i++){
+                   /* for(int i=0;i<opResult.size();i++){
                         if(opResult.get(i) instanceof ArrayList){
                             String output_mode = "";
                             fileOutputStream.write("\t[");
@@ -337,7 +338,7 @@ public class summarizeTowKey {
                             fileOutputStream.write("     " + opResult.get(i) + "     ");
                         }
 
-                    }
+                    }*/
                     fileOutputStream.write(System.lineSeparator());
 
                     fileOutputStream.close();

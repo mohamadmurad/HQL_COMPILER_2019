@@ -52,7 +52,8 @@ public class codeGen extends HplsqlBaseVisitor<Object> {
                 "import java.io.*;\n" +
                 "import java.util.ArrayList;\n" +
                 "import java.util.HashMap;\n" +
-                "import java.util.Map;\n";
+                "import java.util.Map;\n"+
+                  "import java.util.Collections;\n";
 
 
         output+="public class cg {\n\n";
@@ -314,7 +315,7 @@ public class codeGen extends HplsqlBaseVisitor<Object> {
         output+= getMain();
 
 
-        output+=getPrintFunc(ctx);
+        output+=getPrintFunc(ctx,table_name);
 
 
         output+="}";
@@ -757,27 +758,122 @@ public class codeGen extends HplsqlBaseVisitor<Object> {
 
                                 "        }});\n\n";
             }
+            case "summarize":{
+                return "String output=\"\";\n" +
+                        "                //calculate count\n" +
+                        "                output+=c.size() + \" \\t\\t \";\n" +
+                        "                //calculate mean(avg)\n" +
+                        "                double sum = 0.0;\n" +
+                        "                for(double num : c){\n" +
+                        "                    sum+=num;\n" +
+                        "                }\n" +
+                        "                double avg = sum/c.size();\n" +
+                        "                avg = Math.floor(avg);\n" +
+                        "                output+=avg + \" \\t\\t \";\n" +
+                        "                //calculate median\n" +
+                        "                Collections.sort(c);\n" +
+                        "                double median;\n" +
+                        "                if (c.size() % 2 == 0)\n" +
+                        "                { median = (double)(c.get(c.size()/2) + c.get(c.size()/2 - 1))/2;}\n" +
+                        "                else\n" +
+                        "                { median = (double)c.get(c.size()/2);}\n" +
+                        "                output+=median + \" \\t\\t \";\n" +
+                        "                //calculate mode\n" +
+                        "                final Map<Integer, Integer> countMap = new HashMap<Integer, Integer>();\n" +
+                        "\n" +
+                        "                int max = -1;\n" +
+                        "\n" +
+                        "                for (final int n : c) {\n" +
+                        "                    int count = 0;\n" +
+                        "\n" +
+                        "                    if (countMap.containsKey(n)) {\n" +
+                        "                        count = countMap.get(n) + 1;\n" +
+                        "                    } else {\n" +
+                        "                        count = 1;\n" +
+                        "                    }\n" +
+                        "\n" +
+                        "                    countMap.put(n, count);\n" +
+                        "\n" +
+                        "                    if (count > max) {\n" +
+                        "                        max = count;\n" +
+                        "                    }\n" +
+                        "                }\n" +
+                        "                output+=\"[\";\n" +
+                        "                for (final Map.Entry<Integer, Integer> tuple : countMap.entrySet()) {\n" +
+                        "                    if (tuple.getValue() == max) {\n" +
+                        "                        output+=tuple.getKey()+ \" - \";\n" +
+                        "                    }\n" +
+                        "                }\n" +
+                        "                output+=\"]\"+ \" \\t\\t \";\n" +
+                        "                \n" +
+                        "                //max value\n" +
+                        "                int maxVal = c.get(0);\n" +
+                        "                for(int i=1;i < c.size();i++){\n" +
+                        "                    if(c.get(i) > maxVal){\n" +
+                        "                        maxVal = c.get(i);\n" +
+                        "                    }\n" +
+                        "                }\n" +
+                        "                \n" +
+                        "                output+=maxVal+ \" \\t\\t \";\n" +
+                        "                //min value\n" +
+                        "                int minValue = c.get(0);\n" +
+                        "                for(int i=1;i<c.size();i++){\n" +
+                        "                    if(c.get(i) < minValue){\n" +
+                        "                        minValue = c.get(i);\n" +
+                        "                    }\n" +
+                        "                }\n" +
+                        "                output+=minValue+ \" \\t\\t \";\n" +
+                        "                //calculate std\n" +
+                        "                double summ = 0.0, standardDeviation = 0.0;\n" +
+                        "                int length = c.size();\n" +
+                        "\n" +
+                        "                for(double num : c) {\n" +
+                        "                    summ += num;\n" +
+                        "                }\n" +
+                        "\n" +
+                        "                double mean = summ/length;\n" +
+                        "\n" +
+                        "                for(double num: c) {\n" +
+                        "                    standardDeviation += Math.pow(num - mean, 2);\n" +
+                        "                }\n" +
+                        "                output+=Math.sqrt(standardDeviation/length)+ \" \\t\\t \";\n" +
+                        "\n" +
+                        "\n" +
+                        "                return output;\n\n}});";
+            }
         }
 
         return "";
     }
 
-    private String getPrintFunc(HplsqlParser.New_select_stmtContext ctx){
+    private String getPrintFunc(HplsqlParser.New_select_stmtContext ctx,String tablename){
 
         String out ="private static void printResult(String ResultFile) {\nString colName = \"\";";
 
         for(int i =0 ; i<ctx.new_select_col().size();i++){
             SelectCol coloms = (SelectCol)visit(ctx.new_select_col(i));
             if(coloms.is_colom)
-                out+="colName += \""+coloms.colname+" \\t\\t\";";
-            else
-                out+=" colName += \""+coloms.func_name+"("+coloms.colname+")"+" \\t\\t\";";
+                out+="colName += \""+coloms.colname+" \\t\\t\";\n";
+            else{
+                if(coloms.func_name.equals("summarize")){
+
+                    out+="colName += \"Count\"+\"\\t\\t\"+\"Mean\"+\"\\t\\t\"+\"Median\"+\"\\t\\t\"+\"Mode\"+\"\\t\\t\"+\"Max\"+\"\\t\\t\"+\"Min\"+\"\\t\\t\"+\"STD\";\n";
+                }else {
+                    out+=" colName += \""+coloms.func_name+"("+coloms.colname+")"+" \\t\\t\";\n";
+
+                }
+
+            }
 
 
         }
 
         out+="System.out.println(colName);\n" +
                 "        String absolutePath = tempdirectory + File.separator +ResultFile;\n" +
+                "File v = new File(absolutePath);\n" +
+                "        if(!v.exists()){\n" +
+                "            absolutePath = tempdirectory+File.separator +\""+tablename+"\"+ File.separator+ \"red"+reduNum+"\"+File.separator + ResultFile;\n" +
+                "        }"+
                 "        try(BufferedReader br = new BufferedReader(new FileReader(absolutePath))) {\n" +
                 "\n" +
                 "            String line;\n" +

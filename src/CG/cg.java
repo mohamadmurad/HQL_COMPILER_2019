@@ -3,6 +3,7 @@ import java.io.*;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Collections;
 public class cg {
 
 public interface MyFunction {
@@ -107,71 +108,25 @@ public static void initFIleDir(){
 
         return redu1+redu2+".txt";
     }
-static String tableLocation = "C:\\Users\\MouAz He\\IdeaProjects\\HQL_COMPILER_2019\\temperature";
-static String tableSpilt  = ",";
+static String tableLocation1 = "C:\\Users\\MouAz He\\IdeaProjects\\HQL_COMPILER_2019\\temperature";
+static String tableSpilt1  = ",";
     public static void mapper1(String filename){
 
 String maperPath = tempdirectory+File.separator+"temperature"+File.separator+"map1";
 
         File stockDir1 = new File(maperPath);
         if(!stockDir1.exists()){stockDir1.mkdir();}
-        try (BufferedReader br = new BufferedReader(new FileReader(tableLocation+File.separator+filename))) {
+        try (BufferedReader br = new BufferedReader(new FileReader(tableLocation1+File.separator+filename))) {
             String line =  br.readLine();
             while ((line ) != null) {
                 
-                String[] country = line.split(tableSpilt);
+                String[] country = line.split(tableSpilt1);
                 
                 String FileName = filename + "1.txt";
                 String absolutePath = maperPath + File.separator + FileName;
 
                 try(FileOutputStream fileOutputStream = new FileOutputStream(absolutePath,true)) {
 String fileContent = country[0] + "," +country[1] + "," +"/" + country[2];
-
-
-fileContent = fileContent.replace(",/","/");                    fileOutputStream.write(fileContent.getBytes());
-
-                    line =  br.readLine();
-                    if(line != null){
-                        fileOutputStream.write(lineSeparator.getBytes());
-                    }
-
-
-
-                    fileOutputStream.flush();
-
-                    fileOutputStream.close();
-
-                } catch (FileNotFoundException e) {
-                   
-                } catch (IOException e) {
-                   
-                }
-
-
-            }
-
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
-    }
-    public static void mapper2(String filename){
-
-String maperPath = tempdirectory+File.separator+"temperature"+File.separator+"map2";
-
-        File stockDir1 = new File(maperPath);
-        if(!stockDir1.exists()){stockDir1.mkdir();}
-        try (BufferedReader br = new BufferedReader(new FileReader(tableLocation+File.separator+filename))) {
-            String line =  br.readLine();
-            while ((line ) != null) {
-                
-                String[] country = line.split(tableSpilt);
-                
-                String FileName = filename + "2.txt";
-                String absolutePath = maperPath + File.separator + FileName;
-
-                try(FileOutputStream fileOutputStream = new FileOutputStream(absolutePath,true)) {
-String fileContent = country[0] + "," +country[1] + "," +"/" + country[1];
 
 
 fileContent = fileContent.replace(",/","/");                    fileOutputStream.write(fileContent.getBytes());
@@ -251,87 +206,6 @@ public static  void shuffle1() throws IOException {
         }
 
         String shuffl = shuffPath + File.separator +"shufflResult1.txt";
-
-        try(BufferedWriter fileOutputStream = new BufferedWriter(new FileWriter(shuffl,true))) {
-
-
-            for (Map.Entry<ArrayList<Integer>, ArrayList<Integer>> entry : mmm.entrySet()) {
-                String output = "";
-
-                for(int key : entry.getKey()){
-                    output += key + ",";
-                }
-                output +="/";
-                output = output.replaceFirst(",/","/");
-
-                for(int val :entry.getValue()){
-                    output+=","+val;
-                }
-                output += System.lineSeparator();
-                output = output.replaceFirst("/,","/");
-                fileOutputStream.write(output);
-
-            }
-
-            fileOutputStream.close();
-
-        } catch (FileNotFoundException e) {
-            // exception handling
-        } catch (IOException e) {
-            // exception handling
-        }
-
-    }
-public static  void shuffle2() throws IOException {
-        String maperPath = tempdirectory+File.separator+"temperature"+File.separator+"map2";
-        String shuffPath = tempdirectory+File.separator+"temperature"+File.separator+"shuff2";
-
-        File stockDir1 = new File(shuffPath);
-        if(!stockDir1.exists()){stockDir1.mkdir();}
-
-        Map<ArrayList<Integer>,ArrayList<Integer>> mmm = new HashMap<>();
-
-        File stockDir = new File(maperPath);
-        String[] list = stockDir.list();
-        for(String name : list){
-            String absolutePath = maperPath + File.separator + name;
-            try(BufferedReader br = new BufferedReader(new FileReader(absolutePath))) {
-
-                String line;
-
-                while ((line = br.readLine()) != null){
-                    String[] KeyAndVal = line.split("/");
-                    String[] Keys = KeyAndVal[0].split(",");
-                    ArrayList<Integer> ALKeys = new ArrayList<>();
-                    for(String k :Keys){
-                        ALKeys.add(Integer.parseInt(k));
-                    }
-
-
-                    if(mmm.containsKey(ALKeys)){
-                        mmm.get(ALKeys).add(Integer.parseInt(KeyAndVal[1]));
-
-                    }else {
-
-                        ArrayList<Integer> dd = new ArrayList<>();
-                        dd.add(Integer.parseInt(KeyAndVal[1]));
-                        mmm.put(ALKeys,dd);
-                    }
-                }
-
-                br.close();
-
-            } catch (FileNotFoundException e) {
-                // exception handling
-            } catch (IOException e) {
-                // exception handling
-            }
-
-
-
-        }
-
-        String shuffl = shuffPath + File.separator +"shufflResult2.txt";
 
         try(BufferedWriter fileOutputStream = new BufferedWriter(new FileWriter(shuffl,true))) {
 
@@ -465,64 +339,13 @@ public static String reducer2(MyFunction obj1){
 
     }
 
-public static String reducer3(MyFunction obj1){
-        String shuffPath = tempdirectory+File.separator+"temperature"+File.separator+"shuff2";
-        String redusPath = tempdirectory+File.separator+"temperature"+File.separator+"red3";
-        String FileName = "redu3.txt";
-        File stockDir1 = new File(redusPath);
-        if(!stockDir1.exists()){stockDir1.mkdir();}
-
-        File stockDir = new File(shuffPath);
-        String[] list = stockDir.list();
-        for(String name : list){
-
-            String shuffl = shuffPath + File.separator +name;
-            try (BufferedReader br = new BufferedReader(new FileReader(shuffl))) {
-
-                String line;
-
-                while ((line = br.readLine()) != null){
-
-                    String[] KeyAndVal = line.split("/");
-
-                    String[] vlas = KeyAndVal[1].split(",");
-                    ArrayList<Integer> values = new ArrayList<>();
-
-                    for(String s : vlas){
-                        values.add(Integer.parseInt(s));
-                    }
-
-                    String opResult1 = obj1.operation(values);
-
-                    String reduce = redusPath + File.separator +FileName;
-                    try(BufferedWriter fileOutputStream = new BufferedWriter(new FileWriter(reduce,true))) {
-                        fileOutputStream.write(KeyAndVal[0] + "/" + opResult1+ System.lineSeparator());
-                        fileOutputStream.close();
-                    }
-
-                }
-
-
-            } catch (FileNotFoundException e) {
-                e.printStackTrace();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-
-
-        }
-        return FileName;
-
-
-    }
-
 public static void map_reduce( String[] FilesName) throws IOException {
 File stockDir1 = new File(tempdirectory+File.separator+"temperature");
         if(!stockDir1.exists()){stockDir1.mkdir();}
 
 for(String name : FilesName){
-mapper1(name);mapper2(name);}
-shuffle1();shuffle2();
+mapper1(name);}
+shuffle1();
 String red1 = reducer1(new MyFunction() {
             @Override
             public String operation(ArrayList<Integer> c) {
@@ -538,27 +361,93 @@ int sum = 0;
 String red2 = reducer2(new MyFunction() {
             @Override
             public String operation(ArrayList<Integer> c) {
-int sum = 0;
-                for(int i=0;i<c.size();i++){
-
-                    sum+=c.get(i);
+String output="";
+                //calculate count
+                output+=c.size() + " \t\t ";
+                //calculate mean(avg)
+                double sum = 0.0;
+                for(double num : c){
+                    sum+=num;
                 }
-                return String.valueOf(sum/c.size());
-            }
-        });
+                double avg = sum/c.size();
+                avg = Math.floor(avg);
+                output+=avg + " \t\t ";
+                //calculate median
+                Collections.sort(c);
+                double median;
+                if (c.size() % 2 == 0)
+                { median = (double)(c.get(c.size()/2) + c.get(c.size()/2 - 1))/2;}
+                else
+                { median = (double)c.get(c.size()/2);}
+                output+=median + " \t\t ";
+                //calculate mode
+                final Map<Integer, Integer> countMap = new HashMap<Integer, Integer>();
 
-red2 = concatReducer(red1,red2,tempdirectory+File.separator+"temperature"+File.separator+"red1",tempdirectory+File.separator+"temperature"+File.separator+"red2");
-String red3 = reducer3(new MyFunction() {
-            @Override
-            public String operation(ArrayList<Integer> c) {
-                return String.valueOf(c.size());
-        }});
+                int max = -1;
 
-red3 = concatReducer(red2,red3,tempdirectory,tempdirectory+File.separator+"temperature"+File.separator+"red3");
-printResult(red3);}    public static void main(String[] args) {
+                for (final int n : c) {
+                    int count = 0;
+
+                    if (countMap.containsKey(n)) {
+                        count = countMap.get(n) + 1;
+                    } else {
+                        count = 1;
+                    }
+
+                    countMap.put(n, count);
+
+                    if (count > max) {
+                        max = count;
+                    }
+                }
+                output+="[";
+                for (final Map.Entry<Integer, Integer> tuple : countMap.entrySet()) {
+                    if (tuple.getValue() == max) {
+                        output+=tuple.getKey()+ " - ";
+                    }
+                }
+                output+="]"+ " \t\t ";
+                
+                //max value
+                int maxVal = c.get(0);
+                for(int i=1;i < c.size();i++){
+                    if(c.get(i) > maxVal){
+                        maxVal = c.get(i);
+                    }
+                }
+                
+                output+=maxVal+ " \t\t ";
+                //min value
+                int minValue = c.get(0);
+                for(int i=1;i<c.size();i++){
+                    if(c.get(i) < minValue){
+                        minValue = c.get(i);
+                    }
+                }
+                output+=minValue+ " \t\t ";
+                //calculate std
+                double summ = 0.0, standardDeviation = 0.0;
+                int length = c.size();
+
+                for(double num : c) {
+                    summ += num;
+                }
+
+                double mean = summ/length;
+
+                for(double num: c) {
+                    standardDeviation += Math.pow(num - mean, 2);
+                }
+                output+=Math.sqrt(standardDeviation/length)+ " \t\t ";
+
+
+                return output;
+
+}});red2 = concatReducer(red1,red2,tempdirectory+File.separator+"temperature"+File.separator+"red1",tempdirectory+File.separator+"temperature"+File.separator+"red2");
+printResult(red2);}    public static void main(String[] args) {
         
         initFIleDir();
-        File tableDir = new File(tableLocation);
+        File tableDir = new File(tableLocation1);
         if(tableDir.exists() && tableDir.isDirectory()){
 
             try {
@@ -570,9 +459,16 @@ printResult(red3);}    public static void main(String[] args) {
 
         }
     }private static void printResult(String ResultFile) {
-String colName = "";colName += "id \t\t";colName += "t_date \t\t"; colName += "sum(temp) \t\t"; colName += "avg(temp) \t\t"; colName += "count(t_date) \t\t";System.out.println(colName);
+String colName = "";colName += "id \t\t";
+colName += "t_date \t\t";
+ colName += "sum(temp) \t\t";
+colName += "Count"+"\t\t"+"Mean"+"\t\t"+"Median"+"\t\t"+"Mode"+"\t\t"+"Max"+"\t\t"+"Min"+"\t\t"+"STD";
+System.out.println(colName);
         String absolutePath = tempdirectory + File.separator +ResultFile;
-        try(BufferedReader br = new BufferedReader(new FileReader(absolutePath))) {
+File v = new File(absolutePath);
+        if(!v.exists()){
+            absolutePath = tempdirectory+File.separator +"temperature"+ File.separator+ "red2"+File.separator + ResultFile;
+        }        try(BufferedReader br = new BufferedReader(new FileReader(absolutePath))) {
 
             String line;
 
