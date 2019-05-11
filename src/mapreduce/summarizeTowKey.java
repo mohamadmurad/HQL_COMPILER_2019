@@ -321,9 +321,9 @@ public class summarizeTowKey {
                 String reduce = tempdirectory + File.separator +"redu.txt";
                 try(BufferedWriter fileOutputStream = new BufferedWriter(new FileWriter(reduce,true))) {
 
-                    fileOutputStream.write(KeyAndVal[0] + "/" + "\t");
+                    fileOutputStream.write(KeyAndVal[0] + "/" +opResult);
 
-                   /* for(int i=0;i<opResult.size();i++){
+                  /*  for(int i=0;i<opResult.size();i++){
                         if(opResult.get(i) instanceof ArrayList){
                             String output_mode = "";
                             fileOutputStream.write("\t[");

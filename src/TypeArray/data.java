@@ -63,6 +63,8 @@ public class data implements Serializable {
         return name_typ;
     }
 
+    public ArrayList<name_type> getTyp() {return typ;}
+
     public void setStore(String store) {
         this.store = store;
     }

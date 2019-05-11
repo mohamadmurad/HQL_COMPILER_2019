@@ -138,51 +138,9 @@ public class CodeGenerator extends HplsqlBaseVisitor<Object> {
 
         }else{
 
-            for(int i=0;i<Tabels_name.size();i++){
-                output+="public static void JoinMap"+(i+1)+"(String filename){\n" +
-                        "\n" +
-                        "        String maperPath = tempdirectory+File.separator+tableLocation"+(i+1)+"+File.separator+\"JoinMap\";\n" +
-                        "\n" +
-                        "        File stockDir1 = new File(maperPath);\n" +
-                        "        if(!stockDir1.exists()){stockDir1.mkdir();}\n" +
-                        "\n" +
-                        "        try (BufferedReader br = new BufferedReader(new FileReader(tableLocation"+(i+1)+"+File.separator+filename))) {\n" +
-                        "            String line =  br.readLine();\n" +
-                        "\n" +
-                        "            while ((line ) != null) {\n" +
-                        "\n" +
-                        "                String[] country = line.split(tableSpilt"+(i+1)+");\n" +
-                        "                for(int i=0;i<country.length;i++){\n" +
-                        "                    country[i] = country[i].replace(\"\\\"\",\"\");\n" +
-                        "                }\n" +
-                        "\n" +
-                        "                String FileName = filename + \".txt\";\n" +
-                        "                String absolutePath = maperPath + File.separator + FileName;\n" +
-                        "\n" +
-                        "                try(FileOutputStream fileOutputStream = new FileOutputStream(absolutePath,true)) {\n";
-                ArrayList<SelectCol> sel_col_keys = new ArrayList<>();
 
-                for(int j =0 ; j<ctx.new_select_col().size();j++){
-                    SelectCol coloms = (SelectCol)visit(ctx.new_select_col(j));
-                    if(coloms.tablename.equals(Tabels_name.get(i).getName_typ())){
 
-                        sel_col_keys.add(coloms);
-
-                    }
-                    }
-                 for(int k=0;k<ctx.new_from_join_clause().size();k++){
-                     if(ctx.new_from_join_clause(k).new_join_condition().table_name(0).ident().getText().equals(Tabels_name.get(i).getName_typ())){
-
-                     }
-                     if(ctx.new_from_join_clause(k).new_join_condition().table_name(1).ident().getText().equals(Tabels_name.get(i).getName_typ())){
-
-                     }
-                 }
-
-                    //}
-
-                }
-            }
+             }
 /*
             output+= getMain(Tabels_name.size());
 

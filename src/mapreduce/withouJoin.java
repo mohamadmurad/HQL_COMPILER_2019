@@ -1,36 +1,36 @@
 package mapreduce;
 
+
 import java.io.*;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
 
-public class innerJoin {
+public class withouJoin {
 
     public interface MyFunction {
         String operation(ArrayList<Integer> c);
     }
 
-    String sql = "SELECT dep.dep_id , SUM(emp.salary),avg(emp.date) FROM emp INNER JOIN dep" +
-            " ON dep.dep_id = emp.dep_id WHERE dep.dep_id=1 AND emp.name LIKE(\"mhd\") GROUP by dep.dep_id";
+    String sql = "Select id,date , sum(temp),avg(date) , SUMMARIZE(temp) from temp group by id";
 
     static String lineSeparator = System.getProperty("line.separator");
     static String tempdirectory = "temp";
 
-    static String tableLocation1 = "emp";
-    static String tableLocation2 = "dep";
+    static String tableLocation1 = "temperature";
+
     static String tableSpilt1  = ",";
-    static String tableSpilt2  = ",";
 
 
     public static void main(String[] args) {
-       initFIleDir();
+        initFIleDir();
         File tableDir1 = new File(tableLocation1);
-        File tableDir2 = new File(tableLocation2);
 
 
-        if(tableDir1.exists() && tableDir1.isDirectory() && tableDir2.exists() && tableDir2.isDirectory()){
+
+        if(tableDir1.exists() && tableDir1.isDirectory()){
 
             try {
 
@@ -54,10 +54,10 @@ public class innerJoin {
             for(int i=0;i<line.length;i++) {
                 line[i] = line[i].replace("\"", "");
             }
-            String fileContent = line[5] +"/"+line[3];
+            String fileContent = line[0] +"/"+line[2];
 
             fileOutputStream.write(fileContent.getBytes());
-                fileOutputStream.write(lineSeparator.getBytes());
+            fileOutputStream.write(lineSeparator.getBytes());
 
 
             fileOutputStream.flush();
@@ -84,7 +84,7 @@ public class innerJoin {
             for(int i=0;i<line.length;i++) {
                 line[i] = line[i].replace("\"", "");
             }
-            String fileContent = line[5] +"/"+line[4];
+            String fileContent = line[0] +"/"+line[1];
 
             fileOutputStream.write(fileContent.getBytes());
             fileOutputStream.write(lineSeparator.getBytes());
@@ -103,15 +103,12 @@ public class innerJoin {
 
     }
 
-
     public static void map_reduce() throws IOException {
 
-        innerJoin1();
+        read_files();
 
        shuffle(1);
-       shuffle(2);
-
-        String red1 = reducer(1,new MyFunction() {
+        String red1 = reducer(1,1,new MyFunction() {
             @Override
             public String operation(ArrayList<Integer> c) {
                 int sum = 0;
@@ -123,9 +120,97 @@ public class innerJoin {
                 return String.valueOf(sum);
             }
         });
+        reducer(1,3,new MyFunction() {
+            @Override
+            public String operation(ArrayList<Integer> c) {
+                String output="";
+                //calculate count
+                output+=c.size() + " \t\t ";
+                //calculate mean(avg)
+                double sum = 0.0;
+                for(double num : c){
+                    sum+=num;
+                }
+                double avg = sum/c.size();
+                avg = Math.floor(avg);
+                output+=avg + " \t\t ";
+                //calculate median
+                Collections.sort(c);
+                double median;
+                if (c.size() % 2 == 0)
+                { median = (double)(c.get(c.size()/2) + c.get(c.size()/2 - 1))/2;}
+                else
+                { median = (double)c.get(c.size()/2);}
+                output+=median + " \t\t ";
+                //calculate mode
+                final Map<Integer, Integer> countMap = new HashMap<Integer, Integer>();
+
+                int max = -1;
+
+                for (final int n : c) {
+                    int count = 0;
+
+                    if (countMap.containsKey(n)) {
+                        count = countMap.get(n) + 1;
+                    } else {
+                        count = 1;
+                    }
+
+                    countMap.put(n, count);
+
+                    if (count > max) {
+                        max = count;
+                    }
+                }
+                output+="[";
+                for (final Map.Entry<Integer, Integer> tuple : countMap.entrySet()) {
+                    if (tuple.getValue() == max) {
+                        output+=tuple.getKey()+ " \t\t ";
+                    }
+                }
+                output+="]"+ " \t\t ";
+
+                //max value
+                int maxVal = c.get(0);
+                for(int i=1;i < c.size();i++){
+                    if(c.get(i) > maxVal){
+                        maxVal = c.get(i);
+                    }
+                }
+
+                output+=maxVal+ " \t\t ";
+                //min value
+                int minValue = c.get(0);
+                for(int i=1;i<c.size();i++){
+                    if(c.get(i) < minValue){
+                        minValue = c.get(i);
+                    }
+                }
+                output+=minValue+ " \t\t ";
+                //calculate std
+                double summ = 0.0, standardDeviation = 0.0;
+                int length = c.size();
+
+                for(double num : c) {
+                    summ += num;
+                }
+
+                double mean = summ/length;
+
+                for(double num: c) {
+                    standardDeviation += Math.pow(num - mean, 2);
+                }
+                output+=Math.sqrt(standardDeviation/length)+ " \t\t ";
 
 
-      String red2 = reducer(2,new MyFunction() {
+                return output;
+            }
+        });
+
+
+
+       shuffle(2);
+       String red2 = reducer(2,2,new MyFunction() {
             @Override
             public String operation(ArrayList<Integer> c) {
                 int sum = 0;
@@ -138,8 +223,12 @@ public class innerJoin {
         });
 
 
-       sum_all_red(1);
-       sum_all_red(2);
+
+
+
+        sum_all_red(1);
+        sum_all_red(2);
+        sum_all_red(3);
 
         File n = new File(tempdirectory+File.separator+"All_red");
         String[] list = n.list();
@@ -193,15 +282,11 @@ public class innerJoin {
     }
 
 
-    public static void innerJoin1() {
+    public static void read_files() {
 
         String Table_1_path = tableLocation1;
-        String Table_2_path = tableLocation2;
         File table1 = new File(Table_1_path);
-        File table2 = new File(Table_2_path);
         String[] Table_1_list = table1.list();
-        String[] Table_2_list = table2.list();
-
 
         for(String name1 : Table_1_list) {
             String absolutePath1 = Table_1_path + File.separator + name1;
@@ -211,36 +296,13 @@ public class innerJoin {
                 while ((line = br.readLine()) != null) {
 
                     String[] country1 = line.split(tableSpilt1);
-                    if (!(country1[2].matches("null") || country1[2].matches("NULL"))) {
 
-                        // for table 2
-                        for (String name2 : Table_2_list) {
-                            String absolutePath2 = Table_2_path + File.separator + name2;
-                            try (BufferedReader depbr = new BufferedReader(new FileReader(absolutePath2))) {
-                                String dep_line;
-
-                                while ((dep_line = depbr.readLine()) != null) {
-                                    String[] country2 = dep_line.split(tableSpilt2);
-
-                                    // on
-                                    if ((country1[2].equals(country2[0]))){
-
-                                        String[] concat_Line =new String[country1.length+country2.length];
-                                        System.arraycopy(country1, 0, concat_Line, 0, country1.length);
-                                        System.arraycopy(country2, 0, concat_Line, country1.length, country2.length);
-
-                                        // for table 3 ..... join
-
-                                        map1(concat_Line,name1+"_"+name2);
-                                        map2(concat_Line,name1+name2);
-
-
-                                    }
-
-                                }
-                            }
-                        }
+                    // where
+                    if ((true)){
+                        map1(country1,name1);
+                        map2(country1,name1);
                     }
+
                 }
             } catch (FileNotFoundException e) {
                 e.printStackTrace();
@@ -248,9 +310,6 @@ public class innerJoin {
                 e.printStackTrace();
             }
         }
-
-
-
     }
 
 
@@ -356,11 +415,11 @@ public class innerJoin {
 
     }
 
-    public static String reducer(int shuff,MyFunction obj1){
+    public static String reducer(int shuff,int red,MyFunction obj1){
 
         String shuffPath = tempdirectory+File.separator+"shuff"+shuff;;
-        String redusPath = tempdirectory+File.separator+"red"+shuff;
-       // String FileName = "redu"+numReduce+".txt";
+        String redusPath = tempdirectory+File.separator+"red"+red;
+        // String FileName = "redu"+numReduce+".txt";
 
         File stockDir1 = new File(redusPath);
         if(!stockDir1.exists()){stockDir1.mkdir();}
@@ -403,7 +462,7 @@ public class innerJoin {
             }
 
 
-       }
+        }
         return "";
 
 
@@ -457,7 +516,7 @@ public class innerJoin {
         String shuffl = path1 + File.separator +redu1;
 
         //File stockDir = new File(reduce);
-  //     String[] list = stockDir.list();
+        //     String[] list = stockDir.list();
 
         try (BufferedReader br = new BufferedReader(new FileReader(shuffl))) {
 
