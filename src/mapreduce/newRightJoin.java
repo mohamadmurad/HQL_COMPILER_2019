@@ -1,39 +1,36 @@
 package mapreduce;
 
-import java.io.*;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
+        import java.io.*;
+        import java.util.ArrayList;
+        import java.util.HashMap;
+        import java.util.Map;
 
 
-public class threeJoin {
+public class newRightJoin {
 
     public interface MyFunction {
         String operation(ArrayList<Integer> c);
     }
 
-    String sql = "select s_name, score, status, address_city, email_id,\n" +
-            "accomplishments from student s inner join marks m on\n" +
-            "s.s_id = m.s_id inner join details d on \n" +
-            "d.school_id = m.school_id;";
+    String sql = "SELECT Orders.OrderID,  Customers.Name\n" +
+            "FROM Customers\n" +
+            "RIGHT JOIN Orders ON Orders.CustomersID = Customers.CustomersID";
 
     static String lineSeparator = System.getProperty("line.separator");
     static String tempdirectory = "temp";
 
-    static String tableLocation1 = "student";
-    static String tableLocation2 = "marks";
-    static String tableLocation3 = "details";
+    static String tableLocation1 = "Customers";
+    static String tableLocation2 = "Orders";
     static String tableSpilt1  = ",";
     static String tableSpilt2  = ",";
-    static String tableSpilt3  = ",";
 
+    static String numberREG = "^[-+]?\\d+(\\.\\d+)?$";
 
 
     public static void main(String[] args) {
         initFIleDir();
         File tableDir1 = new File(tableLocation1);
         File tableDir2 = new File(tableLocation2);
-        File tableDir3 = new File(tableLocation3);
 
 
         if(tableDir1.exists() && tableDir1.isDirectory() && tableDir2.exists() && tableDir2.isDirectory()){
@@ -50,7 +47,6 @@ public class threeJoin {
     }
 
     public static void map1(String[] line,String fileName){
-
         String maperPath = tempdirectory+File.separator+"map1";
         File stockDir1 = new File(maperPath);
         if(!stockDir1.exists()){stockDir1.mkdir();}
@@ -58,10 +54,10 @@ public class threeJoin {
         String outPath = maperPath + File.separator + FileName;
         try(FileOutputStream fileOutputStream = new FileOutputStream(outPath,true)) {
 
-            for(int i=0;i<line.length;i++) {
-                //line[i] = line[i].replace("\"", "");
-            }
-            String fileContent = line[1]+","+line[4]+","+line[5]+","+line[6] +","+line[7]+","+line[9];
+           /* for(int i=0;i<line.length;i++) {
+                line[i] = line[i].replace("\"", "");
+            }*/
+            String fileContent = line[1]+"/"+line[2];
 
             fileOutputStream.write(fileContent.getBytes());
             fileOutputStream.write(lineSeparator.getBytes());
@@ -88,10 +84,10 @@ public class threeJoin {
         String outPath = maperPath + File.separator + FileName;
         try(FileOutputStream fileOutputStream = new FileOutputStream(outPath,true)) {
 
-            for(int i=0;i<line.length;i++) {
+           /* for(int i=0;i<line.length;i++) {
                 line[i] = line[i].replace("\"", "");
-            }
-            String fileContent = line[5] +"/"+line[4];
+            }*/
+            String fileContent = line[5]+"/"+line[4];
 
             fileOutputStream.write(fileContent.getBytes());
             fileOutputStream.write(lineSeparator.getBytes());
@@ -110,16 +106,14 @@ public class threeJoin {
 
     }
 
-
     public static void map_reduce() throws IOException {
 
-        innerJoin1();
+        rightJoin();
 
+        //  shuffle(1);
+        //  shuffle(2);
 
-       shuffle(1);
-       // shuffle(2);
-/*
-        String red1 = reducer(1,new MyFunction() {
+     /*   String red1 = reducer(1,new MyFunction() {
             @Override
             public String operation(ArrayList<Integer> c) {
                 int sum = 0;
@@ -130,10 +124,10 @@ public class threeJoin {
 
                 return String.valueOf(sum);
             }
-        });
-*/
-/*
-        String red2 = reducer(2,new MyFunction() {
+        });*/
+
+
+      /*  String red2 = reducer(2,new MyFunction() {
             @Override
             public String operation(ArrayList<Integer> c) {
                 int sum = 0;
@@ -143,13 +137,13 @@ public class threeJoin {
                 }
                 return String.valueOf(sum/c.size());
             }
-        });
-*/
-/*
-        sum_all_red(1);
-        sum_all_red(2);
+        });*/
 
-        File n = new File(tempdirectory+File.separator+"All_red");
+
+        //sum_all_red(1);
+       // sum_all_red(2);
+
+      /* File n = new File(tempdirectory+File.separator+"All_red");
         String[] list = n.list();
         String all =concatReducer(list[0],list[1],tempdirectory+File.separator+"All_red",tempdirectory+File.separator+"All_red");;
         for(int i=1;i<list.length;i++){
@@ -157,13 +151,13 @@ public class threeJoin {
                 all = concatReducer(all,list[i+1],tempdirectory,tempdirectory+File.separator+"All_red");
             }
 
-        }
-        if(list.length==1){
-            printResult(tempdirectory+File.separator+"All_red/1.txt");
-        }else {
-            printResult(tempdirectory+File.separator+all);
-        }
-*/
+        }*/
+        //if(list.length==1){
+         //   printResult(tempdirectory+File.separator+"All_red/1.txt");
+       // }else {
+            //printResult(tempdirectory+File.separator+all);
+       // }
+
 
     }
 
@@ -200,97 +194,66 @@ public class threeJoin {
         }
     }
 
-
-    public static void innerJoin1() {
+    public static void rightJoin(){
 
         String Table_1_path = tableLocation1;
         String Table_2_path = tableLocation2;
-        String Table_3_path = tableLocation3;
         File table1 = new File(Table_1_path);
         File table2 = new File(Table_2_path);
-        File table3 = new File(Table_3_path);
         String[] Table_1_list = table1.list();
         String[] Table_2_list = table2.list();
-        String[] Table_3_list = table3.list();
+        int length_country2=0;
+        int length_country1=0;
+        for(String name2 : Table_2_list) {
+            String absolutePath2 = Table_2_path + File.separator + name2;
+            try (BufferedReader br = new BufferedReader(new FileReader(absolutePath2))) {
+                String line2;
+
+                while ((line2 = br.readLine()) != null) {
+
+                    String[] country2 = line2.split(tableSpilt2);
+                    int null_value =0;
+                    int i=0;
+                    for (String name1 : Table_1_list) {
+                        String absolutePath1 = Table_1_path + File.separator + name1;
+                        try (BufferedReader depbr = new BufferedReader(new FileReader(absolutePath1))) {
+                            String line;
 
 
-        for(String name1 : Table_1_list) {
-            String absolutePath1 = Table_1_path + File.separator + name1;
-            try (BufferedReader br = new BufferedReader(new FileReader(absolutePath1))) {
-                String line;
 
-                while ((line = br.readLine()) != null) {
+                            while ((line = depbr.readLine()) != null) {
+                                i++;
+                                String[] country1 = line.split(tableSpilt1);
+                                length_country1 = country1.length;
+                               // if(!(country1[2].matches("NULL") || country1[2].matches("null"))) {
 
-                    String[] country1 = line.split(tableSpilt1);
-                    //if (!(country1[2].matches("null") || country1[2].matches("NULL"))) {
+                                    if ((country1[0].equals(country2[1]))) {
 
-                        // for table 2
-                        for (String name2 : Table_2_list) {
-                            String absolutePath2 = Table_2_path + File.separator + name2;
-                            try (BufferedReader depbr = new BufferedReader(new FileReader(absolutePath2))) {
-                                String dep_line;
-
-                                while ((dep_line = depbr.readLine()) != null) {
-                                    String[] country2 = dep_line.split(tableSpilt2);
-
-                                    // on
-                                    if ((country1[0].equals(country2[1]))){
-/*
                                         String[] concat_Line =new String[country1.length+country2.length];
                                         System.arraycopy(country1, 0, concat_Line, 0, country1.length);
                                         System.arraycopy(country2, 0, concat_Line, country1.length, country2.length);
-*/
-                                        // for table 3 ..... join
+                                        map1(concat_Line,name1+name2);
 
-                                        for (String name3 : Table_3_list) {
-                                            String absolutePath3 = Table_3_path + File.separator + name3;
-                                            try (BufferedReader depbr3 = new BufferedReader(new FileReader(absolutePath3))) {
-                                                String dep_line3;
-
-                                                while ((dep_line3 = depbr3.readLine()) != null) {
-                                                    String[] country3 = dep_line3.split(tableSpilt3);
-
-                                                    // on
-                                                    if ((country2[0].equals(country3[2]))){
-
-                                                        String[] concat_Line =new String[country1.length+country2.length+country3.length];
-                                                   /*     System.arraycopy(country1, 0, concat_Line, 0, country1.length);
-                                                        System.arraycopy(country2, 0, concat_Line, country1.length, country2.length);
-                                                        System.arraycopy(country3, 0, concat_Line, country2.length, country3.length);
-*/
-                                                      int i=0;
-                                                      for(int j=0;j<country1.length;j++){
-                                                          concat_Line[i++] = country1[j];
-                                                      }
-                                                        for(int j=0;j<country2.length;j++){
-                                                            concat_Line[i++] = country2[j];
-                                                        }
-                                                        for(int j=0;j<country3.length;j++){
-                                                            concat_Line[i++] = country3[j];
-                                                        }
-                                                                        System.out.println(country2[2]);
-
-
-                                                        map1(concat_Line,name1+"_"+name2+"_"+name3);
-                                                      //  map2(concat_Line,name1+name2);
-
-
-                                                    }
-
-                                                }
-                                            }
-                                        }
-
-                                        //map1(concat_Line,name1+"_"+name2);
-                                     //   map2(concat_Line,name1+name2);
-
-
+                                    }else {
+                                        null_value++;
                                     }
-
-                                }
+                               // }
                             }
+
                         }
-                  //  }
+                    }
+                    if(null_value==i){
+                        String[] c_null = new String[length_country1];
+                        for(String c : c_null){
+                            c="null";
+                        }
+                        String[] concat_Line =new String[country2.length+c_null.length];
+                        System.arraycopy(c_null, 0, concat_Line, 0, c_null.length);
+                        System.arraycopy(country2, 0, concat_Line, c_null.length, country2.length);
+                        map1(concat_Line,"null_file");
+
+                    }
+
                 }
             } catch (FileNotFoundException e) {
                 e.printStackTrace();
@@ -298,21 +261,18 @@ public class threeJoin {
                 e.printStackTrace();
             }
         }
-
-
-
     }
 
 
-    public static  void shuffle(int map) throws IOException {
 
+    public static  void shuffle(int map) throws IOException {
         String maperPath = tempdirectory+File.separator+"map"+map;
         String shuffPath = tempdirectory+File.separator+"shuff"+map;
 
         File stockDir1 = new File(shuffPath);
         if(!stockDir1.exists()){stockDir1.mkdir();}
 
-        Map<ArrayList<Integer>,ArrayList<Integer>> mmm = new HashMap<>();
+        Map<ArrayList<Object>,ArrayList<Object>> mmm = new HashMap<>();
 
         File stockDir = new File(maperPath);
         String[] list = stockDir.list();
@@ -324,21 +284,26 @@ public class threeJoin {
 
                 while ((line = br.readLine()) != null){
                     String[] KeyAndVal = line.split("/");
-
-                    String shuffname = KeyAndVal[0];
-                    String ou_file = shuffPath+File.separator+shuffname+".txt";
-                    File n = new File(ou_file);
-                    if(n.exists()){
-                        // for distnict
-                        try(BufferedWriter fileOutputStream = new BufferedWriter(new FileWriter(ou_file,true))) {
-                            fileOutputStream.write(","+KeyAndVal[1]);
-                        }
-                    }else{
-                        try(BufferedWriter fileOutputStream = new BufferedWriter(new FileWriter(ou_file,true))) {
-                            fileOutputStream.write(KeyAndVal[0] + "/" + KeyAndVal[1]);
+                    String[] Keys = KeyAndVal[0].split(",");
+                    ArrayList<Object> ALKeys = new ArrayList<>();
+                    for(String k :Keys){
+                        if(k.matches("NULL") || k.matches("null")){
+                            ALKeys.add(k);
+                        }else{
+                            ALKeys.add(Integer.parseInt(k));
                         }
                     }
 
+
+                    if(mmm.containsKey(ALKeys)){
+                        mmm.get(ALKeys).add(KeyAndVal[1]);
+
+                    }else {
+
+                        ArrayList<Object> dd = new ArrayList<>();
+                        dd.add(KeyAndVal[1]);
+                        mmm.put(ALKeys,dd);
+                    }
                 }
 
                 br.close();
@@ -349,9 +314,44 @@ public class threeJoin {
                 // exception handling
             }
 
+
+
+        }
+
+        String shuffl = shuffPath + File.separator +"shufflResult1.txt";
+
+        try(BufferedWriter fileOutputStream = new BufferedWriter(new FileWriter(shuffl,true))) {
+
+
+            for (Map.Entry<ArrayList<Object>, ArrayList<Object>> entry : mmm.entrySet()) {
+                System.out.println(entry.getKey()+" : "+entry.getValue());
+                String output = "";
+
+                for(Object key : entry.getKey()){
+                    output += key + ",";
+                }
+                output +="/";
+                output = output.replaceFirst(",/","/");
+
+                for(Object val :entry.getValue()){
+                    output+=","+val;
+                }
+                output += System.lineSeparator();
+                output = output.replaceFirst("/,","/");
+                fileOutputStream.write(output);
+
+            }
+
+            fileOutputStream.close();
+
+        } catch (FileNotFoundException e) {
+            // exception handling
+        } catch (IOException e) {
+            // exception handling
         }
 
     }
+
 
     public static String reducer(int shuff,MyFunction obj1){
 
@@ -378,18 +378,32 @@ public class threeJoin {
                     String[] vlas = KeyAndVal[1].split(",");
                     ArrayList<Integer> values = new ArrayList<>();
 
+                    boolean isNum = false;
                     for(String s : vlas){
-                        values.add(Integer.parseInt(s));
+                        if(s.matches(numberREG)){
+                            isNum = true;
+                            values.add(Integer.parseInt(s));
+                        }else{
+
+                        }
+
                     }
+                    if(isNum) {
+                        String opResult1 = obj1.operation(values);
 
-                    String opResult1 = obj1.operation(values);
-
-                    String reduce = redusPath + File.separator +name;
-                    try(BufferedWriter fileOutputStream = new BufferedWriter(new FileWriter(reduce,true))) {
-                        fileOutputStream.write(KeyAndVal[0] + "/" + opResult1+ System.lineSeparator());
-                        fileOutputStream.close();
+                        String reduce = redusPath + File.separator + name;
+                        try (BufferedWriter fileOutputStream = new BufferedWriter(new FileWriter(reduce, true))) {
+                            fileOutputStream.write(KeyAndVal[0] + "/" + opResult1 + System.lineSeparator());
+                            fileOutputStream.close();
+                        }
                     }
-
+                    else {
+                        String reduce = redusPath + File.separator + name;
+                        try (BufferedWriter fileOutputStream = new BufferedWriter(new FileWriter(reduce, true))) {
+                            fileOutputStream.write(line+ System.lineSeparator());
+                            fileOutputStream.close();
+                        }
+                    }
                 }
 
 
@@ -405,6 +419,7 @@ public class threeJoin {
 
 
     }
+
 
     public static void sum_all_red(int red){
 
@@ -491,8 +506,6 @@ public class threeJoin {
         return redu1+redu2+"res.txt";
     }
 
-
-
     public static void delete(File file) throws IOException{
 
         if(file.isDirectory()){
@@ -548,3 +561,4 @@ public class threeJoin {
 
 
 }
+

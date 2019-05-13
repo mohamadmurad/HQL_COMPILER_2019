@@ -8,11 +8,12 @@ import java.util.Map;
 
 public class innerJoin {
 
+
     public interface MyFunction {
         String operation(ArrayList<Integer> c);
     }
 
-    String sql = "SELECT dep.dep_id , SUM(emp.salary),avg(emp.date) FROM emp INNER JOIN dep" +
+    String sql = "SELECT dep.dep_id , SUM(emp.salary), avg(emp.date) FROM emp INNER JOIN dep" +
             " ON dep.dep_id = emp.dep_id WHERE dep.dep_id=1 AND emp.name LIKE(\"mhd\") GROUP by dep.dep_id";
 
     static String lineSeparator = System.getProperty("line.separator");
@@ -54,7 +55,7 @@ public class innerJoin {
             for(int i=0;i<line.length;i++) {
                 line[i] = line[i].replace("\"", "");
             }
-            String fileContent = line[5] +"/"+line[3];
+            String fileContent = line[5]+"/"+line[3];
 
             fileOutputStream.write(fileContent.getBytes());
                 fileOutputStream.write(lineSeparator.getBytes());
@@ -84,7 +85,7 @@ public class innerJoin {
             for(int i=0;i<line.length;i++) {
                 line[i] = line[i].replace("\"", "");
             }
-            String fileContent = line[5] +"/"+line[4];
+            String fileContent = line[5]+"/"+line[4];
 
             fileOutputStream.write(fileContent.getBytes());
             fileOutputStream.write(lineSeparator.getBytes());
@@ -103,14 +104,13 @@ public class innerJoin {
 
     }
 
-
     public static void map_reduce() throws IOException {
 
         innerJoin1();
 
-       shuffle(1);
-       shuffle(2);
 
+        shuffle1(1);
+        shuffle1(2);
         String red1 = reducer(1,new MyFunction() {
             @Override
             public String operation(ArrayList<Integer> c) {
@@ -192,7 +192,6 @@ public class innerJoin {
         }
     }
 
-
     public static void innerJoin1() {
 
         String Table_1_path = tableLocation1;
@@ -253,8 +252,7 @@ public class innerJoin {
 
     }
 
-
-    public static  void shuffle(int map) throws IOException {
+    public static  void shuffle1(int map) throws IOException {
 
         String maperPath = tempdirectory+File.separator+"map"+map;
         String shuffPath = tempdirectory+File.separator+"shuff"+map;
@@ -274,31 +272,13 @@ public class innerJoin {
 
                 while ((line = br.readLine()) != null){
                     String[] KeyAndVal = line.split("/");
-
-                    String shuffname = KeyAndVal[0];
-                    String ou_file = shuffPath+File.separator+shuffname+".txt";
-                    File n = new File(ou_file);
-                    if(n.exists()){
-                        // for distnict
-                        try(BufferedWriter fileOutputStream = new BufferedWriter(new FileWriter(ou_file,true))) {
-                            fileOutputStream.write(","+KeyAndVal[1]);
-                        }
-                    }else{
-                        try(BufferedWriter fileOutputStream = new BufferedWriter(new FileWriter(ou_file,true))) {
-                            fileOutputStream.write(KeyAndVal[0] + "/" + KeyAndVal[1]);
-                        }
+                    String[] Keys = KeyAndVal[0].split(",");
+                    ArrayList<Integer> ALKeys = new ArrayList<>();
+                    for(String k :Keys){
+                        ALKeys.add(Integer.parseInt(k));
                     }
 
 
-
-
-                    //String[] Keys = KeyAndVal[0].split(",");
-                    //ArrayList<Integer> ALKeys = new ArrayList<>();
-                    /*for(String k :Keys){
-                        ALKeys.add(Integer.parseInt(k));
-                    }*/
-
-/*
                     if(mmm.containsKey(ALKeys)){
                         mmm.get(ALKeys).add(Integer.parseInt(KeyAndVal[1]));
 
@@ -307,7 +287,7 @@ public class innerJoin {
                         ArrayList<Integer> dd = new ArrayList<>();
                         dd.add(Integer.parseInt(KeyAndVal[1]));
                         mmm.put(ALKeys,dd);
-                    }*/
+                    }
                 }
 
                 br.close();
@@ -321,8 +301,8 @@ public class innerJoin {
 
 
         }
-/*
-        String shuffl = shuffPath + File.separator +"shufflResult"+numShuff+".txt";
+
+        String shuffl = shuffPath + File.separator +"shufflResult1.txt";
 
         try(BufferedWriter fileOutputStream = new BufferedWriter(new FileWriter(shuffl,true))) {
 
@@ -352,9 +332,11 @@ public class innerJoin {
             // exception handling
         } catch (IOException e) {
             // exception handling
-        }*/
+        }
 
     }
+
+
 
     public static String reducer(int shuff,MyFunction obj1){
 
@@ -493,8 +475,6 @@ public class innerJoin {
 
         return redu1+redu2+"res.txt";
     }
-
-
 
     public static void delete(File file) throws IOException{
 

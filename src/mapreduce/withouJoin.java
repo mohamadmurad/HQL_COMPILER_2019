@@ -54,7 +54,7 @@ public class withouJoin {
             for(int i=0;i<line.length;i++) {
                 line[i] = line[i].replace("\"", "");
             }
-            String fileContent = line[0] +"/"+line[2];
+            String fileContent = line[0]+","+line[1] +"/"+line[2];
 
             fileOutputStream.write(fileContent.getBytes());
             fileOutputStream.write(lineSeparator.getBytes());
@@ -84,7 +84,7 @@ public class withouJoin {
             for(int i=0;i<line.length;i++) {
                 line[i] = line[i].replace("\"", "");
             }
-            String fileContent = line[0] +"/"+line[1];
+            String fileContent = line[0]+","+line[1] +"/"+line[1];
 
             fileOutputStream.write(fileContent.getBytes());
             fileOutputStream.write(lineSeparator.getBytes());
@@ -119,7 +119,7 @@ public class withouJoin {
 
                 return String.valueOf(sum);
             }
-        });
+        });/*
         reducer(1,3,new MyFunction() {
             @Override
             public String operation(ArrayList<Integer> c) {
@@ -205,7 +205,7 @@ public class withouJoin {
 
                 return output;
             }
-        });
+        });*/
 
 
 
@@ -228,7 +228,7 @@ public class withouJoin {
 
         sum_all_red(1);
         sum_all_red(2);
-        sum_all_red(3);
+        //sum_all_red(3);
 
         File n = new File(tempdirectory+File.separator+"All_red");
         String[] list = n.list();
@@ -314,14 +314,13 @@ public class withouJoin {
 
 
     public static  void shuffle(int map) throws IOException {
-
         String maperPath = tempdirectory+File.separator+"map"+map;
         String shuffPath = tempdirectory+File.separator+"shuff"+map;
 
         File stockDir1 = new File(shuffPath);
         if(!stockDir1.exists()){stockDir1.mkdir();}
 
-        Map<ArrayList<Integer>,ArrayList<Integer>> mmm = new HashMap<>();
+        Map<ArrayList<Object>,ArrayList<Object>> mmm = new HashMap<>();
 
         File stockDir = new File(maperPath);
         String[] list = stockDir.list();
@@ -333,40 +332,26 @@ public class withouJoin {
 
                 while ((line = br.readLine()) != null){
                     String[] KeyAndVal = line.split("/");
-
-                    String shuffname = KeyAndVal[0];
-                    String ou_file = shuffPath+File.separator+shuffname+".txt";
-                    File n = new File(ou_file);
-                    if(n.exists()){
-                        // for distnict
-                        try(BufferedWriter fileOutputStream = new BufferedWriter(new FileWriter(ou_file,true))) {
-                            fileOutputStream.write(","+KeyAndVal[1]);
-                        }
-                    }else{
-                        try(BufferedWriter fileOutputStream = new BufferedWriter(new FileWriter(ou_file,true))) {
-                            fileOutputStream.write(KeyAndVal[0] + "/" + KeyAndVal[1]);
+                    String[] Keys = KeyAndVal[0].split(",");
+                    ArrayList<Object> ALKeys = new ArrayList<>();
+                    for(String k :Keys){
+                        if(k.matches("NULL") || k.matches("null")){
+                            ALKeys.add(k);
+                        }else{
+                            ALKeys.add(Integer.parseInt(k));
                         }
                     }
 
 
-
-
-                    //String[] Keys = KeyAndVal[0].split(",");
-                    //ArrayList<Integer> ALKeys = new ArrayList<>();
-                    /*for(String k :Keys){
-                        ALKeys.add(Integer.parseInt(k));
-                    }*/
-
-/*
                     if(mmm.containsKey(ALKeys)){
-                        mmm.get(ALKeys).add(Integer.parseInt(KeyAndVal[1]));
+                        mmm.get(ALKeys).add(KeyAndVal[1]);
 
                     }else {
 
-                        ArrayList<Integer> dd = new ArrayList<>();
-                        dd.add(Integer.parseInt(KeyAndVal[1]));
+                        ArrayList<Object> dd = new ArrayList<>();
+                        dd.add(KeyAndVal[1]);
                         mmm.put(ALKeys,dd);
-                    }*/
+                    }
                 }
 
                 br.close();
@@ -380,23 +365,23 @@ public class withouJoin {
 
 
         }
-/*
-        String shuffl = shuffPath + File.separator +"shufflResult"+numShuff+".txt";
+
+        String shuffl = shuffPath + File.separator +"shufflResult1.txt";
 
         try(BufferedWriter fileOutputStream = new BufferedWriter(new FileWriter(shuffl,true))) {
 
 
-            for (Map.Entry<ArrayList<Integer>, ArrayList<Integer>> entry : mmm.entrySet()) {
+            for (Map.Entry<ArrayList<Object>, ArrayList<Object>> entry : mmm.entrySet()) {
                 System.out.println(entry.getKey()+" : "+entry.getValue());
                 String output = "";
 
-                for(int key : entry.getKey()){
+                for(Object key : entry.getKey()){
                     output += key + ",";
                 }
                 output +="/";
                 output = output.replaceFirst(",/","/");
 
-                for(int val :entry.getValue()){
+                for(Object val :entry.getValue()){
                     output+=","+val;
                 }
                 output += System.lineSeparator();
@@ -411,7 +396,7 @@ public class withouJoin {
             // exception handling
         } catch (IOException e) {
             // exception handling
-        }*/
+        }
 
     }
 
