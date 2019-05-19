@@ -43,19 +43,22 @@ public class withouJoin {
 
     }
 
-    public static void map1(String[] line,String fileName){
+    public static void map1(String line,String fileName,byte[] comalist){
         String maperPath = tempdirectory+File.separator+"map1";
         File stockDir1 = new File(maperPath);
         if(!stockDir1.exists()){stockDir1.mkdir();}
         String FileName = fileName + ".txt";
         String outPath = maperPath + File.separator + FileName;
         try(FileOutputStream fileOutputStream = new FileOutputStream(outPath,true)) {
-
+/*
             for(int i=0;i<line.length;i++) {
                 line[i] = line[i].replace("\"", "");
-            }
-            String fileContent = line[0]+","+line[1] +"/"+line[2];
+            }*/
 
+           // String fileContent = line[0]+","+line[1] +"/"+line[2];
+
+            String fileContent = getCol(0,comalist[0],line)+","+getCol(comalist[0]+1,comalist[1],line) +"/"+getCol(comalist[1]+1,line.length(),line);
+           // String col1 = getCol(0,comalist[0],line);
             fileOutputStream.write(fileContent.getBytes());
             fileOutputStream.write(lineSeparator.getBytes());
 
@@ -73,19 +76,19 @@ public class withouJoin {
 
     }
 
-    public static void map2(String[] line,String fileName){
+    public static void map2(String line,String fileName,byte[] comalist){
         String maperPath = tempdirectory+File.separator+"map2";
         File stockDir1 = new File(maperPath);
         if(!stockDir1.exists()){stockDir1.mkdir();}
         String FileName = fileName + ".txt";
         String outPath = maperPath + File.separator + FileName;
         try(FileOutputStream fileOutputStream = new FileOutputStream(outPath,true)) {
-
+/*
             for(int i=0;i<line.length;i++) {
                 line[i] = line[i].replace("\"", "");
-            }
-            String fileContent = line[0]+","+line[1] +"/"+line[1];
-
+            }*/
+           // String fileContent = line[0]+","+line[1] +"/"+line[1];
+            String fileContent = getCol(0,comalist[0],line)+","+getCol(comalist[0]+1,comalist[1],line) +"/"+getCol(comalist[0]+1,comalist[1],line);
             fileOutputStream.write(fileContent.getBytes());
             fileOutputStream.write(lineSeparator.getBytes());
 
@@ -297,10 +300,16 @@ public class withouJoin {
 
                     String[] country1 = line.split(tableSpilt1);
 
+                    byte[] comaList = new byte[2];
+
+                    comaList = FindCommasInLine(line,comaList);
+
+
+
                     // where
                     if ((true)){
-                        map1(country1,name1);
-                        map2(country1,name1);
+                        map1(line,name1,comaList);
+                        map2(line,name1,comaList);
                     }
 
                 }
@@ -591,6 +600,36 @@ public class withouJoin {
             e.printStackTrace();
         }
 
+    }
+
+
+    private static byte[] FindCommasInLine(String line,byte[] list){
+        //byte[] list = new byte[2];
+        int counter = 0;
+
+        for (byte index = 0; index < line.length(); index++)
+        {
+            if (line.charAt(index) == ',')
+            {
+                list[counter++] = index;
+                //list.add(index);
+            }
+        }
+
+        return list;
+    }
+
+    private static String getCol(int start, int end, String line){
+        String sb = "";
+        int c=0;
+        for (int index = start; index < end; index++)
+        {
+
+            sb+= line.charAt(index);
+            // sb.append(line.charAt(index));
+        }
+
+        return sb;
     }
 
 
