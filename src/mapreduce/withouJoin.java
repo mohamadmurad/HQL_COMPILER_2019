@@ -2,6 +2,7 @@ package mapreduce;
 
 
 import java.io.*;
+import java.lang.reflect.Array;
 import java.util.*;
 
 
@@ -13,8 +14,7 @@ public class withouJoin {
 
     String sql = "Select id,date ,sum(temp),avg(date)  from temp group by id";
 
-
-
+    static String numberREG = "^[-+]?\\d+(\\.\\d+)?$";
 
 
 
@@ -162,7 +162,7 @@ public class withouJoin {
 
         }
 
-        order.start(tempdirectory+File.separator+all,tempdirectory+File.separator+all,comparator);
+        //order.start(tempdirectory+File.separator+all,tempdirectory+File.separator+all,comparator);
         if(list.length==1){
             printResult(tempdirectory+File.separator+"All_red/1.txt");
         }else {
@@ -183,10 +183,10 @@ public class withouJoin {
 
     private static void printResult(String ResultFile) {
         String colName = "";
-        //colName+=""
+
         colName += "id \t\t t_date \t\t avg(temp) \t\t sum(temp) \t\t\n";
         System.out.println(colName);
-        //String absolutePath = ResultFile;
+
         try(BufferedReader br = new BufferedReader(new FileReader(ResultFile))) {
 
             String line;
@@ -455,14 +455,6 @@ public class withouJoin {
 
        }
 
-      /* File stockDir21 = new File(shuffPath);
-       String[] dd = stockDir21.list();
-
-       Arrays.sort(dd);
-
-       for(String s : dd){
-           System.out.println(s);
-       }*/
        shufSort(shuffPath);
 
    }
@@ -471,12 +463,23 @@ public class withouJoin {
         File stockDir = new File(shuffPath);
         String[] list = stockDir.list();
 
-        for(String s : list){
-            System.out.println(s);
-        }
+        Arrays.sort(list, new Comparator<String>() {
+            @Override
+            public int compare(String o1, String o2) {
+
+                int e1 = o1.indexOf('_');
+                int e2= o2.indexOf('_');
+                int number1 = Integer.parseInt(o1.substring(0, e1));
+
+                int number2 = Integer.parseInt(o2.substring(0, e2));
+
+                return number1 - number2;
+
+            }
+        });
 
         int numOfLine = 0;
-        int MAXLINES = 5;
+        int MAXLINES = 100;
         List<String> temp = new ArrayList<>();
         int i=0;
         String Line = "";
@@ -555,7 +558,7 @@ public class withouJoin {
 
         String shuffPath = tempdirectory+File.separator+"shuff"+shuff;;
         String redusPath = tempdirectory+File.separator+"red"+red;
-        // String FileName = "redu"+numReduce+".txt";
+
 
         File stockDir1 = new File(redusPath);
         if(!stockDir1.exists()){stockDir1.mkdir();}
@@ -571,32 +574,56 @@ public class withouJoin {
 
                 while ((line = br.readLine()) != null){
 
-                    //String[] KeyAndVal = line.split("/");
-
-                    //String[] vlas = KeyAndVal[1].split(",");
-
                     String[] vlas ;
 
                     byte slash1 = 0;
 
                     slash1 =FindSlash(line);
 
+                    // String[] KeyAndVal = line.split("/");
+
                     String Key = getCol(0,slash1,line);
 
                     String value = getCol(slash1+1,line.length(),line);
 
-                    ArrayList<Integer> values = new ArrayList<>();
 
-                    for(String s : vlas){
-                        values.add(Integer.parseInt(s));
+
+                    if(value.length() != 2){
+                        vlas = value.split(",");
+                    }else{
+                        vlas= new String[1];
+                        vlas[0]  = "";
                     }
 
-                    String opResult1 = obj1.operation(values);
 
-                    String reduce = redusPath + File.separator +name;
-                    try(BufferedWriter fileOutputStream = new BufferedWriter(new FileWriter(reduce,true))) {
-                        fileOutputStream.write(KeyAndVal[0] + "/" + opResult1+ System.lineSeparator());
-                        fileOutputStream.close();
+                    ArrayList<Integer> values = new ArrayList<>();
+
+                    boolean isNum = false;
+                    for(String s : vlas){
+                        if(s.matches(numberREG)){
+                            isNum = true;
+                            values.add(Integer.parseInt(s));
+                        }else{
+
+                        }
+
+                    }
+                    if(isNum) {
+
+                        String opResult1 = obj1.operation(values);
+
+                        String reduce = redusPath + File.separator + name;
+                        try (BufferedWriter fileOutputStream = new BufferedWriter(new FileWriter(reduce, true))) {
+                            fileOutputStream.write(Key + "/" + opResult1 + System.lineSeparator());
+                            fileOutputStream.close();
+                        }
+                    }
+                    else {
+                        String reduce = redusPath + File.separator + name;
+                        try (BufferedWriter fileOutputStream = new BufferedWriter(new FileWriter(reduce, true))) {
+                            fileOutputStream.write(line+ System.lineSeparator());
+                            fileOutputStream.close();
+                        }
                     }
 
                 }
@@ -620,7 +647,7 @@ public class withouJoin {
         String redusPath = tempdirectory+File.separator+"red"+red;
         String ALl_red_path = tempdirectory+File.separator+"All_red";
         String all_file = ALl_red_path + File.separator+red+".txt";
-        // String FileName = "redu"+numReduce+".txt";
+
 
         File stockDir1 = new File(ALl_red_path);
         if(!stockDir1.exists()){stockDir1.mkdir();}
@@ -628,6 +655,23 @@ public class withouJoin {
 
         File stockDir = new File(redusPath);
         String[] list = stockDir.list();
+
+        Arrays.sort(list, new Comparator<String>() {
+            @Override
+            public int compare(String o1, String o2) {
+
+                int e1 = o1.indexOf('.');
+                int e2= o2.indexOf('.');
+                int number1 = Integer.parseInt(o1.substring(0, e1));
+
+                int number2 = Integer.parseInt(o2.substring(0, e2));
+
+                return number1 - number2;
+
+            }
+        });
+
+
         for(String name : list){
 
             String all = redusPath + File.separator +name;

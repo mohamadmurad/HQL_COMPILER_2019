@@ -34,6 +34,10 @@ public class CodeG extends HplsqlBaseVisitor<Object> {
     String diroutput = "src//CG";
     String fileName = "cg.java";
 
+    int shuffNum=0;
+
+    Map<Integer,Integer> shufRed = new HashMap<>();
+
     String  filePath = diroutput+ File.separator+fileName;
 
 
@@ -47,7 +51,7 @@ public class CodeG extends HplsqlBaseVisitor<Object> {
                 "import java.util.ArrayList;\n" +
                 "import java.util.HashMap;\n" +
                 "import java.util.List;\n" +
-                "import java.util.Map;\n";
+                "import java.util.*;\n";
         output+="public class cg {\n\n";
         output+="public interface MyFunction {\n" +
                 "        String operation(ArrayList<Integer> c);\n" +
@@ -166,35 +170,50 @@ public class CodeG extends HplsqlBaseVisitor<Object> {
             int sum_all_red =0;
             for(Map.Entry<String, Integer> entry : vales.entrySet()){
                 map++;
-
+                System.out.print("col : "+entry.getKey());
                 sum_all_red+= entry.getValue();
 
                for(SelectCol s :values){
                    if(s.colname.equals(entry.getKey())){
-
+                       System.out.println("   func : "+s.func_name);
                        output+="shuffle11("+map+","+s.is_distnict+");\n";
-
-                       for(int red=0;red<entry.getValue();red++){
-                           output+=" reducer("+map+","+(red+1)+",new MyFunction() {\n" +
-                                   "            @Override\n" +
-                                   "            public String operation(ArrayList<Integer> c) {\n" +
-                                   "                int sum = 0;\n" +
-                                   "                for(int i=0;i<c.size();i++){\n" +
-                                   "\n" +
-                                   "                    sum+=c.get(i);\n" +
-                                   "                }\n" +
-                                   "                return String.valueOf(sum/c.size());\n" +
-                                   "            }\n" +
-                                   "        });\n";
-
-
+                       if(shufRed.containsKey(map)){
+                           int r = shufRed.get(map)+1;
+                           shufRed.put(map,r);
+                       }else{
+                           shufRed.put(map,1);
                        }
                    }
 
                }
 
+            }
+
+            int redNum=1;
+            for(Map.Entry<Integer, Integer> entry : shufRed.entrySet()){
+
+                for(int red=0;red<entry.getValue();red++){
+
+                    output+=" reducer("+entry.getKey()+","+(redNum)+",new MyFunction() {\n" +
+                            "            @Override\n" +
+                            "            public String operation(ArrayList<Integer> c) {\n";
+
+                   output+=getFuncBody(values.get(redNum-1).func_name);
+                    redNum++;
+
+                            /*"                int sum = 0;\n" +
+                            "                for(int i=0;i<c.size();i++){\n" +
+                            "\n" +
+                            "                    sum+=c.get(i);\n" +
+                            "                }\n" +
+                            "                return String.valueOf(sum/c.size());\n" +
+                            "            }\n" +
+                            "        });\n";*/
+
+                }
 
             }
+
 
             for(int sum_a_red=0;sum_a_red<sum_all_red;sum_a_red++){
                 output+="sum_all_red("+(sum_a_red+1)+");\n";
@@ -217,21 +236,27 @@ public class CodeG extends HplsqlBaseVisitor<Object> {
                         "        }\n\n";
 
 
-                // if order /////
-
-
-
-                output+="if(list.length==1){\n" +
-                        "            printResult(tempdirectory+File.separator+\"All_red/1.txt\");\n" +
-                        "        }else {\n" +
-                        "            printResult(tempdirectory+File.separator+all);\n" +
-                        "        }\n\n";
-
-
             }
 
+            // if order /////
 
-            output+="}";
+
+
+            output+="if(list.length==1){\n" +
+                    "            printResult(tempdirectory+File.separator+\"All_red/1.txt\");\n" +
+                    "        }else {\n" +
+                    "            printResult(tempdirectory+File.separator+all);\n" +
+                    "        }\n\n";
+
+
+            output+="}\n\n";
+
+
+            output+=getPrintFunc(ctx);
+
+            output+=getMain(0);
+
+            output+="}\n\n";
             try(BufferedWriter fileOutputStream = new BufferedWriter(new FileWriter(filePath,true))){
 
                 fileOutputStream.write(output);
@@ -433,7 +458,7 @@ public class CodeG extends HplsqlBaseVisitor<Object> {
                 "        {\n" +
                 "            if (line.charAt(index) == '/')\n" +
                 "            {\n" +
-                "                list =  index;\n" +
+                "                list =  index;\n break;" +
                 "\n" +
                 "            }\n" +
                 "        }\n" +
@@ -575,18 +600,34 @@ public class CodeG extends HplsqlBaseVisitor<Object> {
                 "        File stockDir = new File(shuffPath);\n" +
                 "        String[] list = stockDir.list();\n" +
                 "\n" +
+                "        Arrays.sort(list, new Comparator<String>() {\n" +
+                "            @Override\n" +
+                "            public int compare(String o1, String o2) {\n" +
+                "\n" +
+                "                int e1 = o1.indexOf('_');\n" +
+                "                int e2= o2.indexOf('_');\n" +
+                "                int number1 = Integer.parseInt(o1.substring(0, e1));\n" +
+                "\n" +
+                "                int number2 = Integer.parseInt(o2.substring(0, e2));\n" +
+                "\n" +
+                "                return number1 - number2;\n" +
+                "\n" +
+                "            }\n" +
+                "        });\n" +
+                "\n" +
                 "        int numOfLine = 0;\n" +
-                "        int MAXLINES = 5;\n" +
+                "        int MAXLINES = 100;\n" +
                 "        List<String> temp = new ArrayList<>();\n" +
                 "        int i=0;\n" +
                 "        String Line = \"\";\n" +
                 "        String ou_file = null;\n" +
                 "        for(String name :list){\n" +
+                "\n" +
                 "            String absolutePath = shuffPath + File.separator + name;\n" +
                 "            try(BufferedReader br = new BufferedReader(new FileReader(absolutePath))) {\n" +
                 "\n" +
                 "\n" +
-                "                ou_file = shuffPath + File.separator +(++i) +\".txt\" ;\n" +
+                "              //  ou_file = shuffPath + File.separator +(++i) +\".txt\" ;\n" +
                 "                while ((numOfLine<MAXLINES) && (Line = br.readLine()) !=null){\n" +
                 "\n" +
                 "                    //while ((Line = br.readLine()) != null){\n" +
@@ -620,7 +661,6 @@ public class CodeG extends HplsqlBaseVisitor<Object> {
                 "\n" +
                 "\n" +
                 "\n" +
-                "\n" +
                 "            } catch (FileNotFoundException e) {\n" +
                 "                e.printStackTrace();\n" +
                 "            } catch (IOException e) {\n" +
@@ -632,7 +672,7 @@ public class CodeG extends HplsqlBaseVisitor<Object> {
                 "        if((temp.size()!=0)){\n" +
                 "\n" +
                 "            numOfLine =0;\n" +
-                "\n" +
+                "            ou_file = shuffPath + File.separator +(++i) +\".txt\" ;\n" +
                 "            try(BufferedWriter fileOutputStream = new BufferedWriter(new FileWriter(ou_file,true))) {\n" +
                 "                for(String r : temp) {\n" +
                 "\n" +
@@ -679,7 +719,7 @@ public class CodeG extends HplsqlBaseVisitor<Object> {
                 "\n" +
                 "                   slash1 =FindSlash(line);\n" +
                 "\n" +
-                "                  // String[] KeyAndVal = line.split(\"/\");\n" +
+
                 "\n" +
                 "                   String Key = getCol(0,slash1,line);\n" +
                 "\n" +
@@ -766,12 +806,12 @@ public class CodeG extends HplsqlBaseVisitor<Object> {
     }
 
     private String getSumAllRed(){
-        return "public static void sum_all_red(int red){\n" +
+        return "    public static void sum_all_red(int red){\n" +
                 "\n" +
                 "        String redusPath = tempdirectory+File.separator+\"red\"+red;\n" +
                 "        String ALl_red_path = tempdirectory+File.separator+\"All_red\";\n" +
                 "        String all_file = ALl_red_path + File.separator+red+\".txt\";\n" +
-                "        // String FileName = \"redu\"+numReduce+\".txt\";\n" +
+                "        \n" +
                 "\n" +
                 "        File stockDir1 = new File(ALl_red_path);\n" +
                 "        if(!stockDir1.exists()){stockDir1.mkdir();}\n" +
@@ -779,6 +819,23 @@ public class CodeG extends HplsqlBaseVisitor<Object> {
                 "\n" +
                 "        File stockDir = new File(redusPath);\n" +
                 "        String[] list = stockDir.list();\n" +
+                "\n" +
+                "        Arrays.sort(list, new Comparator<String>() {\n" +
+                "            @Override\n" +
+                "            public int compare(String o1, String o2) {\n" +
+                "\n" +
+                "                int e1 = o1.indexOf('.');\n" +
+                "                int e2= o2.indexOf('.');\n" +
+                "                int number1 = Integer.parseInt(o1.substring(0, e1));\n" +
+                "\n" +
+                "                int number2 = Integer.parseInt(o2.substring(0, e2));\n" +
+                "\n" +
+                "                return number1 - number2;\n" +
+                "\n" +
+                "            }\n" +
+                "        });\n" +
+                "\n" +
+                "\n" +
                 "        for(String name : list){\n" +
                 "\n" +
                 "            String all = redusPath + File.separator +name;\n" +
@@ -818,10 +875,10 @@ public class CodeG extends HplsqlBaseVisitor<Object> {
     }
 
     private String getReducer(){
-        return "public static String reducer(int shuff,MyFunction obj1){\n" +
+        return "public static String reducer(int shuff,int red,MyFunction obj1){\n" +
                 "\n" +
                 "        String shuffPath = tempdirectory+File.separator+\"shuff\"+shuff;;\n" +
-                "        String redusPath = tempdirectory+File.separator+\"red\"+shuff;\n" +
+                "        String redusPath = tempdirectory+File.separator+\"red\"+red;\n" +
                 "\n" +
                 "\n" +
                 "        File stockDir1 = new File(redusPath);\n" +
@@ -838,14 +895,13 @@ public class CodeG extends HplsqlBaseVisitor<Object> {
                 "\n" +
                 "                while ((line = br.readLine()) != null){\n" +
                 "\n" +
-                "                    //String[] KeyAndVal = line.split(\"/\");\n" +
                 "                    String[] vlas ;\n" +
                 "\n" +
                 "                    byte slash1 = 0;\n" +
                 "\n" +
                 "                    slash1 =FindSlash(line);\n" +
                 "\n" +
-                "                    // String[] KeyAndVal = line.split(\"/\");\n" +
+
                 "\n" +
                 "                    String Key = getCol(0,slash1,line);\n" +
                 "\n" +
@@ -890,6 +946,7 @@ public class CodeG extends HplsqlBaseVisitor<Object> {
                 "                            fileOutputStream.close();\n" +
                 "                        }\n" +
                 "                    }\n" +
+                "\n" +
                 "                }\n" +
                 "\n" +
                 "\n" +
@@ -1047,7 +1104,178 @@ public class CodeG extends HplsqlBaseVisitor<Object> {
     }
 
 
+    private String getPrintFunc(HplsqlParser.New_select_stmtContext ctx){
+
+        String out ="private static void printResult(String ResultFile) {\nString colName = \"\";";
+
+        for(int i =0 ; i<ctx.new_select_col().size();i++){
+            SelectCol coloms = (SelectCol)visit(ctx.new_select_col(i));
+            if(coloms.is_colom)
+                out+="colName += \""+coloms.colname+" \\t\\t\";\n";
+            else{
+                if(coloms.func_name.equals("summarize")){
+
+                    out+="colName += \"Count\"+\"\\t\\t\"+\"Mean\"+\"\\t\\t\"+\"Median\"+\"\\t\\t\"+\"Mode\"+\"\\t\\t\"+\"Max\"+\"\\t\\t\"+\"Min\"+\"\\t\\t\"+\"STD\";\n";
+                }else {
+                    out+=" colName += \""+coloms.func_name+"("+coloms.colname+")"+" \\t\\t\";\n";
+
+                }
+
+            }
 
 
+        }
 
+        out+="System.out.println(colName);\n" +
+                "       \n" +
+                "        try(BufferedReader br = new BufferedReader(new FileReader(ResultFile))) {\n" +
+                "\n" +
+                "            String line;\n" +
+                "\n" +
+                "            while ((line = br.readLine()) != null) {\n" +
+                "\n" +
+                "                String[] r = line.split(\"/\");\n" +
+                "                String[] k = r[0].split(\",\");\n" +
+                "\n" +
+                "                for(String kk:k){\n" +
+                "                    System.out.print(kk + \" \\t\\t \");\n" +
+                "                }\n" +
+                "\n" +
+                "                String[] values = r[1].split(\",\");\n" +
+                "\n" +
+                "                for(String kk:values){\n" +
+                "                    System.out.print(kk + \" \\t\\t \");\n" +
+                "                }\n" +
+                "                System.out.println(\"\\n\");\n" +
+                "            }\n" +
+                "        } catch (FileNotFoundException e) {\n" +
+                "            e.printStackTrace();\n" +
+                "        } catch (IOException e) {\n" +
+                "            e.printStackTrace();\n" +
+                "        }\n" +
+                "    }\n";
+        return out;
     }
+
+
+    private String getFuncBody(String func_name){
+        switch (func_name){
+            case "sum":{
+                return  "int sum = 0;\n" +
+                        "                for(int i=0;i<c.size();i++){\n" +
+                        "\n" +
+                        "                    sum+=c.get(i);\n" +
+                        "                }\n" +
+                        "                return String.valueOf(sum);\n" +
+                        "            }\n" +
+                        "        });\n\n";
+            }
+            case "avg":{
+                return "int sum = 0;\n" +
+                        "                for(int i=0;i<c.size();i++){\n" +
+                        "\n" +
+                        "                    sum+=c.get(i);\n" +
+                        "                }\n" +
+                        "                return String.valueOf(sum/c.size());\n" +
+                        "            }\n" +
+                        "        });\n\n";
+            }
+            case "count":{
+                return
+                        "                return String.valueOf(c.size());\n" +
+
+                                "        }});\n\n";
+            }
+            case "summarize":{
+                return "String output=\"\";\n" +
+                        "                //calculate count\n" +
+                        "                output+=c.size() + \" \\t\\t \";\n" +
+                        "                //calculate mean(avg)\n" +
+                        "                double sum = 0.0;\n" +
+                        "                for(double num : c){\n" +
+                        "                    sum+=num;\n" +
+                        "                }\n" +
+                        "                double avg = sum/c.size();\n" +
+                        "                avg = Math.floor(avg);\n" +
+                        "                output+=avg + \" \\t\\t \";\n" +
+                        "                //calculate median\n" +
+                        "                Collections.sort(c);\n" +
+                        "                double median;\n" +
+                        "                if (c.size() % 2 == 0)\n" +
+                        "                { median = (double)(c.get(c.size()/2) + c.get(c.size()/2 - 1))/2;}\n" +
+                        "                else\n" +
+                        "                { median = (double)c.get(c.size()/2);}\n" +
+                        "                output+=median + \" \\t\\t \";\n" +
+                        "                //calculate mode\n" +
+                        "                final Map<Integer, Integer> countMap = new HashMap<Integer, Integer>();\n" +
+                        "\n" +
+                        "                int max = -1;\n" +
+                        "\n" +
+                        "                for (final int n : c) {\n" +
+                        "                    int count = 0;\n" +
+                        "\n" +
+                        "                    if (countMap.containsKey(n)) {\n" +
+                        "                        count = countMap.get(n) + 1;\n" +
+                        "                    } else {\n" +
+                        "                        count = 1;\n" +
+                        "                    }\n" +
+                        "\n" +
+                        "                    countMap.put(n, count);\n" +
+                        "\n" +
+                        "                    if (count > max) {\n" +
+                        "                        max = count;\n" +
+                        "                    }\n" +
+                        "                }\n" +
+                        "                output+=\"[\";\n" +
+                        "                for (final Map.Entry<Integer, Integer> tuple : countMap.entrySet()) {\n" +
+                        "                    if (tuple.getValue() == max) {\n" +
+                        "                        output+=tuple.getKey()+ \" - \";\n" +
+                        "                    }\n" +
+                        "                }\n" +
+                        "                output+=\"]\"+ \" \\t\\t \";\n" +
+                        "                \n" +
+                        "                //max value\n" +
+                        "                int maxVal = c.get(0);\n" +
+                        "                for(int i=1;i < c.size();i++){\n" +
+                        "                    if(c.get(i) > maxVal){\n" +
+                        "                        maxVal = c.get(i);\n" +
+                        "                    }\n" +
+                        "                }\n" +
+                        "                \n" +
+                        "                output+=maxVal+ \" \\t\\t \";\n" +
+                        "                //min value\n" +
+                        "                int minValue = c.get(0);\n" +
+                        "                for(int i=1;i<c.size();i++){\n" +
+                        "                    if(c.get(i) < minValue){\n" +
+                        "                        minValue = c.get(i);\n" +
+                        "                    }\n" +
+                        "                }\n" +
+                        "                output+=minValue+ \" \\t\\t \";\n" +
+                        "                //calculate std\n" +
+                        "                double summ = 0.0, standardDeviation = 0.0;\n" +
+                        "                int length = c.size();\n" +
+                        "\n" +
+                        "                for(double num : c) {\n" +
+                        "                    summ += num;\n" +
+                        "                }\n" +
+                        "\n" +
+                        "                double mean = summ/length;\n" +
+                        "\n" +
+                        "                for(double num: c) {\n" +
+                        "                    standardDeviation += Math.pow(num - mean, 2);\n" +
+                        "                }\n" +
+                        "                output+=Math.sqrt(standardDeviation/length)+ \" \\t\\t \";\n" +
+                        "\n" +
+                        "\n" +
+                        "                return output;\n\n}});";
+            }
+        }
+
+        return "";
+    }
+
+
+
+
+
+}
