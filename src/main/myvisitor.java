@@ -455,7 +455,8 @@ public class myvisitor extends HplsqlBaseVisitor<Object> {
         String func_name = ctx.getChild(0).getText();
         //System.out.println(func_name);
         String paramiter = ctx.expr().get(0).getText();
-        SelectCol temp = new SelectCol("",func_name, paramiter,null);
+        boolean isDistnict = ctx.expr_func_all_distinct() != null ? true :false;
+        SelectCol temp = new SelectCol("",func_name, paramiter,null,isDistnict);
         return  temp;
 
 
@@ -503,7 +504,8 @@ public class myvisitor extends HplsqlBaseVisitor<Object> {
                 String func_name = ctx.getChild(0).getText();
 
                 String paramiter = ctx.having_conditions(i).expr_agg_window_func().expr().get(0).getText();
-                c.add(new SelectCol("",func_name, paramiter,null));
+                boolean isDistnict = ctx.having_conditions(i).expr_agg_window_func().expr_func_all_distinct() != null ? true :false;
+                c.add(new SelectCol("",func_name, paramiter,null,isDistnict));
 
             }
         }

@@ -407,7 +407,7 @@ public class codeGen extends HplsqlBaseVisitor<Object> {
         String func_name = ctx.getChild(0).getText();
 
         String paramiter = ctx.expr().get(0).getText();
-        SelectCol temp = new SelectCol("",func_name, paramiter,null);
+        SelectCol temp = new SelectCol("",func_name, paramiter,null,false);
         return  temp;
 
 

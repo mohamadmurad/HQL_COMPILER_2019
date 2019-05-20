@@ -435,28 +435,37 @@ public class innerJoin {
     public static String concatReducer(String redu1, String redu2,String path1,String path2){
 
         String reduce = tempdirectory + File.separator +redu1+redu2+"res.txt";
-        //String out_File = tempdirectory+File.separator+"res.txt";
         String shuffl = path1 + File.separator +redu1;
-
-        //File stockDir = new File(reduce);
-  //     String[] list = stockDir.list();
-
         try (BufferedReader br = new BufferedReader(new FileReader(shuffl))) {
 
             String line;
-
             while ((line = br.readLine()) != null){
 
-                String[] KeyAndVal = line.split("/");
+                byte slashIndex1 ;
+
+                slashIndex1 = FindSlash(line);
+
+                String Key1 = getCol(0,slashIndex1,line);
+
+                String val1 = getCol(slashIndex1+1,line.length(),line);
+
 
                 String shuff2 = path2 + File.separator +redu2;
                 try (BufferedReader br2 = new BufferedReader(new FileReader(shuff2))) {
                     String line2;
                     while ((line2 = br2.readLine()) != null) {
 
-                        String[] KeyAndVal2 = line2.split("/");
-                        if(KeyAndVal[0].equals(KeyAndVal2[0])){
-                            String output = KeyAndVal[0] + "/" + KeyAndVal[1] + "," +KeyAndVal2[1]+lineSeparator;
+                        //String[] KeyAndVal2 = line2.split("/");
+
+                        byte slashIndex2 ;
+
+                        slashIndex2 = FindSlash(line);
+                        String Key2 = getCol(0,slashIndex2,line2);
+                        String val2 = getCol(slashIndex2+1,line2.length(),line2);
+
+
+                        if(Key1.equals(Key2)){
+                            String output = Key2 + "/" + val1 + "," +val2+lineSeparator;
                             try(BufferedWriter fileOutputStream = new BufferedWriter(new FileWriter(reduce,true))) {
                                 fileOutputStream.write(output);
                                 fileOutputStream.close();
@@ -528,6 +537,51 @@ public class innerJoin {
         }
 
     }
+
+
+    private static byte[] FindCommasInLine(String line,byte[] list){
+
+        int counter = 0;
+
+        for (byte index = 0; index < line.length(); index++)
+        {
+            if (line.charAt(index) == ',')
+            {
+                list[counter++] = index;
+
+            }
+        }
+
+        return list;
+    }
+
+    private static byte FindSlash(String line){
+
+        int counter = 0;
+byte list = 0;
+        for (byte index = 0; index < line.length(); index++)
+        {
+            if (line.charAt(index) == '/')
+            {
+                list =  index;
+
+            }
+        }
+
+        return list;
+    }
+
+    private static String getCol(int start, int end, String line){
+        String sb = "";
+        int c=0;
+        for (int index = start; index < end; index++)
+        {
+            sb+= line.charAt(index);
+        }
+
+        return sb;
+    }
+
 
 
 }

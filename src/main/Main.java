@@ -78,8 +78,9 @@ public class Main {
 
 
 
-            CodeGenerator code_g = new CodeGenerator(symbol);
+            CodeG code_g = new CodeG();
             code_g.visit(myTree);
+
             //codeGen code_g = new codeGen(symbol);
            // code_g.visit(myTree);
 

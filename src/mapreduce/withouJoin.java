@@ -2,10 +2,7 @@ package mapreduce;
 
 
 import java.io.*;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 
 public class withouJoin {
@@ -14,103 +11,19 @@ public class withouJoin {
         String operation(ArrayList<Integer> c);
     }
 
-    String sql = "Select id,date , sum(temp),avg(date) , SUMMARIZE(temp) from temp group by id";
-
-    static String lineSeparator = System.getProperty("line.separator");
-    static String tempdirectory = "temp";
-
-    static String tableLocation1 = "temperature";
-
-    static String tableSpilt1  = ",";
-
-
-    public static void main(String[] args) {
-        initFIleDir();
-        File tableDir1 = new File(tableLocation1);
+    String sql = "Select id,date ,sum(temp),avg(date)  from temp group by id";
 
 
 
-        if(tableDir1.exists() && tableDir1.isDirectory()){
-
-            try {
-
-                map_reduce();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-
-        }
-
-    }
-
-    public static void map1(String line,String fileName,byte[] comalist){
-        String maperPath = tempdirectory+File.separator+"map1";
-        File stockDir1 = new File(maperPath);
-        if(!stockDir1.exists()){stockDir1.mkdir();}
-        String FileName = fileName + ".txt";
-        String outPath = maperPath + File.separator + FileName;
-        try(FileOutputStream fileOutputStream = new FileOutputStream(outPath,true)) {
-/*
-            for(int i=0;i<line.length;i++) {
-                line[i] = line[i].replace("\"", "");
-            }*/
-
-           // String fileContent = line[0]+","+line[1] +"/"+line[2];
-
-            String fileContent = getCol(0,comalist[0],line)+","+getCol(comalist[0]+1,comalist[1],line) +"/"+getCol(comalist[1]+1,line.length(),line);
-           // String col1 = getCol(0,comalist[0],line);
-            fileOutputStream.write(fileContent.getBytes());
-            fileOutputStream.write(lineSeparator.getBytes());
 
 
-            fileOutputStream.flush();
-
-            fileOutputStream.close();
-
-        } catch (FileNotFoundException e) {
-
-        } catch (IOException e) {
-
-        }
-
-
-    }
-
-    public static void map2(String line,String fileName,byte[] comalist){
-        String maperPath = tempdirectory+File.separator+"map2";
-        File stockDir1 = new File(maperPath);
-        if(!stockDir1.exists()){stockDir1.mkdir();}
-        String FileName = fileName + ".txt";
-        String outPath = maperPath + File.separator + FileName;
-        try(FileOutputStream fileOutputStream = new FileOutputStream(outPath,true)) {
-/*
-            for(int i=0;i<line.length;i++) {
-                line[i] = line[i].replace("\"", "");
-            }*/
-           // String fileContent = line[0]+","+line[1] +"/"+line[1];
-            String fileContent = getCol(0,comalist[0],line)+","+getCol(comalist[0]+1,comalist[1],line) +"/"+getCol(comalist[0]+1,comalist[1],line);
-            fileOutputStream.write(fileContent.getBytes());
-            fileOutputStream.write(lineSeparator.getBytes());
-
-
-            fileOutputStream.flush();
-
-            fileOutputStream.close();
-
-        } catch (FileNotFoundException e) {
-
-        } catch (IOException e) {
-
-        }
-
-
-    }
 
     public static void map_reduce() throws IOException {
 
         read_files();
 
-       shuffle(1);
+       //shuffle11(1,true);
+        shuffle11(1,false);
         String red1 = reducer(1,1,new MyFunction() {
             @Override
             public String operation(ArrayList<Integer> c) {
@@ -122,7 +35,9 @@ public class withouJoin {
 
                 return String.valueOf(sum);
             }
-        });/*
+        });
+
+       /*
         reducer(1,3,new MyFunction() {
             @Override
             public String operation(ArrayList<Integer> c) {
@@ -212,7 +127,8 @@ public class withouJoin {
 
 
 
-       shuffle(2);
+       shuffle11(2,false);
+
        String red2 = reducer(2,2,new MyFunction() {
             @Override
             public String operation(ArrayList<Integer> c) {
@@ -230,11 +146,14 @@ public class withouJoin {
 
 
         sum_all_red(1);
-        sum_all_red(2);
+       sum_all_red(2);
         //sum_all_red(3);
 
-        File n = new File(tempdirectory+File.separator+"All_red");
+        String all_path = tempdirectory+File.separator+"All_red";
+        File n = new File(all_path);
         String[] list = n.list();
+
+
         String all =concatReducer(list[0],list[1],tempdirectory+File.separator+"All_red",tempdirectory+File.separator+"All_red");;
         for(int i=1;i<list.length;i++){
             if(i+1 <list.length){
@@ -242,6 +161,8 @@ public class withouJoin {
             }
 
         }
+
+        order.start(tempdirectory+File.separator+all,tempdirectory+File.separator+all,comparator);
         if(list.length==1){
             printResult(tempdirectory+File.separator+"All_red/1.txt");
         }else {
@@ -250,6 +171,15 @@ public class withouJoin {
 
 
     }
+
+    static Comparator<String> comparator = new Comparator<String>() {
+        public int compare(String r1, String r2){
+            String[] r11 = r1.split(",");
+            String[] r22 = r2.split(",");
+            // int t1 = Integer.parseInt(r11[5]);
+            // int t2 = Integer.parseInt(r22[5]);
+            return r11[0].compareTo(r22[0]);
+        }};
 
     private static void printResult(String ResultFile) {
         String colName = "";
@@ -284,7 +214,6 @@ public class withouJoin {
         }
     }
 
-
     public static void read_files() {
 
         String Table_1_path = tableLocation1;
@@ -298,18 +227,27 @@ public class withouJoin {
 
                 while ((line = br.readLine()) != null) {
 
-                    String[] country1 = line.split(tableSpilt1);
-
+                    //String[] country1 = line.split(tableSpilt1);
+                    // change
                     byte[] comaList = new byte[2];
 
-                    comaList = FindCommasInLine(line,comaList);
+                    comaList = FindCommasInLine(line,comaList,tableSpilt1);
 
 
 
-                    // where
+                    // where change
+                    // get col to where
                     if ((true)){
-                        map1(line,name1,comaList);
-                        map2(line,name1,comaList);
+
+                        byte[] Keys1 = new byte[2];
+                        Keys1[0] = 0;
+                        Keys1[1] = 1;
+                        map1(1,line,name1,comaList,Keys1,(byte)2);
+
+                        byte[] Keys2 = new byte[2];
+                        Keys2[0] = 0;
+                        Keys2[1] = 1;
+                        map1(2,line,name1,comaList,Keys2,(byte)1);
                     }
 
                 }
@@ -322,89 +260,293 @@ public class withouJoin {
     }
 
 
-    public static  void shuffle(int map) throws IOException {
-        String maperPath = tempdirectory+File.separator+"map"+map;
-        String shuffPath = tempdirectory+File.separator+"shuff"+map;
+    public static void main(String[] args) {
+        initFIleDir();
+        File tableDir1 = new File(tableLocation1);
+        if(tableDir1.exists() && tableDir1.isDirectory()){
 
-        File stockDir1 = new File(shuffPath);
-        if(!stockDir1.exists()){stockDir1.mkdir();}
+            try {
 
-        Map<ArrayList<Object>,ArrayList<Object>> mmm = new HashMap<>();
-
-        File stockDir = new File(maperPath);
-        String[] list = stockDir.list();
-        for(String name : list){
-            String absolutePath = maperPath + File.separator + name;
-            try(BufferedReader br = new BufferedReader(new FileReader(absolutePath))) {
-
-                String line;
-
-                while ((line = br.readLine()) != null){
-                    String[] KeyAndVal = line.split("/");
-                    String[] Keys = KeyAndVal[0].split(",");
-                    ArrayList<Object> ALKeys = new ArrayList<>();
-                    for(String k :Keys){
-                        if(k.matches("NULL") || k.matches("null")){
-                            ALKeys.add(k);
-                        }else{
-                            ALKeys.add(Integer.parseInt(k));
-                        }
-                    }
-
-
-                    if(mmm.containsKey(ALKeys)){
-                        mmm.get(ALKeys).add(KeyAndVal[1]);
-
-                    }else {
-
-                        ArrayList<Object> dd = new ArrayList<>();
-                        dd.add(KeyAndVal[1]);
-                        mmm.put(ALKeys,dd);
-                    }
-                }
-
-                br.close();
-
-            } catch (FileNotFoundException e) {
-                // exception handling
+                map_reduce();
             } catch (IOException e) {
-                // exception handling
+                e.printStackTrace();
             }
-
-
 
         }
 
-        String shuffl = shuffPath + File.separator +"shufflResult1.txt";
+    }
+    static String lineSeparator = System.getProperty("line.separator");
+    static String tempdirectory = "temp";
 
-        try(BufferedWriter fileOutputStream = new BufferedWriter(new FileWriter(shuffl,true))) {
+    static String tableLocation1 = "temperature";
 
+    static char tableSpilt1  = ',';
 
-            for (Map.Entry<ArrayList<Object>, ArrayList<Object>> entry : mmm.entrySet()) {
-                System.out.println(entry.getKey()+" : "+entry.getValue());
-                String output = "";
+    public static void map1(int mapNum,String line,String fileName,byte[] comalist , byte[] KeyIndex,byte valIndex){
+        String maperPath = tempdirectory+File.separator+"map"+mapNum;
+        File stockDir1 = new File(maperPath);
+        if(!stockDir1.exists()){stockDir1.mkdir();}
+        String FileName = fileName + ".txt";
+        String outPath = maperPath + File.separator + FileName;
+        try(FileOutputStream fileOutputStream = new FileOutputStream(outPath,true)) {
+/*
+            for(int i=0;i<line.length;i++) {
+                line[i] = line[i].replace("\"", "");
+            }*/
 
-                for(Object key : entry.getKey()){
-                    output += key + ",";
+            // String fileContent = line[0]+","+line[1] +"/"+line[2];
+            String fileContent="";
+            for(byte b:KeyIndex){
+
+                if(b==0){
+                    fileContent+= getCol(b,comalist[b],line)+",";
+
+                }else if(comalist.length+1 == b){
+
+                    fileContent+= getCol(comalist[comalist.length-1]+1,line.length(),line)+",";
+                }else{
+
+                    fileContent+=getCol(comalist[b-1]+1,comalist[b],line)+",";
+
                 }
-                output +="/";
-                output = output.replaceFirst(",/","/");
-
-                for(Object val :entry.getValue()){
-                    output+=","+val;
-                }
-                output += System.lineSeparator();
-                output = output.replaceFirst("/,","/");
-                fileOutputStream.write(output);
 
             }
+            fileContent+="/";
+
+            fileContent = fileContent.replace(",/","/");
+
+            if(valIndex==0){
+
+                fileContent+= getCol(valIndex,comalist[valIndex],line);
+
+            }else if(comalist.length == valIndex){
+
+                fileContent+= getCol(comalist[comalist.length-1]+1,line.length(),line);
+            }else{
+
+
+
+                fileContent+=getCol(comalist[valIndex-1]+1,comalist[valIndex],line);
+
+            }
+
+            //fileContent = getCol(0,comalist[0],line)+","+getCol(comalist[0]+1,comalist[1],line) +"/"+getCol(comalist[1]+1,line.length(),line);
+            // String col1 = getCol(0,comalist[0],line);
+            fileOutputStream.write(fileContent.getBytes());
+            fileOutputStream.write(lineSeparator.getBytes());
+
+
+            fileOutputStream.flush();
 
             fileOutputStream.close();
 
         } catch (FileNotFoundException e) {
-            // exception handling
+
         } catch (IOException e) {
-            // exception handling
+
+        }
+
+
+    }
+
+
+   public static  void shuffle11(int map,boolean isDistnict) throws IOException {
+
+       String maperPath = tempdirectory+File.separator+"map"+map;
+       String shuffPath = tempdirectory+File.separator+"shuff"+map;
+
+       File stockDir1 = new File(shuffPath);
+       if(!stockDir1.exists()){stockDir1.mkdir();}
+
+       Map<String,String> mmm = new HashMap<>();
+
+       File stockDir = new File(maperPath);
+       String[] list = stockDir.list();
+       int fNum=0;
+       for(String name : list){
+           String absolutePath = maperPath + File.separator + name;
+           try(BufferedReader br = new BufferedReader(new FileReader(absolutePath))) {
+
+               String line;
+
+               while ((line = br.readLine()) != null){
+
+                   byte slash1 = 0;
+
+                   slash1 =FindSlash(line);
+
+                  // String[] KeyAndVal = line.split("/");
+
+                   String Key = getCol(0,slash1,line);
+
+                   String value = getCol(slash1+1,line.length(),line);
+
+                   String shuffname = mmm.get(Key);
+                   if(shuffname == null){
+                       shuffname = ++fNum+"_"+Key;
+                       mmm.put(Key,shuffname);
+                   }
+                   String ou_file = shuffPath+File.separator+shuffname+".txt";
+                   File n = new File(ou_file);
+                   if(n.exists()){
+                       try(RandomAccessFile fileOutputStream = new RandomAccessFile(ou_file,"rw")){
+
+
+                           String l = fileOutputStream.readLine();
+                           byte slash2 = 0;
+
+                           slash2 =FindSlash(l);
+
+
+                           String[] KVal = l.split("/");
+
+
+
+                           if(KVal.length == 2) {
+                               String[] val = KVal[1].split(",");
+
+                               boolean dis = false;
+                               // Distnict function
+                               if(isDistnict){
+                                   for (String d : val) {
+                                       if (d.equals(value)) {
+                                           dis = true;
+                                           break;
+                                       }
+
+                                   }
+                               }
+
+                               if(!dis){
+                                   fileOutputStream.write((","+value).getBytes());
+                               }
+
+
+                           }else{
+                               fileOutputStream.write((","+value).getBytes());
+                           }
+
+
+
+
+                       }
+
+
+                   }else{
+                       try(BufferedWriter fileOutputStream = new BufferedWriter(new FileWriter(ou_file,true))) {
+                           if(value.length() !=0 ){
+                               fileOutputStream.write(Key + "/" + value);
+                           }else{
+                               fileOutputStream.write(Key + "/" );
+                           }
+
+                       }
+                   }
+
+               }
+
+               br.close();
+
+           } catch (FileNotFoundException e) {
+               // exception handling
+           } catch (IOException e) {
+               // exception handling
+           }
+
+       }
+
+      /* File stockDir21 = new File(shuffPath);
+       String[] dd = stockDir21.list();
+
+       Arrays.sort(dd);
+
+       for(String s : dd){
+           System.out.println(s);
+       }*/
+       shufSort(shuffPath);
+
+   }
+
+    private static void shufSort(String shuffPath) {
+        File stockDir = new File(shuffPath);
+        String[] list = stockDir.list();
+
+        for(String s : list){
+            System.out.println(s);
+        }
+
+        int numOfLine = 0;
+        int MAXLINES = 5;
+        List<String> temp = new ArrayList<>();
+        int i=0;
+        String Line = "";
+        String ou_file = null;
+        for(String name :list){
+
+            String absolutePath = shuffPath + File.separator + name;
+            try(BufferedReader br = new BufferedReader(new FileReader(absolutePath))) {
+
+
+              //  ou_file = shuffPath + File.separator +(++i) +".txt" ;
+                while ((numOfLine<MAXLINES) && (Line = br.readLine()) !=null){
+
+                    //while ((Line = br.readLine()) != null){
+
+                    temp.add(Line);
+
+                    numOfLine++;
+
+                    //  }
+
+
+
+
+                }
+
+                if((numOfLine>=MAXLINES)){
+
+                    numOfLine =0;
+                    ou_file = shuffPath + File.separator +(++i) +".txt" ;
+                    try(BufferedWriter fileOutputStream = new BufferedWriter(new FileWriter(ou_file,true))) {
+                        for(String r : temp) {
+
+                            fileOutputStream.write(r);
+                            fileOutputStream.newLine();
+                        }
+                    }
+
+                    temp.clear();
+
+                }
+
+
+
+            } catch (FileNotFoundException e) {
+                e.printStackTrace();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            new File(absolutePath).delete();
+        }
+
+        if((temp.size()!=0)){
+
+            numOfLine =0;
+            ou_file = shuffPath + File.separator +(++i) +".txt" ;
+            try(BufferedWriter fileOutputStream = new BufferedWriter(new FileWriter(ou_file,true))) {
+                for(String r : temp) {
+
+                    fileOutputStream.write(r);
+                    fileOutputStream.newLine();
+                }
+            } catch (FileNotFoundException e) {
+                e.printStackTrace();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+            temp.clear();
+
         }
 
     }
@@ -429,9 +571,20 @@ public class withouJoin {
 
                 while ((line = br.readLine()) != null){
 
-                    String[] KeyAndVal = line.split("/");
+                    //String[] KeyAndVal = line.split("/");
 
-                    String[] vlas = KeyAndVal[1].split(",");
+                    //String[] vlas = KeyAndVal[1].split(",");
+
+                    String[] vlas ;
+
+                    byte slash1 = 0;
+
+                    slash1 =FindSlash(line);
+
+                    String Key = getCol(0,slash1,line);
+
+                    String value = getCol(slash1+1,line.length(),line);
+
                     ArrayList<Integer> values = new ArrayList<>();
 
                     for(String s : vlas){
@@ -547,8 +700,6 @@ public class withouJoin {
         return redu1+redu2+"res.txt";
     }
 
-
-
     public static void delete(File file) throws IOException{
 
         if(file.isDirectory()){
@@ -602,17 +753,32 @@ public class withouJoin {
 
     }
 
+    private static byte[] FindCommasInLine(String line,byte[] list,char split){
 
-    private static byte[] FindCommasInLine(String line,byte[] list){
-        //byte[] list = new byte[2];
         int counter = 0;
 
         for (byte index = 0; index < line.length(); index++)
         {
-            if (line.charAt(index) == ',')
+            if (line.charAt(index) == split)
             {
                 list[counter++] = index;
-                //list.add(index);
+
+            }
+        }
+
+        return list;
+    }
+
+    private static byte FindSlash(String line){
+
+        int counter = 0;
+        byte list = 0;
+        for (byte index = 0; index < line.length(); index++)
+        {
+            if (line.charAt(index) == '/')
+            {
+                list =  index;
+
             }
         }
 
@@ -624,9 +790,7 @@ public class withouJoin {
         int c=0;
         for (int index = start; index < end; index++)
         {
-
             sb+= line.charAt(index);
-            // sb.append(line.charAt(index));
         }
 
         return sb;

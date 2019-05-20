@@ -28,35 +28,9 @@ public class fullouterjoin {
             return r11[0].compareTo(r22[0]);
         }};
 
-    static String lineSeparator = System.getProperty("line.separator");
-    static String tempdirectory = "temp";
-
-    static String tableLocation1 = "Customers";
-    static String tableLocation2 = "Orders";
-    static String tableSpilt1  = ",";
-    static String tableSpilt2  = ",";
-
-    static String numberREG = "^[-+]?\\d+(\\.\\d+)?$";
 
 
-    public static void main(String[] args) {
-        initFIleDir();
-        File tableDir1 = new File(tableLocation1);
-        File tableDir2 = new File(tableLocation2);
 
-
-        if(tableDir1.exists() && tableDir1.isDirectory() && tableDir2.exists() && tableDir2.isDirectory()){
-
-            try {
-
-                map_reduce();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-
-        }
-
-    }
 
     public static void map1(String[] line,String fileName){
         String maperPath = tempdirectory+File.separator+"map1";
@@ -88,41 +62,11 @@ public class fullouterjoin {
 
     }
 
-    public static void map2(String[] line,String fileName){
-        String maperPath = tempdirectory+File.separator+"map2";
-        File stockDir1 = new File(maperPath);
-        if(!stockDir1.exists()){stockDir1.mkdir();}
-        String FileName = fileName + ".txt";
-        String outPath = maperPath + File.separator + FileName;
-        try(FileOutputStream fileOutputStream = new FileOutputStream(outPath,true)) {
-
-           /* for(int i=0;i<line.length;i++) {
-                line[i] = line[i].replace("\"", "");
-            }*/
-            String fileContent = line[5]+"/"+line[4];
-
-            fileOutputStream.write(fileContent.getBytes());
-            fileOutputStream.write(lineSeparator.getBytes());
-
-
-            fileOutputStream.flush();
-
-            fileOutputStream.close();
-
-        } catch (FileNotFoundException e) {
-
-        } catch (IOException e) {
-
-        }
-
-
-    }
-
     public static void map_reduce() throws IOException {
 
         fullOuterJoin();
 
-          shuffle11(1);
+          shuffle11(1,false);
         //  shuffle(2);
 
        String red1 = reducer(1,new MyFunction() {
@@ -139,10 +83,12 @@ public class fullouterjoin {
         });
 
         sum_all_red(1);
+
+
         String all_path = tempdirectory+File.separator+"All_red";
         File n = new File(all_path);
         String[] list = n.list();
-        order.start(all_path+File.separator+list[0],all_path+File.separator+list[0],comparator);
+       // order.start(all_path+File.separator+list[0],all_path+File.separator+list[0],comparator);
 
 
       /*  String red2 = reducer(2,new MyFunction() {
@@ -227,13 +173,6 @@ public class fullouterjoin {
         } catch (IOException e) {
             e.printStackTrace();
         }
-    }
-
-    public static void fullOuterJoin() {
-
-        LeftJoin();
-        RightJoin_WithoutInnerJoin();
-
     }
 
     public static void LeftJoin(){
@@ -370,8 +309,134 @@ public class fullouterjoin {
         }
     }
 
-    public static  void shuffle11(int map) throws IOException {
-     //   RandomAccessFile raf = new RandomAccessFile("c:/test.txt", "rw");
+
+
+
+    public static void main(String[] args) {
+        initFIleDir();
+        File tableDir1 = new File(tableLocation1);
+        File tableDir2 = new File(tableLocation2);
+
+
+        if(tableDir1.exists() && tableDir1.isDirectory() && tableDir2.exists() && tableDir2.isDirectory()){
+
+            try {
+
+                map_reduce();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+        }
+
+    }
+    static String lineSeparator = System.getProperty("line.separator");
+    static String tempdirectory = "temp";
+
+    static String tableLocation1 = "Customers";
+    static String tableLocation2 = "Orders";
+    static String tableSpilt1  = ",";
+    static String tableSpilt2  = ",";
+
+    static String numberREG = "^[-+]?\\d+(\\.\\d+)?$";
+
+
+    public static String reducer(int shuff,MyFunction obj1){
+
+        String shuffPath = tempdirectory+File.separator+"shuff"+shuff;;
+        String redusPath = tempdirectory+File.separator+"red"+shuff;
+
+
+        File stockDir1 = new File(redusPath);
+        if(!stockDir1.exists()){stockDir1.mkdir();}
+
+        File stockDir = new File(shuffPath);
+        String[] list = stockDir.list();
+        for(String name : list){
+
+            String shuffl = shuffPath + File.separator +name;
+            try (BufferedReader br = new BufferedReader(new FileReader(shuffl))) {
+
+                String line;
+
+                while ((line = br.readLine()) != null){
+
+                    //String[] KeyAndVal = line.split("/");
+                    String[] vlas ;
+
+                    byte slash1 = 0;
+
+                    slash1 =FindSlash(line);
+
+                    // String[] KeyAndVal = line.split("/");
+
+                    String Key = getCol(0,slash1,line);
+
+                    String value = getCol(slash1+1,line.length(),line);
+
+
+
+                    if(value.length() != 2){
+                        vlas = value.split(",");
+                    }else{
+                        vlas= new String[1];
+                        vlas[0]  = "";
+                    }
+
+
+                    ArrayList<Integer> values = new ArrayList<>();
+
+                    boolean isNum = false;
+                    for(String s : vlas){
+                        if(s.matches(numberREG)){
+                            isNum = true;
+                            values.add(Integer.parseInt(s));
+                        }else{
+
+                        }
+
+                    }
+                    if(isNum) {
+
+                        String opResult1 = obj1.operation(values);
+
+                        String reduce = redusPath + File.separator + name;
+                        try (BufferedWriter fileOutputStream = new BufferedWriter(new FileWriter(reduce, true))) {
+                            fileOutputStream.write(Key + "/" + opResult1 + System.lineSeparator());
+                            fileOutputStream.close();
+                        }
+                    }
+                    else {
+                        String reduce = redusPath + File.separator + name;
+                        try (BufferedWriter fileOutputStream = new BufferedWriter(new FileWriter(reduce, true))) {
+                            fileOutputStream.write(line+ System.lineSeparator());
+                            fileOutputStream.close();
+                        }
+                    }
+                }
+
+
+            } catch (FileNotFoundException e) {
+                e.printStackTrace();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+
+        }
+        return "";
+
+
+    }
+
+    public static void fullOuterJoin() {
+
+        LeftJoin();
+        RightJoin_WithoutInnerJoin();
+
+    }
+
+    public static  void shuffle11(int map,boolean isDistnict) throws IOException {
 
         String maperPath = tempdirectory+File.separator+"map"+map;
         String shuffPath = tempdirectory+File.separator+"shuff"+map;
@@ -391,12 +456,21 @@ public class fullouterjoin {
                 String line;
 
                 while ((line = br.readLine()) != null){
-                    String[] KeyAndVal = line.split("/");
 
-                    String shuffname = mmm.get(KeyAndVal[0]);
+                    byte slash1 = 0;
+
+                    slash1 =FindSlash(line);
+
+                    // String[] KeyAndVal = line.split("/");
+
+                    String Key = getCol(0,slash1,line);
+
+                    String value = getCol(slash1+1,line.length(),line);
+
+                    String shuffname = mmm.get(Key);
                     if(shuffname == null){
-                        shuffname = ++fNum+"_"+KeyAndVal[0];
-                        mmm.put(KeyAndVal[0],shuffname);
+                        shuffname = ++fNum+"_"+Key;
+                        mmm.put(Key,shuffname);
                     }
                     String ou_file = shuffPath+File.separator+shuffname+".txt";
                     File n = new File(ou_file);
@@ -405,30 +479,37 @@ public class fullouterjoin {
 
 
                             String l = fileOutputStream.readLine();
+                            byte slash2 = 0;
+
+                            slash2 =FindSlash(l);
+
 
                             String[] KVal = l.split("/");
 
-                            //String[] val = l.split("/")[1].split(",");
-                            if(KVal.length == 2){
+
+
+                            if(KVal.length == 2) {
                                 String[] val = KVal[1].split(",");
 
                                 boolean dis = false;
                                 // Distnict function
-                               /* for(String d:val){
-                                    if(d.equals(KeyAndVal[1])){
-                                        dis = true;
-                                        break;
-                                    }
+                                if(isDistnict){
+                                    for (String d : val) {
+                                        if (d.equals(value)) {
+                                            dis = true;
+                                            break;
+                                        }
 
-                                }*/
+                                    }
+                                }
 
                                 if(!dis){
-                                    fileOutputStream.write((","+KeyAndVal[1]).getBytes());
+                                    fileOutputStream.write((","+value).getBytes());
                                 }
 
 
                             }else{
-                                fileOutputStream.write((","+KeyAndVal[1]).getBytes());
+                                fileOutputStream.write((","+value).getBytes());
                             }
 
 
@@ -437,20 +518,12 @@ public class fullouterjoin {
                         }
 
 
-                       /* try(BufferedWriter fileOutputStream = new BufferedWriter(new FileWriter(ou_file,true))) {
-                            if(KeyAndVal.length == 2){
-                                fileOutputStream.write(","+KeyAndVal[1]);
-                            }else{
-                                fileOutputStream.write(",");
-                            }
-
-                        }*/
                     }else{
                         try(BufferedWriter fileOutputStream = new BufferedWriter(new FileWriter(ou_file,true))) {
-                            if(KeyAndVal.length == 2){
-                                fileOutputStream.write(KeyAndVal[0] + "/" + KeyAndVal[1]);
+                            if(value.length() !=0 ){
+                                fileOutputStream.write(Key + "/" + value);
                             }else{
-                                fileOutputStream.write(KeyAndVal[0] + "/" );
+                                fileOutputStream.write(Key + "/" );
                             }
 
                         }
@@ -472,7 +545,6 @@ public class fullouterjoin {
         shufSort(shuffPath);
 
     }
-
     private static void shufSort(String shuffPath) {
         File stockDir = new File(shuffPath);
         String[] list = stockDir.list();
@@ -493,11 +565,11 @@ public class fullouterjoin {
 
                     //while ((Line = br.readLine()) != null){
 
-                        temp.add(Line);
+                    temp.add(Line);
 
-                        numOfLine++;
+                    numOfLine++;
 
-                  //  }
+                    //  }
 
 
 
@@ -507,8 +579,8 @@ public class fullouterjoin {
                 if((numOfLine>=MAXLINES)){
 
                     numOfLine =0;
-                     ou_file = shuffPath + File.separator +(++i) +".txt" ;
-                   try(BufferedWriter fileOutputStream = new BufferedWriter(new FileWriter(ou_file,true))) {
+                    ou_file = shuffPath + File.separator +(++i) +".txt" ;
+                    try(BufferedWriter fileOutputStream = new BufferedWriter(new FileWriter(ou_file,true))) {
                         for(String r : temp) {
 
                             fileOutputStream.write(r);
@@ -550,82 +622,6 @@ public class fullouterjoin {
             temp.clear();
 
         }
-
-    }
-
-    public static String reducer(int shuff,MyFunction obj1){
-
-        String shuffPath = tempdirectory+File.separator+"shuff"+shuff;;
-        String redusPath = tempdirectory+File.separator+"red"+shuff;
-        // String FileName = "redu"+numReduce+".txt";
-
-        File stockDir1 = new File(redusPath);
-        if(!stockDir1.exists()){stockDir1.mkdir();}
-
-        File stockDir = new File(shuffPath);
-        String[] list = stockDir.list();
-        for(String name : list){
-
-            String shuffl = shuffPath + File.separator +name;
-            try (BufferedReader br = new BufferedReader(new FileReader(shuffl))) {
-
-                String line;
-
-                while ((line = br.readLine()) != null){
-
-                    String[] KeyAndVal = line.split("/");
-                    String[] vlas ;
-
-                    if(KeyAndVal.length == 2){
-                        vlas = KeyAndVal[1].split(",");
-                    }else{
-                        vlas= new String[1];
-                        vlas[0]  = "";
-                    }
-
-
-                    ArrayList<Integer> values = new ArrayList<>();
-
-                    boolean isNum = false;
-                    for(String s : vlas){
-                        if(s.matches(numberREG)){
-                            isNum = true;
-                            values.add(Integer.parseInt(s));
-                        }else{
-
-                        }
-
-                    }
-                    if(isNum) {
-
-                        String opResult1 = obj1.operation(values);
-
-                        String reduce = redusPath + File.separator + name;
-                        try (BufferedWriter fileOutputStream = new BufferedWriter(new FileWriter(reduce, true))) {
-                            fileOutputStream.write(KeyAndVal[0] + "/" + opResult1 + System.lineSeparator());
-                            fileOutputStream.close();
-                        }
-                    }
-                    else {
-                        String reduce = redusPath + File.separator + name;
-                        try (BufferedWriter fileOutputStream = new BufferedWriter(new FileWriter(reduce, true))) {
-                            fileOutputStream.write(line+ System.lineSeparator());
-                            fileOutputStream.close();
-                        }
-                    }
-                }
-
-
-            } catch (FileNotFoundException e) {
-                e.printStackTrace();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-
-
-        }
-        return "";
-
 
     }
 
@@ -765,6 +761,49 @@ public class fullouterjoin {
             e.printStackTrace();
         }
 
+    }
+
+    private static byte[] FindCommasInLine(String line,byte[] list,char split){
+
+        int counter = 0;
+
+        for (byte index = 0; index < line.length(); index++)
+        {
+            if (line.charAt(index) == split)
+            {
+                list[counter++] = index;
+
+            }
+        }
+
+        return list;
+    }
+
+    private static byte FindSlash(String line){
+
+        int counter = 0;
+        byte list = 0;
+        for (byte index = 0; index < line.length(); index++)
+        {
+            if (line.charAt(index) == '/')
+            {
+                list =  index;
+
+            }
+        }
+
+        return list;
+    }
+
+    private static String getCol(int start, int end, String line){
+        String sb = "";
+        int c=0;
+        for (int index = start; index < end; index++)
+        {
+            sb+= line.charAt(index);
+        }
+
+        return sb;
     }
 
 
