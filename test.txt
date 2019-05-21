@@ -1,1 +1,1 @@
-select emp.dep_id , sum(salary) from emp emp inner join dep dep on dep.id==emp.dep_id group by dep_id;
+select dep.id , sum(emp.salary) , avg(emp.t_date) from emp emp inner join dep dep on dep.id==emp.dep_id group by id;

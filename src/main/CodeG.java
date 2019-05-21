@@ -423,9 +423,11 @@ public class CodeG extends HplsqlBaseVisitor<Object> {
         String func_name = ctx.getChild(0).getText();
 
         String paramiter = ctx.expr().get(0).getText();
+
+        String tableName = ctx.ident().getText();
         boolean isDistnict = ctx.expr_func_all_distinct() != null ? true :false;
 
-        SelectCol temp = new SelectCol("",func_name, paramiter,null,isDistnict);
+        SelectCol temp = new SelectCol(tableName,func_name, paramiter,null,isDistnict);
         return  temp;
 
 
@@ -1131,6 +1133,17 @@ public class CodeG extends HplsqlBaseVisitor<Object> {
                 "                        col1=getCol(comaList1[index1-1]+1,comaList1[index1],line1);\n" +
                 "                    }\n\n";
 
+
+        try(BufferedWriter fileOutputStream = new BufferedWriter(new FileWriter(filePath,true))){
+
+            fileOutputStream.write(output);
+
+            fileOutputStream.close();
+            output = "";
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
         int tbl = 2;
         for(int i=0;i<joines.size();i++){
 
@@ -1184,34 +1197,61 @@ public class CodeG extends HplsqlBaseVisitor<Object> {
 
             output+="];\n";
 
+
+            try(BufferedWriter fileOutputStream = new BufferedWriter(new FileWriter(filePath,true))){
+
+                fileOutputStream.write(output);
+
+                fileOutputStream.close();
+                output = "";
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
             for(int j=0;j<sel_col_keys.size();j++){
 
-                if(sel_col_keys.get(j).tablename.equals(joines.get(i).getAlis1()) || sel_col_keys.get(j).tablename.equals(joines.get(i).getTbl1())){
+             //   if(sel_col_keys.get(j).tablename.equals(joines.get(i).getAlis1()) || sel_col_keys.get(j).tablename.equals(joines.get(i).getTbl1())){
 
                     // keys from table 1
                     int TableInde =0;
+                    int TI=-1;
                     for(TableInde=0;TableInde<Tabels_name.size();TableInde++){
 
-                        if(Tabels_name.get(TableInde).getName_typ().equals(sel_col_keys.get(j).colname)){
+                        if(Tabels_name.get(TableInde).getName_typ().equals(sel_col_keys.get(j).tablename)){
+                            TI = TableInde;
                             break;
                         }
 
                     }
-                    int colInde = Tabels_name.get(TableInde).getIndexCol(sel_col_keys.get(j).colname);
 
-                    output+="Keys1[0] =(byte) ( ";
-                    for(int keys=1;keys<TableInde;keys++){
 
-                        output+="comaList"+keys+".length +";
-                        if(keys-1 == TableInde)
+
+                    int colInde = Tabels_name.get(TI).getIndexCol(sel_col_keys.get(j).colname);
+
+                    output+="Keys1["+j+"] =(byte) ( ";
+                    for(int keys=0;keys<TableInde;keys++){
+
+                        output+="comaList"+(keys+1)+".length +";
+                        if(keys+1 == TableInde)
                             output+="1+";
 
                     }
 
                     output+=colInde+");\n";
 
-                    int map=0;
-                    for(Map.Entry<String, Integer> entry : vales.entrySet()){
+
+                try(BufferedWriter fileOutputStream = new BufferedWriter(new FileWriter(filePath,true))){
+
+                    fileOutputStream.write(output);
+
+                    fileOutputStream.close();
+                    output = "";
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+
+
+                    /*for(Map.Entry<String, Integer> entry : vales.entrySet()){
                          map++;
 
 
@@ -1241,7 +1281,7 @@ public class CodeG extends HplsqlBaseVisitor<Object> {
                       //  Tabels_name.get(0).getIndexCol(entry.getKey())
 
 
-                    }
+                    }*/
 
 
 
@@ -1250,11 +1290,11 @@ public class CodeG extends HplsqlBaseVisitor<Object> {
 
 
 
-               }else{
+             //  }else{
                     // keys from table 2
 
 
-
+/*
 
                     int TableInde =0;
                     for(TableInde=0;TableInde<Tabels_name.size();TableInde++){
@@ -1267,7 +1307,7 @@ public class CodeG extends HplsqlBaseVisitor<Object> {
 
 
                     int colInde = Tabels_name.get(1).getIndexCol(sel_col_keys.get(j).colname);
-                    System.out.println("elsssssss  "+sel_col_keys.get(j).colname);
+
                     output+="Keys1[0] =(byte) ( ";
                     for(int keys=1;keys<TableInde;keys++){
 
@@ -1314,10 +1354,44 @@ public class CodeG extends HplsqlBaseVisitor<Object> {
 
 
                     }
+*/
+             //   }
+
+             //   output+="Keys"+(i+1)+"["+j+"] = "+Tabels_name.get(0).getIndexCol(sel_col_keys.get(j).colname)+";\n";
+            }
+
+            int TableInde =0;
+            int map=0;
+
+            for(int ii =0;ii<values.size();ii++){
+                map++;
+                output+="map("+map+",concat_line"+(i+1)+",name"+(tbl-1)+"+\"_\"+name"+(tbl)+",comaConcat"+(i+1)+",Keys1,(byte) (";
+
+                for(TableInde=0;TableInde<Tabels_name.size();TableInde++){
+
+                    if(Tabels_name.get(TableInde).getName_typ().equals(values.get(ii).tablename)){
+                        break;
+                    }
 
                 }
 
-             //   output+="Keys"+(i+1)+"["+j+"] = "+Tabels_name.get(0).getIndexCol(sel_col_keys.get(j).colname)+";\n";
+
+                int valIndex = Tabels_name.get(TableInde).getIndexCol(values.get(ii).colname);
+
+
+
+
+                for(int valus=0;valus<TableInde;valus++){
+
+                    output+="comaList"+(valus+1)+".length +";
+                    if(valus+1 == TableInde)
+                        output+="1+";
+
+                }
+
+                output+=valIndex+"));\n";
+
+
             }
 
             output+="}";
