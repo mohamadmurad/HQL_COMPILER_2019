@@ -3,3 +3,17 @@ stored as textfile
 ROW FORMAT DELIMITED FIELDS TERMINATED BY ','
 LOCATION "C:\Users\MouAz He\IdeaProjects\HQL_COMPILER_2019\temperature";
 
+
+
+create external table dep ( id int , name string)
+stored as textfile
+ROW FORMAT DELIMITED FIELDS TERMINATED BY ','
+LOCATION "C:\Users\MouAz He\IdeaProjects\HQL_COMPILER_2019\dep";
+
+
+
+create external table emp ( id int , name string,dep_id int,salary int ,t_date int)
+stored as textfile
+ROW FORMAT DELIMITED FIELDS TERMINATED BY ','
+LOCATION "C:\Users\MouAz He\IdeaProjects\HQL_COMPILER_2019\emp";
+

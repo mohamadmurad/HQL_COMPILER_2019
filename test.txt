@@ -1,1 +1,1 @@
-Select id ,sum(temp),summarize(t_date),avg(t_date) from temperature group by id;
+select emp.dep_id , sum(salary) from emp emp inner join dep dep on dep.id==emp.dep_id group by dep_id;
