@@ -32,19 +32,56 @@ public class fullouterjoin {
 
 
 
-    public static void map1(String[] line,String fileName){
-        String maperPath = tempdirectory+File.separator+"map1";
+    public static void map1(int mapNum,String line,String fileName,byte[] comalist , byte[] KeyIndex,byte valIndex){
+        String maperPath = tempdirectory+File.separator+"map"+mapNum;
         File stockDir1 = new File(maperPath);
         if(!stockDir1.exists()){stockDir1.mkdir();}
         String FileName = fileName + ".txt";
         String outPath = maperPath + File.separator + FileName;
         try(FileOutputStream fileOutputStream = new FileOutputStream(outPath,true)) {
-
-           /* for(int i=0;i<line.length;i++) {
+/*
+            for(int i=0;i<line.length;i++) {
                 line[i] = line[i].replace("\"", "");
             }*/
-            String fileContent = line[1]+"/"+line[4];
 
+            // String fileContent = line[0]+","+line[1] +"/"+line[2];
+            String fileContent="";
+            for(byte b:KeyIndex){
+
+                if(b==0){
+                    fileContent+= getCol(b,comalist[b],line)+",";
+
+                }else if(comalist.length+1 == b){
+
+                    fileContent+= getCol(comalist[comalist.length-1]+1,line.length(),line)+",";
+                }else{
+
+                    fileContent+=getCol(comalist[b-1]+1,comalist[b],line)+",";
+
+                }
+
+            }
+            fileContent+="/";
+
+            fileContent = fileContent.replace(",/","/");
+
+            if(valIndex==0){
+
+                fileContent+= getCol(valIndex,comalist[valIndex],line);
+
+            }else if(comalist.length == valIndex){
+
+                fileContent+= getCol(comalist[comalist.length-1]+1,line.length(),line);
+            }else{
+
+
+
+                fileContent+=getCol(comalist[valIndex-1]+1,comalist[valIndex],line);
+
+            }
+
+            //fileContent = getCol(0,comalist[0],line)+","+getCol(comalist[0]+1,comalist[1],line) +"/"+getCol(comalist[1]+1,line.length(),line);
+            // String col1 = getCol(0,comalist[0],line);
             fileOutputStream.write(fileContent.getBytes());
             fileOutputStream.write(lineSeparator.getBytes());
 
@@ -62,6 +99,7 @@ public class fullouterjoin {
 
     }
 
+
     public static void map_reduce() throws IOException {
 
         fullOuterJoin();
@@ -69,7 +107,7 @@ public class fullouterjoin {
           shuffle11(1,false);
         //  shuffle(2);
 
-       String red1 = reducer(1,new MyFunction() {
+       String red1 = reducer(1,1,new MyFunction() {
             @Override
             public String operation(ArrayList<Integer> c) {
                 int sum = 0;
@@ -88,7 +126,7 @@ public class fullouterjoin {
         String all_path = tempdirectory+File.separator+"All_red";
         File n = new File(all_path);
         String[] list = n.list();
-       // order.start(all_path+File.separator+list[0],all_path+File.separator+list[0],comparator);
+        order.start(all_path+File.separator+list[0],all_path+File.separator+list[0],comparator);
 
 
       /*  String red2 = reducer(2,new MyFunction() {
@@ -192,7 +230,24 @@ public class fullouterjoin {
 
                 while ((line1 = br.readLine()) != null) {
 
-                    String[] country1 = line1.split(tableSpilt1);
+                    //String[] country1 = line1.split(",");
+
+                    byte[] comaList1 = new byte[1];
+
+                    comaList1 = FindCommasInLine(line1,comaList1,tableSpilt1);
+                    int index1 = 0;
+                    String col1;
+                    if(index1==0){
+
+                        col1= getCol(index1,comaList1[index1],line1);
+
+                    }else if(comaList1.length+1 == index1){
+
+                        col1= getCol(comaList1[comaList1.length-1]+1,line1.length(),line1);
+                    }else{
+                        col1=getCol(comaList1[index1-1]+1,comaList1[index1],line1);
+                    }
+
                     int null_value =0;
                     int i=0;
                     for (String name2 : Table_2_list) {
@@ -204,16 +259,47 @@ public class fullouterjoin {
 
                             while ((line2 = depbr.readLine()) != null) {
                                 i++;
-                                String[] country2 = line2.split(tableSpilt2);
-                                length_country2 = country2.length;
+
+                                byte[] comaList2 = new byte[2];
+
+                                comaList2 = FindCommasInLine(line2,comaList2,tableSpilt2);
+
+                                //String[] country2 = line2.split(tableSpilt2);
+                                length_country2 = comaList2.length+1;
                                 // if(!(country1[2].matches("NULL") || country1[2].matches("null"))) {
 
-                                if ((country1[0].equals(country2[1]))) {
+                                int index2 = 1;
+                                String col2;
+                                if(index2==0){
 
-                                    String[] concat_Line =new String[country1.length+country2.length];
-                                    System.arraycopy(country1, 0, concat_Line, 0, country1.length);
-                                    System.arraycopy(country2, 0, concat_Line, country1.length, country2.length);
-                                    map1(concat_Line,name1+name2);
+                                    col2= getCol(index2,comaList2[index2],line2);
+
+                                }else if(comaList2.length+1 == index2){
+
+                                    col2= getCol(comaList2[comaList2.length-1]+1,line2.length(),line2);
+                                }else{
+                                    col2=getCol(comaList2[index2-1]+1,comaList2[index2],line2);
+                                }
+
+                                if ((col1.equals(col2))) {
+
+                                    line1 = line1.replace(tableSpilt1,',');
+                                    line2 = line2.replace(tableSpilt2,',');
+                                    String concat_line1 = line1+','+line2;
+
+                                    byte[] comaConcat1 = new byte[comaList1.length+comaList2.length+1];
+
+                                    comaConcat1 = FindCommasInLine(concat_line1,comaConcat1,',');
+
+                                    byte[] Keys1 = new byte[1];
+
+                                    Keys1[0] =(byte)(1);
+
+
+
+                                    map1(1,concat_line1,name1+"_"+name2,comaConcat1,Keys1,(byte)4);
+
+
 
                                 }else {
                                     null_value++;
@@ -224,15 +310,21 @@ public class fullouterjoin {
                         }
                     }
                     if(null_value==i){
-                        String[] c_null = new String[length_country2];
-                        for(int k=0;k<length_country2;k++){
-                            c_null[k]="";
+                        String c_null = "";
+                        for(int k=1;k<length_country2;k++){
+                           c_null+=",";
                         }
-                      //  System.out.println(c_null[0]);
-                        String[] concat_Line =new String[country1.length+c_null.length];
-                        System.arraycopy(country1, 0, concat_Line, 0, country1.length);
-                        System.arraycopy(c_null, 0, concat_Line, country1.length, c_null.length);
-                        map1(concat_Line,"null_file");
+                        line1 = line1.replace(tableSpilt1,',');
+                        String concat_line1 = line1+','+c_null;
+                        byte[] comaConcat1 = new byte[comaList1.length+c_null.length()+1];
+
+                        comaConcat1 = FindCommasInLine(concat_line1,comaConcat1,',');
+
+                        byte[] Keys1 = new byte[1];
+                        Keys1[0] =(byte)(1);
+
+
+                        map1(1,concat_line1,name1+"_",comaConcat1,Keys1,(byte)4);
 
                     }
 
@@ -247,56 +339,98 @@ public class fullouterjoin {
 
     public static void RightJoin_WithoutInnerJoin(){
 
-        String Table_1_path = tableLocation1;
-        String Table_2_path = tableLocation2;
-        File table1 = new File(Table_1_path);
-        File table2 = new File(Table_2_path);
+
+        File table1 = new File(tableLocation1);
+        File table2 = new File(tableLocation2);
         String[] Table_1_list = table1.list();
         String[] Table_2_list = table2.list();
-        int length_country2=0;
+
         int length_country1=0;
 
         for(String name2 : Table_2_list) {
-            String absolutePath2 = Table_2_path + File.separator + name2;
+            String absolutePath2 = tableLocation2 + File.separator + name2;
             try (BufferedReader br = new BufferedReader(new FileReader(absolutePath2))) {
-                String line2;
+                String line1;
 
-                while ((line2 = br.readLine()) != null) {
 
-                    String[] country2 = line2.split(tableSpilt2);
+                while ((line1 = br.readLine()) != null) {
+
+                    byte[] comaList1 = new byte[2];
+
+                    comaList1 = FindCommasInLine(line1,comaList1,tableSpilt2);
+                    int index1 = 1;
+                    String col1;
+                    if(index1==0){
+
+                        col1= getCol(index1,comaList1[index1],line1);
+
+                    }else if(comaList1.length+1 == index1){
+
+                        col1= getCol(comaList1[comaList1.length-1]+1,line1.length(),line1);
+                    }else{
+                        col1=getCol(comaList1[index1-1]+1,comaList1[index1],line1);
+                    }
+
+                    length_country1 = comaList1.length+1;
+
                     int null_value =0;
                     int i=0;
                     for (String name1 : Table_1_list) {
-                        String absolutePath1 = Table_1_path + File.separator + name1;
-                        try (BufferedReader depbr = new BufferedReader(new FileReader(absolutePath1))) {
-                            String line;
+                        String absolutePath1 = tableLocation1 + File.separator + name1;
+                        try (BufferedReader br2 = new BufferedReader(new FileReader(absolutePath1))) {
+                            String line2;
 
 
 
-                            while ((line = depbr.readLine()) != null) {
+                            while ((line2 = br2.readLine()) != null) {
                                 i++;
-                                String[] country1 = line.split(tableSpilt1);
-                                length_country1 = country1.length;
 
-                                if (!(country1[0].equals(country2[1]))){
+                                byte[] comaList2 = new byte[1];
 
+                                comaList2 = FindCommasInLine(line2,comaList2,tableSpilt1);
+
+                                int index2 = 0;
+                                String col2;
+                                if(index2==0){
+
+                                    col2= getCol(index2,comaList2[index2],line2);
+
+                                }else if(comaList2.length+1 == index2){
+
+                                    col2= getCol(comaList2[comaList2.length-1]+1,line2.length(),line2);
+                                }else{
+                                    col2=getCol(comaList2[index2-1]+1,comaList2[index2],line2);
+                                }
+                               // length_country1 = country1.length;
+
+                                if (col1.equals(col2)){
+
+
+
+                                }else{
                                     null_value++;
-
                                 }
                             }
 
                         }
                     }
                     if(null_value==i){
-                        String[] c_null = new String[length_country1];
-                        for(int k=0;k<length_country1;k++){
-                            c_null[k]="";
+                        String c_null = "";
+                        for(int k=1;k<length_country1;k++){
+                            c_null+=",";
                         }
-                        String[] concat_Line =new String[country2.length+c_null.length];
-                        System.arraycopy(c_null, 0, concat_Line, 0, c_null.length);
-                        System.arraycopy(country2, 0, concat_Line, c_null.length, country2.length);
 
-                        map1(concat_Line,"null_file");
+                        line1 = line1.replace(tableSpilt1,',');
+
+                        String concat_line1 = c_null+','+line1;
+                        byte[] comaConcat1 = new byte[comaList1.length+c_null.length()+1];
+                        System.out.println(concat_line1);
+                        comaConcat1 = FindCommasInLine(concat_line1,comaConcat1,',');
+
+                        byte[] Keys1 = new byte[1];
+
+                        Keys1[0] =(byte)(1);
+                        map1(1,concat_line1,name2+"_",comaConcat1,Keys1,(byte)(comaList1.length+1+2));
 
                     }
 
@@ -335,99 +469,12 @@ public class fullouterjoin {
 
     static String tableLocation1 = "Customers";
     static String tableLocation2 = "Orders";
-    static String tableSpilt1  = ",";
-    static String tableSpilt2  = ",";
+    static char tableSpilt1  = ',';
+    static char tableSpilt2  = ',';
 
     static String numberREG = "^[-+]?\\d+(\\.\\d+)?$";
 
 
-    public static String reducer(int shuff,MyFunction obj1){
-
-        String shuffPath = tempdirectory+File.separator+"shuff"+shuff;;
-        String redusPath = tempdirectory+File.separator+"red"+shuff;
-
-
-        File stockDir1 = new File(redusPath);
-        if(!stockDir1.exists()){stockDir1.mkdir();}
-
-        File stockDir = new File(shuffPath);
-        String[] list = stockDir.list();
-        for(String name : list){
-
-            String shuffl = shuffPath + File.separator +name;
-            try (BufferedReader br = new BufferedReader(new FileReader(shuffl))) {
-
-                String line;
-
-                while ((line = br.readLine()) != null){
-
-                    //String[] KeyAndVal = line.split("/");
-                    String[] vlas ;
-
-                    byte slash1 = 0;
-
-                    slash1 =FindSlash(line);
-
-                    // String[] KeyAndVal = line.split("/");
-
-                    String Key = getCol(0,slash1,line);
-
-                    String value = getCol(slash1+1,line.length(),line);
-
-
-
-                    if(value.length() != 2){
-                        vlas = value.split(",");
-                    }else{
-                        vlas= new String[1];
-                        vlas[0]  = "";
-                    }
-
-
-                    ArrayList<Integer> values = new ArrayList<>();
-
-                    boolean isNum = false;
-                    for(String s : vlas){
-                        if(s.matches(numberREG)){
-                            isNum = true;
-                            values.add(Integer.parseInt(s));
-                        }else{
-
-                        }
-
-                    }
-                    if(isNum) {
-
-                        String opResult1 = obj1.operation(values);
-
-                        String reduce = redusPath + File.separator + name;
-                        try (BufferedWriter fileOutputStream = new BufferedWriter(new FileWriter(reduce, true))) {
-                            fileOutputStream.write(Key + "/" + opResult1 + System.lineSeparator());
-                            fileOutputStream.close();
-                        }
-                    }
-                    else {
-                        String reduce = redusPath + File.separator + name;
-                        try (BufferedWriter fileOutputStream = new BufferedWriter(new FileWriter(reduce, true))) {
-                            fileOutputStream.write(line+ System.lineSeparator());
-                            fileOutputStream.close();
-                        }
-                    }
-                }
-
-
-            } catch (FileNotFoundException e) {
-                e.printStackTrace();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-
-
-        }
-        return "";
-
-
-    }
 
     public static void fullOuterJoin() {
 
@@ -541,26 +588,42 @@ public class fullouterjoin {
 
         }
 
-
         shufSort(shuffPath);
 
     }
+
     private static void shufSort(String shuffPath) {
         File stockDir = new File(shuffPath);
         String[] list = stockDir.list();
 
+        Arrays.sort(list, new Comparator<String>() {
+            @Override
+            public int compare(String o1, String o2) {
+
+                int e1 = o1.indexOf('_');
+                int e2= o2.indexOf('_');
+                int number1 = Integer.parseInt(o1.substring(0, e1));
+
+                int number2 = Integer.parseInt(o2.substring(0, e2));
+
+                return number1 - number2;
+
+            }
+        });
+
         int numOfLine = 0;
-        int MAXLINES = 2;
+        int MAXLINES = 100;
         List<String> temp = new ArrayList<>();
         int i=0;
         String Line = "";
         String ou_file = null;
         for(String name :list){
+
             String absolutePath = shuffPath + File.separator + name;
             try(BufferedReader br = new BufferedReader(new FileReader(absolutePath))) {
 
 
-                ou_file = shuffPath + File.separator +(++i) +".txt" ;
+                //  ou_file = shuffPath + File.separator +(++i) +".txt" ;
                 while ((numOfLine<MAXLINES) && (Line = br.readLine()) !=null){
 
                     //while ((Line = br.readLine()) != null){
@@ -594,7 +657,6 @@ public class fullouterjoin {
 
 
 
-
             } catch (FileNotFoundException e) {
                 e.printStackTrace();
             } catch (IOException e) {
@@ -606,7 +668,7 @@ public class fullouterjoin {
         if((temp.size()!=0)){
 
             numOfLine =0;
-
+            ou_file = shuffPath + File.separator +(++i) +".txt" ;
             try(BufferedWriter fileOutputStream = new BufferedWriter(new FileWriter(ou_file,true))) {
                 for(String r : temp) {
 
@@ -625,12 +687,100 @@ public class fullouterjoin {
 
     }
 
+    public static String reducer(int shuff, int red, MyFunction obj1){
+
+        String shuffPath = tempdirectory+File.separator+"shuff"+shuff;;
+        String redusPath = tempdirectory+File.separator+"red"+red;
+
+
+        File stockDir1 = new File(redusPath);
+        if(!stockDir1.exists()){stockDir1.mkdir();}
+
+        File stockDir = new File(shuffPath);
+        String[] list = stockDir.list();
+        for(String name : list){
+
+            String shuffl = shuffPath + File.separator +name;
+            try (BufferedReader br = new BufferedReader(new FileReader(shuffl))) {
+
+                String line;
+
+                while ((line = br.readLine()) != null){
+
+                    String[] vlas ;
+
+                    byte slash1 = 0;
+
+                    slash1 =FindSlash(line);
+
+                    // String[] KeyAndVal = line.split("/");
+
+                    String Key = getCol(0,slash1,line);
+
+                    String value = getCol(slash1+1,line.length(),line);
+
+
+
+                    if(value.length() != 2){
+                        vlas = value.split(",");
+                    }else{
+                        vlas= new String[1];
+                        vlas[0]  = "";
+                    }
+
+
+                    ArrayList<Integer> values = new ArrayList<>();
+
+                    boolean isNum = false;
+                    for(String s : vlas){
+                        if(s.matches(numberREG)){
+                            isNum = true;
+                            values.add(Integer.parseInt(s));
+                        }else{
+
+                        }
+
+                    }
+                    if(isNum) {
+
+                        String opResult1 = obj1.operation(values);
+
+                        String reduce = redusPath + File.separator + name;
+                        try (BufferedWriter fileOutputStream = new BufferedWriter(new FileWriter(reduce, true))) {
+                            fileOutputStream.write(Key + "/" + opResult1 + System.lineSeparator());
+                            fileOutputStream.close();
+                        }
+                    }
+                    else {
+                        String reduce = redusPath + File.separator + name;
+                        try (BufferedWriter fileOutputStream = new BufferedWriter(new FileWriter(reduce, true))) {
+                            fileOutputStream.write(line+ System.lineSeparator());
+                            fileOutputStream.close();
+                        }
+                    }
+
+                }
+
+
+            } catch (FileNotFoundException e) {
+                e.printStackTrace();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+
+        }
+        return "";
+
+
+    }
+
     public static void sum_all_red(int red){
 
         String redusPath = tempdirectory+File.separator+"red"+red;
         String ALl_red_path = tempdirectory+File.separator+"All_red";
         String all_file = ALl_red_path + File.separator+red+".txt";
-        // String FileName = "redu"+numReduce+".txt";
+
 
         File stockDir1 = new File(ALl_red_path);
         if(!stockDir1.exists()){stockDir1.mkdir();}
@@ -638,6 +788,23 @@ public class fullouterjoin {
 
         File stockDir = new File(redusPath);
         String[] list = stockDir.list();
+
+        Arrays.sort(list, new Comparator<String>() {
+            @Override
+            public int compare(String o1, String o2) {
+
+                int e1 = o1.indexOf('.');
+                int e2= o2.indexOf('.');
+                int number1 = Integer.parseInt(o1.substring(0, e1));
+
+                int number2 = Integer.parseInt(o2.substring(0, e2));
+
+                return number1 - number2;
+
+            }
+        });
+
+
         for(String name : list){
 
             String all = redusPath + File.separator +name;
@@ -805,6 +972,7 @@ public class fullouterjoin {
 
         return sb;
     }
+
 
 
 }

@@ -17,3 +17,22 @@ stored as textfile
 ROW FORMAT DELIMITED FIELDS TERMINATED BY ','
 LOCATION "C:\Users\MouAz He\IdeaProjects\HQL_COMPILER_2019\emp";
 
+
+select Customers.name , sum(Orders.id) from Customers Customers right join Orders Orders on Customers.id=Orders.cust_id group by name;
+
+
+create external table Customers ( id int , name string)
+stored as textfile
+ROW FORMAT DELIMITED FIELDS TERMINATED BY ','
+LOCATION "C:\Users\MouAz He\IdeaProjects\HQL_COMPILER_2019\Customers";
+
+
+
+
+create external table Orders ( o_id int ,cust_id int , salary int)
+stored as textfile
+ROW FORMAT DELIMITED FIELDS TERMINATED BY ','
+LOCATION "C:\Users\MouAz He\IdeaProjects\HQL_COMPILER_2019\Orders";
+
+
+

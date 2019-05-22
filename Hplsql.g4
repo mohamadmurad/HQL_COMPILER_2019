@@ -422,6 +422,7 @@ ifex: ident op (ident (T_DOT ident)? | L_INT);
 
 op :
     |T_EQUAL2
+    |T_EQUAL
     |T_NOTEQUAL2
     |T_GREATER
     |T_GREATEREQUAL

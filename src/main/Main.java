@@ -67,7 +67,7 @@ public class Main {
             visitor.visit(myTree);
 
 
-            ErrorPrinter.exitOnErrors();
+    //        ErrorPrinter.exitOnErrors();
 
 
 

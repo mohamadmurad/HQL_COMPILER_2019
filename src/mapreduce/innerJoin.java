@@ -172,52 +172,56 @@ public class innerJoin {
                                 while ((line2 = br2.readLine()) != null) {
 
 
-
                                     byte[] comaList2 = new byte[1];
 
-                                    comaList2 = FindCommasInLine(line2,comaList2,tableSpilt2);
+                                    comaList2 = FindCommasInLine(line2, comaList2, tableSpilt2);
 
 
                                     int index2 = 0;
                                     String col2;
-                                    if(index2==0){
+                                    if (index2 == 0) {
 
-                                        col2= getCol(index2,comaList2[index2],line2);
+                                        col2 = getCol(index2, comaList2[index2], line2);
 
-                                    }else if(comaList2.length+1 == index2){
+                                    } else if (comaList2.length + 1 == index2) {
 
-                                        col2= getCol(comaList2[comaList2.length-1]+1,line2.length(),line2);
-                                    }else{
-                                        col2=getCol(comaList2[index2-1]+1,comaList2[index2],line2);
+                                        col2 = getCol(comaList2[comaList2.length - 1] + 1, line2.length(), line2);
+                                    } else {
+                                        col2 = getCol(comaList2[index2 - 1] + 1, comaList2[index2], line2);
                                     }
 
                                     //String col2 = getCol(0,comaList1[0],line2);
                                     // on
-                                    if ((col1.equals(col2))){
-/*
-                                        String[] concat_Line =new String[country1.length+country2.length];
-                                        System.arraycopy(country1, 0, concat_Line, 0, country1.length);
-                                        System.arraycopy(country2, 0, concat_Line, country1.length, country2.length);
-*/                                      line1 = line1.replace(tableSpilt1,',');
-                                        line2 = line2.replace(tableSpilt2,',');
-                                        String concat_line1 = line1+','+line2;
+                                    if((true)){
+                                        if ((col1.equals(col2))) {
+    /*
+                                            String[] concat_Line =new String[country1.length+country2.length];
+                                            System.arraycopy(country1, 0, concat_Line, 0, country1.length);
+                                            System.arraycopy(country2, 0, concat_Line, country1.length, country2.length);
+    */
+                                            line1 = line1.replace(tableSpilt1, ',');
+                                            line2 = line2.replace(tableSpilt2, ',');
+                                            String concat_line1 = line1 + ',' + line2;
 
-                                        byte[] comaConcat1 = new byte[comaList1.length+comaList2.length+1];
+                                            byte[] comaConcat1 = new byte[comaList1.length + comaList2.length + 1];
 
-                                        comaConcat1 = FindCommasInLine(concat_line1,comaConcat1,',');
+                                            comaConcat1 = FindCommasInLine(concat_line1, comaConcat1, ',');
 
-                                        byte[] Keys1 = new byte[1];
-
-
-                                        Keys1[0] =(byte) ( comaList1.length +0 + 1);
-
-                                        // for table 3 ..... join
-
-                                        map1(1,concat_line1,name1+"_"+name2,comaConcat1,Keys1,(byte)3);
-                                        map1(2,concat_line1,name1+"_"+name2,comaConcat1,Keys1,(byte)4);
+                                            byte[] Keys1 = new byte[1];
 
 
-                                    }
+                                            Keys1[0] = (byte) (comaList1.length + 0 + 1);
+
+                                            // for table 3 ..... join
+
+                                            map1(1, concat_line1, name1 + "_" + name2, comaConcat1, Keys1, (byte) 3);
+                                            map1(2, concat_line1, name1 + "_" + name2, comaConcat1, Keys1, (byte) 4);
+
+
+                                        } else {
+
+                                        }
+                                }
 
                                 }//
                             }

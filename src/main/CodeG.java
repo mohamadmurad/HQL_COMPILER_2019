@@ -30,7 +30,7 @@ public class CodeG extends HplsqlBaseVisitor<Object> {
     String output = "";
     String mapers = "";
     String shuffles ="";
-    String reducers ="";
+    String temp ="";
     String diroutput = "src//CG";
     String fileName = "cg.java";
 
@@ -298,6 +298,8 @@ public class CodeG extends HplsqlBaseVisitor<Object> {
                  //   tables_alise_name.put(table_1_alis,x);
 
                     String join = ctx.new_from_join_clause(i).from_join_type_clause().getText();
+
+                    System.out.println(join);
                     String op = ctx.new_from_join_clause(i).new_join_condition().op().getText();
 
                     String tbl1 = ctx.new_from_join_clause(i).new_join_condition().table_name(0).getText();
@@ -332,8 +334,14 @@ public class CodeG extends HplsqlBaseVisitor<Object> {
 
 
 
+            if(joines.get(0).getJoin().equals("RIGHTJOIN") || joines.get(0).getJoin().equals("rightjoin")
+                    || joines.get(0).getJoin().equals("fullouterjoin") || joines.get(0).getJoin().equals("FULLOUTERJOIN")){
+                selectRightJoin1(Tabels_name,joines,sel_col_keys,vales);
+            }else{
+                selectJoin(Tabels_name,joines,sel_col_keys,vales);
+            }
 
-            selectJoin(Tabels_name,joines,sel_col_keys,vales);
+
 
 
 
@@ -1095,6 +1103,554 @@ public class CodeG extends HplsqlBaseVisitor<Object> {
 
     }
 
+
+
+    private void selectRightJoin1(ArrayList<data> Tabels_name,ArrayList<joinStruct> joines,ArrayList<SelectCol> sel_col_keys,Map<String,Integer> vales){
+
+        output+= "public static void join() {\n\n";
+        for(int i=1;i<=Tabels_name.size();i++){
+            output+="File table"+(i)+" = new File(tableLocation"+i+");\n";
+            output+="String[] Table_"+i+"_list = table"+i+".list();\n";
+        }
+
+
+        output+="int length_country1 =0;\n" +
+                "for(String name2 : Table_2_list) {\n" +
+                "            String absolutePath2 = tableLocation2 + File.separator + name2;\n" +
+                "            try (BufferedReader br = new BufferedReader(new FileReader(absolutePath2))) {\n" +
+                "                String line1;\n" +
+
+                "\n" +
+                "                while ((line1 = br.readLine()) != null) {\n\n"+
+                "                    int null_value =0;\n" +
+                "                    int i=0;\n\n";
+
+        output+="byte[] comaList1 = new byte[";
+        output+=Tabels_name.get(1).getTyp().size()-1;
+        output+="];\n\n";
+
+        output+="comaList1 = FindCommasInLine(line1,comaList1,tableSpilt2);\n";
+
+        output+=" int index1 = "+Tabels_name.get(1).getIndexCol(joines.get(0).getCol2())+";\n\n";
+
+        output+="String col1;\n" +
+                "                    if(index1==0){\n" +
+                "\n" +
+                "                        col1= getCol(index1,comaList1[index1],line1);\n" +
+                "\n" +
+                "                    }else if(comaList1.length+1 == index1){\n" +
+                "\n" +
+                "                        col1= getCol(comaList1[comaList1.length-1]+1,line1.length(),line1);\n" +
+                "                    }else{\n" +
+                "                        col1=getCol(comaList1[index1-1]+1,comaList1[index1],line1);\n" +
+                "                    }\n\nlength_country1 = comaList1.length+1;\n" +
+                "\n" ;
+
+
+
+        int tbl=1;
+        output+="for (String name"+tbl+" : Table_"+tbl+"_list) {\n" +
+                "                            String absolutePath"+tbl+" = tableLocation"+tbl+" + File.separator + name"+tbl+";\n" +
+                "                            try (BufferedReader br"+(tbl+1)+" = new BufferedReader(new FileReader(absolutePath"+tbl+"))) {\n" +
+                "                                String line"+(tbl+1)+";\n" +
+                "\n" +
+                "                                while ((line"+(tbl+1)+" = br"+(tbl+1)+".readLine()) != null) {\n i++;\n" +
+                "                                 \n";
+
+
+
+        output+="byte[] comaList"+(tbl+1)+" = new byte[";
+        output+=Tabels_name.get(0).getTyp().size()-1;
+        output+="];\n\n";
+
+        output+="comaList"+(tbl+1)+" = FindCommasInLine(line"+(tbl+1)+",comaList"+(tbl+1)+",tableSpilt"+tbl+");";
+
+
+        output+=" int index"+(tbl+1)+" = "+Tabels_name.get(0).getIndexCol(joines.get(0).getCol1())+";\n\n";
+        output+="String col2;\n" +
+                "                    if(index2==0){\n" +
+                "\n" +
+                "                        col2= getCol(index2,comaList2[index2],line2);\n" +
+                "\n" +
+                "                    }else if(comaList2.length+1 == index2){\n" +
+                "\n" +
+                "                        col2= getCol(comaList2[comaList2.length-1]+1,line2.length(),line2);\n" +
+                "                    }else{\n" +
+                "                        col2=getCol(comaList2[index2-1]+1,comaList2[index2],line2);\n" +
+                "                    }\n\n";
+
+
+        String op = joines.get(0).getOnOP();
+        switch (op){
+            case "=":{
+                output+="if ((col"+(tbl)+".equals(col"+(tbl+1)+"))){\n";
+            }break;
+            default:{
+                output+="if ((Integer.parseInt(col"+(tbl)+") "+op+" Integer.parseInt(col"+(tbl+1)+"))){\n";
+            }break;
+        }
+
+        if(joines.get(0).getJoin().equals("rightjoin") || joines.get(0).getJoin().equals("RIGHTJOIN")){
+
+            output+="                                    line1 = line1.replace(tableSpilt1,',');\n" +
+                    "                                    line2 = line2.replace(tableSpilt2,',');\n" +
+                    "                                    String concat_line1 = line2+','+line1;\n" +
+                    "\n" +
+                    "                                    byte[] comaConcat1 = new byte[comaList1.length+comaList2.length+1];\n" +
+                    "\n" +
+                    "                                    comaConcat1 = FindCommasInLine(concat_line1,comaConcat1,',');\n";
+
+
+            try(BufferedWriter fileOutputStream = new BufferedWriter(new FileWriter(filePath,true))){
+
+                fileOutputStream.write(output);
+
+                fileOutputStream.close();
+                output = "";
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+
+            output+=" byte[] Keys"+(1)+" = new byte[";
+
+            output+=sel_col_keys.size();
+
+            output+="];\n";
+            for(int j=0;j<sel_col_keys.size();j++) {
+
+                int TableInde = 0;
+                for(TableInde=0;TableInde<Tabels_name.size();TableInde++){
+                    if(Tabels_name.get(TableInde).getName_typ().equals(sel_col_keys.get(j).tablename)){
+                        break;
+                    }
+                }
+
+
+                int colInde = Tabels_name.get(TableInde).getIndexCol(sel_col_keys.get(j).colname);
+
+                output += "Keys1[" + j + "] =(byte) ( ";
+
+                for (int keys = 0; keys < TableInde; keys++) {
+
+                    output += "comaList" + (keys + 1) + ".length +";
+                    if (keys + 1 == TableInde)
+                        output += "1+";
+
+                }
+
+                output += colInde + ");\n";
+
+
+                temp = output;
+
+                try(BufferedWriter fileOutputStream = new BufferedWriter(new FileWriter(filePath,true))){
+
+                    fileOutputStream.write(output);
+
+                    fileOutputStream.close();
+                    output = "";
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+
+
+
+
+
+                int map=0;
+
+                for(int ii =0;ii<values.size();ii++){
+                    map++;
+                    output+="map("+map+",concat_line"+(1)+",name"+(1)+"+\"_\",comaConcat"+(1)+",Keys1,(byte) (";
+
+                    for(TableInde=0;TableInde<Tabels_name.size();TableInde++){
+
+                        if(Tabels_name.get(TableInde).getName_typ().equals(values.get(ii).tablename)){
+                            break;
+                        }
+
+                    }
+
+                    int valIndex = Tabels_name.get(TableInde).getIndexCol(values.get(ii).colname);
+
+                    for(int valus=0;valus<TableInde;valus++){
+
+                        output+="comaList"+(valus+1)+".length +";
+                        if(valus+1 == TableInde)
+                            output+="1+";
+
+                    }
+
+                    output+=valIndex+"));\n";
+
+
+                }
+                output+=  "                                }else{\n" +
+                        "                                    null_value++;\n" +
+                        "                                }\n";
+
+
+
+            }
+
+        }else{
+
+            output+="\n" +
+                    "\n" +
+                    "\n" +
+                    "                                }else{\n" +
+                    "                                    null_value++;\n" +
+                    "                                }\n";
+
+        }
+
+
+
+
+        output+="}\n" +
+                "\n" +
+                "                        }\n" +
+                "                    }\n";
+
+// ifffff
+
+        output+=" if(null_value==i){\n" +
+                "                        String c_null = \"\";\n" +
+                "                        for(int k=1;k<length_country1;k++){\n" +
+                "                           c_null+=\",\";\n" +
+                "                        }\n" +
+                "                        line1 = line1.replace(tableSpilt1,',');\n" +
+                "                        String concat_line1 = c_null+','+line1;\n" +
+                "                        byte[] comaConcat1 = new byte[comaList1.length+c_null.length()+1];\n" +
+                "\n" +
+                "                        comaConcat1 = FindCommasInLine(concat_line1,comaConcat1,',');\n";
+
+        output+=temp;
+
+        int map=0;
+        int TableInde =0;
+        for(int ii =0;ii<values.size();ii++){
+            map++;
+            output+="map("+map+",concat_line1,name2+\"_\",comaConcat"+(1)+",Keys1,(byte) (";
+
+            for(TableInde=0;TableInde<Tabels_name.size();TableInde++){
+
+                if(Tabels_name.get(TableInde).getName_typ().equals(values.get(ii).tablename)){
+                    break;
+                }
+
+            }
+
+
+            int valIndex = Tabels_name.get(TableInde).getIndexCol(values.get(ii).colname);
+
+            for(int valus=0;valus<TableInde;valus++){
+
+                output+="comaList"+(valus+1)+".length +";
+                if(valus+1 == 1)
+                    output+="1+";
+
+            }
+
+            output+=valIndex+"));\n";
+
+        }
+
+        output+="}\n\n";
+
+        output+=" }\n" +
+                "            } catch (FileNotFoundException e) {\n" +
+                "                e.printStackTrace();\n" +
+                "            } catch (IOException e) {\n" +
+                "                e.printStackTrace();\n" +
+                "            }\n" +
+                "        }\n";
+        output+="}\n";
+
+        try(BufferedWriter fileOutputStream = new BufferedWriter(new FileWriter(filePath,true))){
+
+            fileOutputStream.write(output);
+
+            fileOutputStream.close();
+            output = "";
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+
+    }
+
+    private void selectRightJoin(ArrayList<data> Tabels_name,ArrayList<joinStruct> joines,ArrayList<SelectCol> sel_col_keys,Map<String,Integer> vales){
+        output+= "public static void join() {\n\n";
+        for(int i=1;i<=Tabels_name.size();i++){
+            output+="File table"+(i)+" = new File(tableLocation"+i+");\n";
+            output+="String[] Table_"+i+"_list = table"+i+".list();\n";
+        }
+
+        output+="int length_country1 =0;\n" +
+                "for(String name2 : Table_2_list) {\n" +
+                "            String absolutePath2 = tableLocation2 + File.separator + name2;\n" +
+                "            try (BufferedReader br = new BufferedReader(new FileReader(absolutePath2))) {\n" +
+                "                String line1;\n" +
+                "                    int null_value =0;\n" +
+                "                    int i=0;\n\n"+
+                "\n" +
+                "                while ((line1 = br.readLine()) != null) {\n\n";
+
+
+        output+="byte[] comaList1 = new byte[";
+        output+=Tabels_name.get(1).getTyp().size()-1;
+        output+="];\n\n";
+
+        output+="comaList1 = FindCommasInLine(line1,comaList1,tableSpilt2);\n";
+
+        output+=" int index1 = "+Tabels_name.get(1).getIndexCol(joines.get(0).getCol2())+";\n\n";
+
+        output+="String col1;\n" +
+                "                    if(index1==0){\n" +
+                "\n" +
+                "                        col1= getCol(index1,comaList1[index1],line1);\n" +
+                "\n" +
+                "                    }else if(comaList1.length+1 == index1){\n" +
+                "\n" +
+                "                        col1= getCol(comaList1[comaList1.length-1]+1,line1.length(),line1);\n" +
+                "                    }else{\n" +
+                "                        col1=getCol(comaList1[index1-1]+1,comaList1[index1],line1);\n" +
+                "                    }\n\nlength_country1 = comaList1.length+1;\n" +
+                "\n" ;
+
+
+
+        try(BufferedWriter fileOutputStream = new BufferedWriter(new FileWriter(filePath,true))){
+
+            fileOutputStream.write(output);
+
+            fileOutputStream.close();
+            output = "";
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        int tbl=1;
+        output+="for (String name"+tbl+" : Table_"+tbl+"_list) {\n" +
+                "                            String absolutePath"+tbl+" = tableLocation"+tbl+" + File.separator + name"+tbl+";\n" +
+                "                            try (BufferedReader br"+(tbl+1)+" = new BufferedReader(new FileReader(absolutePath"+tbl+"))) {\n" +
+                "                                String line"+(tbl+1)+";\n" +
+                "\n" +
+                "                                while ((line"+(tbl+1)+" = br"+(tbl+1)+".readLine()) != null) {\n i++;\n" +
+                "                                 \n";
+
+
+
+        output+="byte[] comaList"+(tbl+1)+" = new byte[";
+        output+=Tabels_name.get(0).getTyp().size()-1;
+        output+="];\n\n";
+
+        output+="comaList"+(tbl+1)+" = FindCommasInLine(line"+(tbl+1)+",comaList"+(tbl+1)+",tableSpilt"+tbl+");";
+
+
+        output+=" int index"+(tbl+1)+" = "+Tabels_name.get(1).getIndexCol(joines.get(0).getCol1())+";\n\n";
+        output+="String col2;\n" +
+                "                    if(index2==0){\n" +
+                "\n" +
+                "                        col2= getCol(index2,comaList2[index2],line2);\n" +
+                "\n" +
+                "                    }else if(comaList2.length+1 == index2){\n" +
+                "\n" +
+                "                        col2= getCol(comaList2[comaList2.length-1]+1,line2.length(),line2);\n" +
+                "                    }else{\n" +
+                "                        col2=getCol(comaList2[index2-1]+1,comaList2[index2],line2);\n" +
+                "                    }\n\n";
+
+
+        try(BufferedWriter fileOutputStream = new BufferedWriter(new FileWriter(filePath,true))){
+
+            fileOutputStream.write(output);
+
+            fileOutputStream.close();
+            output = "";
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+
+
+        String op = joines.get(0).getOnOP();
+        switch (op){
+            case "=":{
+                output+="if ((col"+(tbl)+".equals(col"+(tbl+1)+"))){\n";
+            }break;
+            default:{
+                output+="if ((Integer.parseInt(col"+(tbl)+") "+op+" Integer.parseInt(col"+(tbl+1)+"))){\n";
+            }break;
+        }
+
+        if(joines.get(0).getJoin().equals("rightjoin") || joines.get(0).getJoin().equals("RIGHTJOIN")){
+
+            output+="                                    line1 = line1.replace(tableSpilt1,',');\n" +
+                    "                                    line2 = line2.replace(tableSpilt2,',');\n" +
+                    "                                    String concat_line1 = line2+','+line1;\n" +
+                    "\n" +
+                    "                                    byte[] comaConcat1 = new byte[comaList1.length+comaList2.length+1];\n" +
+                    "\n" +
+                    "                                    comaConcat1 = FindCommasInLine(concat_line1,comaConcat1,',');\n";
+
+            output+=" byte[] Keys"+(1)+" = new byte[";
+
+            output+=sel_col_keys.size();
+
+            output+="];\n";
+            for(int j=0;j<sel_col_keys.size();j++){
+
+                int TableInde =0;
+
+
+                int colInde = Tabels_name.get(TableInde).getIndexCol(sel_col_keys.get(j).colname);
+
+                output+="Keys1["+j+"] =(byte) ( ";
+
+                for(int keys=0;keys<TableInde;keys++){
+
+                    output+="comaList"+(keys+1)+".length +";
+                    if(keys+1 == TableInde)
+                        output+="1+";
+
+                }
+
+                output+=colInde+");\n";
+
+
+                temp = output;
+
+
+                try(BufferedWriter fileOutputStream = new BufferedWriter(new FileWriter(filePath,true))){
+
+                    fileOutputStream.write(output);
+
+                    fileOutputStream.close();
+                    output = "";
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+
+
+
+            }
+
+
+            int TableInde=0;
+            int map=0;
+
+            for(int ii =0;ii<values.size();ii++){
+                map++;
+                output+="map("+map+",concat_line"+(1)+",name"+(1)+"+\"_\",comaConcat"+(1)+",Keys1,(byte) (";
+
+
+
+                int valIndex = Tabels_name.get(TableInde).getIndexCol(values.get(ii).colname);
+
+                for(int valus=0;valus<TableInde;valus++){
+
+                    output+="comaList"+(valus+1)+".length +";
+                    if(valus+1 == TableInde)
+                        output+="1+";
+
+                }
+
+                output+=valIndex+"));\n";
+                output+=  "                                }else{\n" +
+                        "                                    null_value++;\n" +
+                        "                                }\n";
+
+            }
+
+        }else{
+
+            output+="\n" +
+                    "\n" +
+                    "\n" +
+                    "                                }else{\n" +
+                    "                                    null_value++;\n" +
+                    "                                }\n";
+
+        }
+
+        try(BufferedWriter fileOutputStream = new BufferedWriter(new FileWriter(filePath,true))){
+
+            fileOutputStream.write(output);
+
+            fileOutputStream.close();
+            output = "";
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+
+        output+="      }\n" +
+                "                            }\n" +
+                "                        }\n\n\n";
+
+
+
+            output+=" if(null_value==i){\n" +
+                    "                        String c_null = \"\";\n" +
+                    "                        for(int k=1;k<length_country1;k++){\n" +
+                    "                           c_null+=\",\";\n" +
+                    "                        }\n" +
+                    "                        line1 = line1.replace(tableSpilt1,',');\n" +
+                    "                        String concat_line1 = c_null+','+line1;\n" +
+                    "                        byte[] comaConcat1 = new byte[comaList1.length+c_null.length()+1];\n" +
+                    "\n" +
+                    "                        comaConcat1 = FindCommasInLine(concat_line1,comaConcat1,',');\n";
+
+            output+=temp;
+
+            int map=0;
+        for(int ii =0;ii<values.size();ii++){
+            map++;
+            output+="map("+map+",concat_line1,name2+\"_\",comaConcat"+(1)+",Keys1,(byte) (";
+
+
+
+            int valIndex = Tabels_name.get(1).getIndexCol(values.get(ii).colname);
+
+            for(int valus=0;valus<1;valus++){
+
+                output+="comaList"+(valus+1)+".length +";
+                if(valus+1 == 1)
+                    output+="1+";
+
+            }
+
+            output+=valIndex+"));\n";
+
+        }
+
+        output+="   }\n" +
+                "\n" +
+                "                }\n" +
+                "            } catch (FileNotFoundException e) {\n" +
+                "                e.printStackTrace();\n" +
+                "            } catch (IOException e) {\n" +
+                "                e.printStackTrace();\n" +
+                "            }\n" +
+                "        }}\n";
+
+
+
+        try(BufferedWriter fileOutputStream = new BufferedWriter(new FileWriter(filePath,true))){
+
+            fileOutputStream.write(output);
+
+            fileOutputStream.close();
+            output = "";
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+    }
+
     private void selectJoin(ArrayList<data> Tabels_name,ArrayList<joinStruct> joines,ArrayList<SelectCol> sel_col_keys,Map<String,Integer> vales){
 
 
@@ -1105,12 +1661,13 @@ public class CodeG extends HplsqlBaseVisitor<Object> {
             output+="String[] Table_"+i+"_list = table"+i+".list();\n";
         }
 
-        output+="for(String name1 : Table_1_list) {\n" +
+        output+="int length_country2 =0;\n" +
+                "for(String name1 : Table_1_list) {\n" +
                 "            String absolutePath1 = tableLocation1 + File.separator + name1;\n" +
                 "            try (BufferedReader br = new BufferedReader(new FileReader(absolutePath1))) {\n" +
                 "                String line1;\n" +
                 "\n" +
-                "                while ((line1 = br.readLine()) != null) {\n\n";
+                "                while ((line1 = br.readLine()) != null) {\nint null_value =0;\nint i=0;\n";
 
         output+="byte[] comaList1 = new byte[";
         output+=Tabels_name.get(0).getTyp().size()-1;
@@ -1152,7 +1709,7 @@ public class CodeG extends HplsqlBaseVisitor<Object> {
                     "                            try (BufferedReader br"+tbl+" = new BufferedReader(new FileReader(absolutePath"+tbl+"))) {\n" +
                     "                                String line"+tbl+";\n" +
                     "\n" +
-                    "                                while ((line"+tbl+" = br"+tbl+".readLine()) != null) {\n" +
+                    "                                while ((line"+tbl+" = br"+tbl+".readLine()) != null) {\n i++;\n" +
                     "                                 \n";
 
 
@@ -1177,7 +1734,18 @@ public class CodeG extends HplsqlBaseVisitor<Object> {
                     "                                        col"+tbl+"=getCol(comaList"+tbl+"[index"+tbl+"-1]+1,comaList"+tbl+"[index"+tbl+"],line"+tbl+");\n" +
                     "                                    }\n\n\n";
 
-            output+="if ((col"+(tbl-1)+".equals(col"+tbl+"))){";
+
+            String op = joines.get(i).getOnOP();
+            switch (op){
+                case "=":{
+                    output+="if ((col"+(tbl-1)+".equals(col"+tbl+"))){\n";
+                }break;
+                default:{
+                    output+="if ((Integer.parseInt(col"+(tbl-1)+") "+op+" Integer.parseInt(col"+tbl+"))){\n";
+                }break;
+            }
+
+
 
             output+="line"+(tbl-1)+" = line"+(tbl-1)+".replace(tableSpilt"+(tbl-1)+",',');\n" +
                     "                                        line"+tbl+" = line"+tbl+".replace(tableSpilt"+tbl+",',');\n" +
@@ -1187,15 +1755,6 @@ public class CodeG extends HplsqlBaseVisitor<Object> {
             output+=" byte[] comaConcat"+(i+1)+" = new byte[comaList"+(tbl-1)+".length+comaList"+tbl+".length+1];\n" +
                     "\n" +
                     "                                        comaConcat"+(i+1)+" = FindCommasInLine(concat_line"+(i+1)+",comaConcat"+(i+1)+",',');\n";
-
-
-           output+="";
-
-            output+=" byte[] Keys"+(i+1)+" = new byte[";
-
-            output+=sel_col_keys.size();
-
-            output+="];\n";
 
 
             try(BufferedWriter fileOutputStream = new BufferedWriter(new FileWriter(filePath,true))){
@@ -1208,11 +1767,17 @@ public class CodeG extends HplsqlBaseVisitor<Object> {
                 e.printStackTrace();
             }
 
+            output+=" byte[] Keys"+(i+1)+" = new byte[";
+
+            output+=sel_col_keys.size();
+
+            output+="];\n";
+
+
+
+
             for(int j=0;j<sel_col_keys.size();j++){
 
-             //   if(sel_col_keys.get(j).tablename.equals(joines.get(i).getAlis1()) || sel_col_keys.get(j).tablename.equals(joines.get(i).getTbl1())){
-
-                    // keys from table 1
                     int TableInde =0;
                     int TI=-1;
                     for(TableInde=0;TableInde<Tabels_name.size();TableInde++){
@@ -1240,6 +1805,9 @@ public class CodeG extends HplsqlBaseVisitor<Object> {
                     output+=colInde+");\n";
 
 
+                    temp = output;
+
+
                 try(BufferedWriter fileOutputStream = new BufferedWriter(new FileWriter(filePath,true))){
 
                     fileOutputStream.write(output);
@@ -1251,113 +1819,7 @@ public class CodeG extends HplsqlBaseVisitor<Object> {
                 }
 
 
-                    /*for(Map.Entry<String, Integer> entry : vales.entrySet()){
-                         map++;
 
-
-                         output+="map("+map+",concat_line"+(i+1)+",name"+(tbl-1)+"+\"_\"+name"+(tbl)+",comaConcat"+(i+1)+",Keys1,(byte) (";
-
-                        for(TableInde=0;TableInde<Tabels_name.size();TableInde++){
-
-                            if(Tabels_name.get(TableInde).getName_typ().equals(entry.getKey())){
-                                break;
-                            }
-
-                        }
-
-                        int valIndex = Tabels_name.get(TableInde).getIndexCol(entry.getKey());
-
-                        for(int valus=1;valus<TableInde;valus++){
-
-                            output+="comaList"+valus+".length +";
-                            if(valus-1 == TableInde)
-                                output+="1+";
-
-                        }
-
-                        output+=valIndex+"));\n";
-
-
-                      //  Tabels_name.get(0).getIndexCol(entry.getKey())
-
-
-                    }*/
-
-
-
-
-
-
-
-
-             //  }else{
-                    // keys from table 2
-
-
-/*
-
-                    int TableInde =0;
-                    for(TableInde=0;TableInde<Tabels_name.size();TableInde++){
-
-                        if(Tabels_name.get(TableInde).getName_typ().equals(sel_col_keys.get(j).colname)){
-                            break;
-                        }
-
-                    }
-
-
-                    int colInde = Tabels_name.get(1).getIndexCol(sel_col_keys.get(j).colname);
-
-                    output+="Keys1[0] =(byte) ( ";
-                    for(int keys=1;keys<TableInde;keys++){
-
-                        output+="comaList"+keys+".length +";
-                        if(keys-1 == TableInde)
-                            output+="1+";
-
-                    }
-
-                    output+=colInde+");\n";
-
-
-
-
-                    int map=0;
-                    for(Map.Entry<String, Integer> entry : vales.entrySet()){
-                        map++;
-
-
-                        output+="map("+map+",concat_line"+(i+1)+",name"+(tbl-1)+"+\"_\"+name"+(tbl)+",comaConcat"+(i+1)+",Keys1,(byte) (";
-
-                        for(TableInde=0;TableInde<Tabels_name.size();TableInde++){
-
-                            if(Tabels_name.get(TableInde).getName_typ().equals(entry.getKey())){
-                                break;
-                            }
-
-                        }
-
-                        int valIndex = Tabels_name.get(TableInde).getIndexCol(entry.getKey());
-
-                        for(int valus=1;valus<TableInde;valus++){
-
-                            output+="comaList"+valus+".length +";
-                            if(valus-1 == TableInde)
-                                output+="1+";
-
-                        }
-
-                        output+=valIndex+"));\n";
-
-
-                        //  Tabels_name.get(0).getIndexCol(entry.getKey())
-
-
-                    }
-*/
-             //   }
-
-             //   output+="Keys"+(i+1)+"["+j+"] = "+Tabels_name.get(0).getIndexCol(sel_col_keys.get(j).colname)+";\n";
             }
 
             int TableInde =0;
@@ -1394,12 +1856,35 @@ public class CodeG extends HplsqlBaseVisitor<Object> {
 
             }
 
-            output+="}";
+            output+="}else {\n" +
+                    "                                    null_value++;\n" +
+                    "                                }";
 
 
             output+="      }\n" +
                     "                            }\n" +
                     "                        }\n\n\n";
+
+            if(joines.get(i).getJoin().equals("leftjoin") || joines.get(i).getJoin().equals("LEFTJOIN")){
+                output+=" if(null_value==i){\n" +
+                        "                        String c_null = \"\";\n" +
+                        "                        for(int k=1;k<length_country2;k++){\n" +
+                        "                           c_null+=\",\";\n" +
+                        "                        }\n" +
+                        "                        line1 = line1.replace(tableSpilt1,',');\n" +
+                        "                        String concat_line1 = line1+','+c_null;\n" +
+                        "                        byte[] comaConcat1 = new byte[comaList1.length+c_null.length()+1];\n" +
+                        "\n" +
+                        "                        comaConcat1 = FindCommasInLine(concat_line1,comaConcat1,',');\n";
+
+                output+=temp;
+
+                output+="\n" +
+                        "                        map(1,concat_line1,name1+\"_\",comaConcat1,Keys1,(byte)4);\n" +
+                        "\n" +
+                        "                    }\n";
+            }
+
 
 
         }
@@ -1418,7 +1903,7 @@ public class CodeG extends HplsqlBaseVisitor<Object> {
                 "    }\n\n";
 
 
-        output+="}\n\n";
+
         try(BufferedWriter fileOutputStream = new BufferedWriter(new FileWriter(filePath,true))){
 
             fileOutputStream.write(output);
@@ -1435,6 +1920,8 @@ public class CodeG extends HplsqlBaseVisitor<Object> {
 
 
     }
+
+
 
     private void selectWitoutJoin( ArrayList<data> Tabels_name,ArrayList<SelectCol> sel_col_keys,Map<String,Integer> vales){
 
