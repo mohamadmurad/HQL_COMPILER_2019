@@ -21,10 +21,11 @@ public class fullouterjoin {
 
     static Comparator<String> comparator = new Comparator<String>() {
         public int compare(String r1, String r2){
+
+
             String[] r11 = r1.split(",");
             String[] r22 = r2.split(",");
-           // int t1 = Integer.parseInt(r11[5]);
-           // int t2 = Integer.parseInt(r22[5]);
+
             return r11[0].compareTo(r22[0]);
         }};
 

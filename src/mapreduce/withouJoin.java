@@ -153,16 +153,25 @@ public class withouJoin {
         File n = new File(all_path);
         String[] list = n.list();
 
+        String all = null;
 
-        String all =concatReducer(list[0],list[1],tempdirectory+File.separator+"All_red",tempdirectory+File.separator+"All_red");;
+        if(list.length == 2){
+            all = concatReducer(list[0],list[1],tempdirectory+File.separator+"All_red",tempdirectory+File.separator+"All_red" , ',');
+        }else{
+            all = concatReducer(list[0],list[1],tempdirectory+File.separator+"All_red",tempdirectory+File.separator+"All_red" , '/');
+        }
+
         for(int i=1;i<list.length;i++){
             if(i+1 <list.length){
-                all = concatReducer(all,list[i+1],tempdirectory,tempdirectory+File.separator+"All_red");
+                all = concatReducer(all,list[i+1],tempdirectory,tempdirectory+File.separator+"All_red" , '/');
+            }else if(i+1 == list.length-1){
+                all = concatReducer(all,list[i+1],tempdirectory,tempdirectory+File.separator+"All_red" , ',');
+
             }
 
         }
 
-        //order.start(tempdirectory+File.separator+all,tempdirectory+File.separator+all,comparator);
+       // order.start(tempdirectory+File.separator+all,tempdirectory+File.separator+all,comparator);
         if(list.length==1){
             printResult(tempdirectory+File.separator+"All_red/1.txt");
         }else {
@@ -174,11 +183,28 @@ public class withouJoin {
 
     static Comparator<String> comparator = new Comparator<String>() {
         public int compare(String r1, String r2){
-            String[] r11 = r1.split(",");
-            String[] r22 = r2.split(",");
-            // int t1 = Integer.parseInt(r11[5]);
-            // int t2 = Integer.parseInt(r22[5]);
-            return r11[0].compareTo(r22[0]);
+            byte[] comaList1 = new byte[3];
+
+            comaList1 =FindCommasInLine(r1,comaList1,',');
+
+            int index1 = 2;
+            String col1=null;
+            String col2 = null;
+            if(index1==0){
+
+                col1= getCol(index1,comaList1[index1],r1);
+                col2= getCol(index1,comaList1[index1],r2);
+
+            }else if(comaList1.length+1 == index1){
+
+                col1= getCol(comaList1[comaList1.length-1]+1,r1.length(),r1);
+                col2= getCol(comaList1[comaList1.length-1]+1,r1.length(),r2);
+            }else{
+                col1=getCol(comaList1[index1-1]+1,comaList1[index1],r1);
+                col2=getCol(comaList1[index1-1]+1,comaList1[index1],r2);
+            }
+
+            return (Integer.parseInt(col1) - Integer.parseInt(col2)) * -1;
         }};
 
     private static void printResult(String ResultFile) {
@@ -700,7 +726,7 @@ public class withouJoin {
 
     }
 
-    public static String concatReducer(String redu1, String redu2,String path1,String path2){
+    public static String concatReducer(String redu1, String redu2,String path1,String path2,char sp){
 
         String reduce = tempdirectory + File.separator +redu1+redu2+"res.txt";
         //String out_File = tempdirectory+File.separator+"res.txt";
@@ -724,7 +750,7 @@ public class withouJoin {
 
                         String[] KeyAndVal2 = line2.split("/");
                         if(KeyAndVal[0].equals(KeyAndVal2[0])){
-                            String output = KeyAndVal[0] + "/" + KeyAndVal[1] + "," +KeyAndVal2[1]+lineSeparator;
+                            String output = KeyAndVal[0] + sp + KeyAndVal[1] + "," +KeyAndVal2[1]+lineSeparator;
                             try(BufferedWriter fileOutputStream = new BufferedWriter(new FileWriter(reduce,true))) {
                                 fileOutputStream.write(output);
                                 fileOutputStream.close();
@@ -743,6 +769,8 @@ public class withouJoin {
 
         return redu1+redu2+"res.txt";
     }
+
+
 
     public static void delete(File file) throws IOException{
 

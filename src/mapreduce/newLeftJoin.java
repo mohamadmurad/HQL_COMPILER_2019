@@ -113,7 +113,7 @@ public class newLeftJoin {
         shuffle11(1,false);
        // shuffle(1);
         // shuffle(2);
-     /*   String red1 = reducer(1,new MyFunction() {
+        String red1 = reducer(1,new MyFunction() {
             @Override
             public String operation(ArrayList<Integer> c) {
                 int sum = 0;
@@ -124,7 +124,7 @@ public class newLeftJoin {
 
                 return String.valueOf(sum);
             }
-        });*/
+        });
 
 
       /*  String red2 = reducer(2,new MyFunction() {
@@ -140,7 +140,7 @@ public class newLeftJoin {
         });*/
 
 
-      //  sum_all_red(1);
+        sum_all_red(1);
         // sum_all_red(2);
 
       /* File n = new File(tempdirectory+File.separator+"All_red");

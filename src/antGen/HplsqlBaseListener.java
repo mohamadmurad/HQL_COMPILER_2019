@@ -1737,6 +1737,18 @@ public class HplsqlBaseListener implements HplsqlListener {
 	 *
 	 * <p>The default implementation does nothing.</p>
 	 */
+	@Override public void enterOrder_by_col(HplsqlParser.Order_by_colContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void exitOrder_by_col(HplsqlParser.Order_by_colContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
 	@Override public void enterSelect_options(HplsqlParser.Select_optionsContext ctx) { }
 	/**
 	 * {@inheritDoc}

@@ -874,6 +874,12 @@ public interface HplsqlVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitOrder_by_clause(HplsqlParser.Order_by_clauseContext ctx);
 	/**
+	 * Visit a parse tree produced by {@link HplsqlParser#order_by_col}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitOrder_by_col(HplsqlParser.Order_by_colContext ctx);
+	/**
 	 * Visit a parse tree produced by {@link HplsqlParser#select_options}.
 	 * @param ctx the parse tree
 	 * @return the visitor result

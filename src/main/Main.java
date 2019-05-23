@@ -67,7 +67,7 @@ public class Main {
             visitor.visit(myTree);
 
 
-    //        ErrorPrinter.exitOnErrors();
+         //   ErrorPrinter.exitOnErrors();
 
 
 
@@ -81,8 +81,7 @@ public class Main {
             CodeG code_g = new CodeG();
             code_g.visit(myTree);
 
-            //codeGen code_g = new codeGen(symbol);
-           // code_g.visit(myTree);
+
 
 
            // CG.cg.main(args);

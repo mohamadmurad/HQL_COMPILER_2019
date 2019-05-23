@@ -80,6 +80,24 @@ public static boolean find_col_in_table(String col,String table) {
 
 }
 
+    public static String find_type_col_in_table(String col,String table) {
+        for(int i=0;i<data_type.size();i++)
+        {
+            if(data_type.get(i).name_typ.equals(table))
+            {
+                for(int j=0;j<data_type.get(i).typ.size();j++)
+                {
+                    if(data_type.get(i).typ.get(j).name.equals(col))
+                    {
+                        return data_type.get(i).typ.get(j).type;
+                    }
+                }
+            }
+        }
+        return null;
+
+    }
+
 public static void set(String name_typ , ArrayList<name_type> typ,String location,String delimeeter,String store) throws IOException {
     boolean find = true;
     String s;

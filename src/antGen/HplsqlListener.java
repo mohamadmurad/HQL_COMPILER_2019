@@ -1443,6 +1443,16 @@ public interface HplsqlListener extends ParseTreeListener {
 	 */
 	void exitOrder_by_clause(HplsqlParser.Order_by_clauseContext ctx);
 	/**
+	 * Enter a parse tree produced by {@link HplsqlParser#order_by_col}.
+	 * @param ctx the parse tree
+	 */
+	void enterOrder_by_col(HplsqlParser.Order_by_colContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link HplsqlParser#order_by_col}.
+	 * @param ctx the parse tree
+	 */
+	void exitOrder_by_col(HplsqlParser.Order_by_colContext ctx);
+	/**
 	 * Enter a parse tree produced by {@link HplsqlParser#select_options}.
 	 * @param ctx the parse tree
 	 */

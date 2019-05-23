@@ -18,6 +18,8 @@ import java.util.Map;
 
 public class CodeG extends HplsqlBaseVisitor<Object> {
 
+    static String numberREG = "^[-+]?\\d+(\\.\\d+)?$";
+
     TypeArray types;
     {
         try {
@@ -334,11 +336,161 @@ public class CodeG extends HplsqlBaseVisitor<Object> {
 
 
 
-            if(joines.get(0).getJoin().equals("RIGHTJOIN") || joines.get(0).getJoin().equals("rightjoin")
-                    || joines.get(0).getJoin().equals("fullouterjoin") || joines.get(0).getJoin().equals("FULLOUTERJOIN")){
+            if(joines.get(0).getJoin().equals("RIGHTJOIN") || joines.get(0).getJoin().equals("rightjoin")){
+                selectRightJoin1(Tabels_name,joines,sel_col_keys,vales);
+            }else if(joines.get(0).getJoin().equals("fullouterjoin") || joines.get(0).getJoin().equals("FULLOUTERJOIN")){
+                selectJoin(Tabels_name,joines,sel_col_keys,vales);
                 selectRightJoin1(Tabels_name,joines,sel_col_keys,vales);
             }else{
                 selectJoin(Tabels_name,joines,sel_col_keys,vales);
+            }
+
+
+            for(int i=0;i<ctx.order_by_clause().order_by_col().size();i++){
+                String tableName="";
+                if(ctx.order_by_clause().order_by_col(i).ident()!=null){
+                    tableName = ctx.order_by_clause().order_by_col(i).ident().getText();
+                }
+                String colName = ctx.order_by_clause().order_by_col(i).expr().getText();
+                if(colName.matches(numberREG)){
+
+                    int colIndex=Integer.parseInt(colName) -1;
+                    SelectCol coloms = null;
+
+                    //for(colIndex=0;colIndex<ctx.new_select_col().size();colIndex++){
+                        coloms = (SelectCol)visit(ctx.new_select_col(colIndex));
+                       // if(coloms.colname.equals(colName))
+                       //     break;
+                   // }
+
+                    output+="static Comparator<String> comparator = new Comparator<String>() {\n" +
+                            "        public int compare(String r1, String r2){\n";
+
+                    output+="byte[] comaList1 = new byte[";
+
+                    output+=ctx.new_select_col().size();
+
+                    output+="];\n";
+
+                    output+="comaList1 =FindCommasInLine(r1,comaList1,',');";
+
+                    output+="int index1 = " + colIndex +";\n";
+
+
+                    output+=" String col1=null;\n" +
+                            "            String col2 = null;\n" +
+                            "            if(index1==0){\n" +
+                            "\n" +
+                            "                col1= getCol(index1,comaList1[index1],r1);\n" +
+                            "                col2= getCol(index1,comaList1[index1],r2);\n" +
+                            "\n" +
+                            "            }else if(comaList1.length+1 == index1){\n" +
+                            "\n" +
+                            "                col1= getCol(comaList1[comaList1.length-1]+1,r1.length(),r1);\n" +
+                            "                col2= getCol(comaList1[comaList1.length-1]+1,r1.length(),r2);\n" +
+                            "            }else{\n" +
+                            "                col1=getCol(comaList1[index1-1]+1,comaList1[index1],r1);\n" +
+                            "                col2=getCol(comaList1[index1-1]+1,comaList1[index1],r2);\n" +
+                            "            }\n";
+
+                    if(types.find_type_col_in_table(coloms.colname,coloms.tablename).equals("string")){
+                        output+="return (col1.compareTo(col2)) ";
+                    }else {
+                        output+=" return (Integer.parseInt(col1) - Integer.parseInt(col2)) ";
+                    }
+
+                    if(ctx.order_by_clause().order_by_col(i).T_DESC()!=null){
+                        output+=" * -1;\n" +
+                                "        }};";
+                    }else{
+                        output+=";\n" +
+                                "        }};";
+
+                    }
+
+                    try(BufferedWriter fileOutputStream = new BufferedWriter(new FileWriter(filePath,true))){
+
+                        fileOutputStream.write(output);
+
+                        fileOutputStream.close();
+                        output = "";
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+
+                }else {
+                        int colIndex=0;
+                    SelectCol coloms = null;
+
+                        for(colIndex=0;colIndex<ctx.new_select_col().size();colIndex++){
+                             coloms = (SelectCol)visit(ctx.new_select_col(colIndex));
+                             System.out.println("collll  "+ coloms.colname + " ttt  "+ coloms.tablename);
+                            if(coloms.colname.equals(colName))
+                                break;
+                        }
+
+                        output+="static Comparator<String> comparator = new Comparator<String>() {\n" +
+                                "        public int compare(String r1, String r2){\n";
+
+                        output+="byte[] comaList1 = new byte[";
+
+                        output+=ctx.new_select_col().size();
+
+                        output+="];\n";
+
+                        output+="comaList1 =FindCommasInLine(r1,comaList1,',');";
+
+                        output+="int index1 = " + colIndex +";\n";
+
+
+                        output+=" String col1=null;\n" +
+                                "            String col2 = null;\n" +
+                                "            if(index1==0){\n" +
+                                "\n" +
+                                "                col1= getCol(index1,comaList1[index1],r1);\n" +
+                                "                col2= getCol(index1,comaList1[index1],r2);\n" +
+                                "\n" +
+                                "            }else if(comaList1.length+1 == index1){\n" +
+                                "\n" +
+                                "                col1= getCol(comaList1[comaList1.length-1]+1,r1.length(),r1);\n" +
+                                "                col2= getCol(comaList1[comaList1.length-1]+1,r1.length(),r2);\n" +
+                                "            }else{\n" +
+                                "                col1=getCol(comaList1[index1-1]+1,comaList1[index1],r1);\n" +
+                                "                col2=getCol(comaList1[index1-1]+1,comaList1[index1],r2);\n" +
+                                "            }\n";
+                        System.out.println(coloms.tablename);
+                        System.out.println(types.find_type_col_in_table(colName,coloms.tablename));
+                        if(types.find_type_col_in_table(colName,coloms.tablename).equals("string")){
+                                output+="return (col1.compareTo(col2)) ";
+                        }else {
+                            output+=" return (Integer.parseInt(col1) - Integer.parseInt(col2)) ";
+                        }
+                    System.out.println("kgjgggku");
+                        if(ctx.order_by_clause().order_by_col(i).T_DESC()!=null){
+                            output+=" * -1;\n" +
+                                    "        }};";
+                        }else{
+                            output+=";\n" +
+                                    "        }};";
+
+                        }
+
+                    try(BufferedWriter fileOutputStream = new BufferedWriter(new FileWriter(filePath,true))){
+
+                        fileOutputStream.write(output);
+
+                        fileOutputStream.close();
+                        output = "";
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+
+
+
+                }
+
+
+
             }
 
 
@@ -401,7 +553,9 @@ public class CodeG extends HplsqlBaseVisitor<Object> {
     public Object visitTabledotcol(HplsqlParser.TabledotcolContext ctx) {
 
         String table_name = ctx.ident().getText();
+
         String col_name = ctx.colom_name().ident().getText();
+
         Object aslis = null;
         if(ctx.colom_name().select_list_alias() != null){
             aslis =  visit(ctx.colom_name().select_list_alias());
@@ -433,6 +587,8 @@ public class CodeG extends HplsqlBaseVisitor<Object> {
         String paramiter = ctx.expr().get(0).getText();
 
         String tableName = ctx.ident().getText();
+
+        System.out.println(paramiter + "  t  "+tableName);
         boolean isDistnict = ctx.expr_func_all_distinct() != null ? true :false;
 
         SelectCol temp = new SelectCol(tableName,func_name, paramiter,null,isDistnict);
@@ -953,8 +1109,8 @@ public class CodeG extends HplsqlBaseVisitor<Object> {
     private String getOutterJoin(){
         return "public static void fullOuterJoin() {\n" +
                 "\n" +
-                "        LeftJoin();\n" +
-                "        RightJoin_WithoutInnerJoin();\n" +
+                "        join();\n" +
+                "        Rightjoin();\n" +
                 "\n" +
                 "    }\n";
     }
@@ -1107,7 +1263,7 @@ public class CodeG extends HplsqlBaseVisitor<Object> {
 
     private void selectRightJoin1(ArrayList<data> Tabels_name,ArrayList<joinStruct> joines,ArrayList<SelectCol> sel_col_keys,Map<String,Integer> vales){
 
-        output+= "public static void join() {\n\n";
+        output+= "public static void Rightjoin() {\n\n";
         for(int i=1;i<=Tabels_name.size();i++){
             output+="File table"+(i)+" = new File(tableLocation"+i+");\n";
             output+="String[] Table_"+i+"_list = table"+i+".list();\n";
@@ -1276,7 +1432,7 @@ public class CodeG extends HplsqlBaseVisitor<Object> {
 
                     for(int valus=0;valus<TableInde;valus++){
 
-                        output+="comaList"+(valus+1)+".length +";
+                        output+="comaList2.length +";
                         if(valus+1 == TableInde)
                             output+="1+";
 
@@ -1720,6 +1876,8 @@ public class CodeG extends HplsqlBaseVisitor<Object> {
             output+="comaList"+tbl+" = FindCommasInLine(line"+tbl+",comaList"+tbl+",tableSpilt"+tbl+");";
 
 
+            output+="length_country2 = comaList"+tbl+".length+1;";
+
             output+=" int index"+tbl+" = "+Tabels_name.get(i+1).getIndexCol(joines.get(i).getCol2())+";\n\n";
 
             output+="String col"+tbl+";\n" +
@@ -1865,7 +2023,8 @@ public class CodeG extends HplsqlBaseVisitor<Object> {
                     "                            }\n" +
                     "                        }\n\n\n";
 
-            if(joines.get(i).getJoin().equals("leftjoin") || joines.get(i).getJoin().equals("LEFTJOIN")){
+            if(joines.get(i).getJoin().equals("leftjoin") || joines.get(i).getJoin().equals("LEFTJOIN")
+                    || joines.get(i).getJoin().equals("fullouterjoin") || joines.get(i).getJoin().equals("FULLOUTERJOIN")){
                 output+=" if(null_value==i){\n" +
                         "                        String c_null = \"\";\n" +
                         "                        for(int k=1;k<length_country2;k++){\n" +
@@ -1879,10 +2038,41 @@ public class CodeG extends HplsqlBaseVisitor<Object> {
 
                 output+=temp;
 
-                output+="\n" +
-                        "                        map(1,concat_line1,name1+\"_\",comaConcat1,Keys1,(byte)4);\n" +
-                        "\n" +
-                        "                    }\n";
+                TableInde=0;map=0;
+                for(int ii =0;ii<values.size();ii++){
+                    map++;
+                    output+="map("+map+",concat_line"+(i+1)+",name"+(tbl-1)+"+\"_\",comaConcat"+(i+1)+",Keys1,(byte) (";
+
+                    for(TableInde=0;TableInde<Tabels_name.size();TableInde++){
+
+                        if(Tabels_name.get(TableInde).getName_typ().equals(values.get(ii).tablename)){
+                            break;
+                        }
+
+                    }
+
+
+                    int valIndex = Tabels_name.get(TableInde).getIndexCol(values.get(ii).colname);
+
+
+
+
+                    for(int valus=0;valus<TableInde;valus++){
+
+                        output+="comaList"+(valus+1)+".length +";
+                        if(valus+1 == TableInde)
+                            output+="1+";
+
+                    }
+
+                    output+=valIndex+"));\n";
+
+
+                }
+
+                output+="}\n";
+
+
             }
 
 

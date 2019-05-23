@@ -817,8 +817,11 @@ qualify_clause :
      ;
 
 order_by_clause :
-       T_ORDER T_BY expr (T_ASC | T_DESC)? (T_COMMA expr (T_ASC | T_DESC)?)*
+       T_ORDER T_BY order_by_col (T_COMMA order_by_col)*
      ;
+
+order_by_col :
+    (ident T_DOT)? expr (T_ASC | T_DESC)?;
 
 select_options :
        select_options_item+

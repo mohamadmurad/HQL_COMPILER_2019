@@ -18,7 +18,7 @@ ROW FORMAT DELIMITED FIELDS TERMINATED BY ','
 LOCATION "C:\Users\MouAz He\IdeaProjects\HQL_COMPILER_2019\emp";
 
 
-select Customers.name , sum(Orders.id) from Customers Customers right join Orders Orders on Customers.id=Orders.cust_id group by name;
+select t.name x , sum(Orders.id) from Customers t right join Orders Orders on Customers.id=Orders.cust_id group by name;
 
 
 create external table Customers ( id int , name string)
@@ -33,6 +33,11 @@ create external table Orders ( o_id int ,cust_id int , salary int)
 stored as textfile
 ROW FORMAT DELIMITED FIELDS TERMINATED BY ','
 LOCATION "C:\Users\MouAz He\IdeaProjects\HQL_COMPILER_2019\Orders";
+
+
+
+select Customers.name , sum(Orders.o_id) from Customers Customers right join Orders Orders on Customers.id=Orders.cust_id group by name;
+
 
 
 

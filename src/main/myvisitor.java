@@ -113,8 +113,10 @@ public class myvisitor extends HplsqlBaseVisitor<Object> {
 
             String delimeter = (String) visit(ctx.create_table_definition().new_delimiter());
             delimeter = delimeter.substring(1, delimeter.length()-1);
+
             String location = (String) visit(ctx.create_table_definition().new_location());
             location = location.substring(1, location.length()-1);
+
             String store = (String) visit(ctx.create_table_definition().new_store());
             store = store.substring(1, store.length()-1);
 
@@ -198,6 +200,7 @@ public class myvisitor extends HplsqlBaseVisitor<Object> {
         if(types.find_typ(table_name)){
 
             ArrayList<SelectCol> sel_col = new ArrayList<>();
+
             for(int i =0 ; i<ctx.new_select_col().size();i++){
 
 
