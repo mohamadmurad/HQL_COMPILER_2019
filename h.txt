@@ -3,6 +3,7 @@ stored as textfile
 ROW FORMAT DELIMITED FIELDS TERMINATED BY ','
 LOCATION "C:\Users\MouAz He\IdeaProjects\HQL_COMPILER_2019\temperature";
 
+select temperature.id , sum(temperature.temp),avg(temperature.temp) from temperature temperature  group by id order by 1 asc;
 
 
 create external table dep ( id int , name string)
@@ -40,4 +41,5 @@ select Customers.name , sum(Orders.o_id) from Customers Customers right join Ord
 
 
 
+select Customers.name , sum(Orders.o_id) from Customers Customers full outer join Orders Orders on Customers.id=Orders.cust_id group by name order by 2 asc;
 

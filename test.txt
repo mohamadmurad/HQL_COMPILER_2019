@@ -1,1 +1,1 @@
-select Customers.name , sum(Orders.o_id) from Customers Customers left join Orders Orders on Customers.id=Orders.cust_id group by name order by 2 asc;
+select Customers.name , sum(Orders.o_id) from Customers Customers full outer join Orders Orders on Customers.id=Orders.cust_id group by name order by 2 asc;

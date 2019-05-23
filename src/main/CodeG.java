@@ -30,7 +30,7 @@ public class CodeG extends HplsqlBaseVisitor<Object> {
     }
     ArrayList<SelectCol> values = new ArrayList<>();
     String output = "";
-    String mapers = "";
+    String map_reduce = "";
     String shuffles ="";
     String temp ="";
     String diroutput = "src//CG";
@@ -76,6 +76,7 @@ public class CodeG extends HplsqlBaseVisitor<Object> {
         output+=getShuffle();
         output+=getSumAllRed();
         output+=getReducer();
+        output+=getremoveSlashFromRed();
 
         try(BufferedWriter fileOutputStream = new BufferedWriter(new FileWriter(filePath,true))){
 
@@ -168,6 +169,7 @@ public class CodeG extends HplsqlBaseVisitor<Object> {
                 }
             }
         }
+
         if(ctx.new_from_join_clause().size() ==0){
             // no join
 
@@ -175,110 +177,211 @@ public class CodeG extends HplsqlBaseVisitor<Object> {
 
 
             selectWitoutJoin(Tabels_name,sel_col_keys,vales);
-            output+="public static void map_reduce() throws IOException {\n" +
-                    "\n" +
-                    "        read_files();\n";
 
-            int map=0;
-            int sum_all_red =0;
-            for(Map.Entry<String, Integer> entry : vales.entrySet()){
-                map++;
-                System.out.print("col : "+entry.getKey());
-                sum_all_red+= entry.getValue();
 
-               for(SelectCol s :values){
-                   if(s.colname.equals(entry.getKey())){
-                       System.out.println("   func : "+s.func_name);
-                       output+="shuffle11("+map+","+s.is_distnict+");\n";
-                       if(shufRed.containsKey(map)){
-                           int r = shufRed.get(map)+1;
-                           shufRed.put(map,r);
-                       }else{
-                           shufRed.put(map,1);
-                       }
-                   }
+            for(int i=0;i<ctx.order_by_clause().order_by_col().size();i++){
+                String tableName="";
+                if(ctx.order_by_clause().order_by_col(i).ident()!=null){
+                    tableName = ctx.order_by_clause().order_by_col(i).ident().getText();
+                }
+                String colName = ctx.order_by_clause().order_by_col(i).expr().getText();
+                if(colName.matches(numberREG)){
 
-               }
+                    int colIndex=Integer.parseInt(colName) -1;
+                    SelectCol coloms = null;
 
-            }
+                    //for(colIndex=0;colIndex<ctx.new_select_col().size();colIndex++){
+                    coloms = (SelectCol)visit(ctx.new_select_col(colIndex));
+                    // if(coloms.colname.equals(colName))
+                    //     break;
+                    // }
 
-            int redNum=1;
-            for(Map.Entry<Integer, Integer> entry : shufRed.entrySet()){
+                    output+="static Comparator<String> comparator = new Comparator<String>() {\n" +
+                            "        public int compare(String r1, String r2){\n";
 
-                for(int red=0;red<entry.getValue();red++){
+                    output+="byte[] comaList1 = new byte[";
 
-                    output+=" reducer("+entry.getKey()+","+(redNum)+",new MyFunction() {\n" +
-                            "            @Override\n" +
-                            "            public String operation(ArrayList<Integer> c) {\n";
+                    output+=ctx.new_select_col().size()-1;
 
-                   output+=getFuncBody(values.get(redNum-1).func_name);
-                    redNum++;
+                    output+="];\n";
 
-                            /*"                int sum = 0;\n" +
-                            "                for(int i=0;i<c.size();i++){\n" +
+                    output+="comaList1 =FindCommasInLine(r1,comaList1,',');";
+
+                    output+="byte[] comaList2 = new byte[";
+
+                    output+=ctx.new_select_col().size()-1;
+
+                    output+="];\n";
+
+                    output+="comaList2 =FindCommasInLine(r2,comaList2,',');";
+
+
+                    output+="int index1 = " + colIndex +";\n";
+
+
+                    output+=" String col1=null;\n" +
+                            "            String col2 = null;\n" +
+                            "            if(index1==0){\n" +
                             "\n" +
-                            "                    sum+=c.get(i);\n" +
-                            "                }\n" +
-                            "                return String.valueOf(sum/c.size());\n" +
-                            "            }\n" +
-                            "        });\n";*/
+                            "                col1= getCol(index1,comaList1[index1],r1);\n" +
+                            "                col2= getCol(index1,comaList2[index1],r2);\n" +
+                            "\n" +
+                            "            }else if(comaList1.length == index1){\n" +
+                            "\n" +
+                            "                col1= getCol(comaList1[comaList1.length-1]+1,r1.length(),r1);\n" +
+                            "                col2= getCol(comaList2[comaList2.length-1]+1,r2.length(),r2);\n" +
+                            "            }else{\n" +
+                            "                col1=getCol(comaList1[index1-1]+1,comaList1[index1],r1);\n" +
+                            "                col2=getCol(comaList2[index1-1]+1,comaList2[index1],r2);\n" +
+                            "            }\n";
+
+
+                    output+="if(col1.equals(\"\") || col2.equals(\"\")){\n" +
+                            "\n" +
+                            "                    if(col2.equals(col1)){\n" +
+                            "                        return 0;\n" +
+                            "                    }else\n" +
+                            "                    if(col1.equals(\"\") && !col2.equals(\"\")){\n" +
+                            "                        return 1;\n" +
+                            "                    }else {\n" +
+                            "                        return -1;\n" +
+                            "                    }\n" +
+                            "            }else{\n";
+
+                    if(types.find_type_col_in_table(coloms.colname,coloms.tablename).equals("string")){
+                        output+="return (col1.compareTo(col2)) ";
+                    }else {
+                        output+=" return (Integer.parseInt(col1) - Integer.parseInt(col2)) ";
+                    }
+
+                    if(ctx.order_by_clause().order_by_col(i).T_DESC()!=null){
+                        output+=" * -1;\n" +
+                                "        }}};";
+                    }else{
+                        output+=";\n" +
+                                "        }}};";
+
+                    }
+
+                    try(BufferedWriter fileOutputStream = new BufferedWriter(new FileWriter(filePath,true))){
+
+                        fileOutputStream.write(output);
+
+                        fileOutputStream.close();
+                        output = "";
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+
+                }else {
+                    int colIndex=0;
+                    SelectCol coloms = null;
+
+                    for(colIndex=0;colIndex<ctx.new_select_col().size();colIndex++){
+                        coloms = (SelectCol)visit(ctx.new_select_col(colIndex));
+                        if(coloms.colname.equals(colName))
+                            break;
+                    }
+
+                    output+="static Comparator<String> comparator = new Comparator<String>() {\n" +
+                            "        public int compare(String r1, String r2){\n";
+
+                    output+="byte[] comaList1 = new byte[";
+
+                    output+=ctx.new_select_col().size()-1;
+
+                    output+="];\n";
+
+                    output+="comaList1 =FindCommasInLine(r1,comaList1,',');";
+
+                    output+="byte[] comaList2 = new byte[";
+
+                    output+=ctx.new_select_col().size()-1;
+
+                    output+="];\n";
+
+                    output+="comaList2 =FindCommasInLine(r2,comaList2,',');";
+
+
+                    output+="int index1 = " + colIndex +";\n";
+
+
+                    output+=" String col1=null;\n" +
+                            "            String col2 = null;\n" +
+                            "            if(index1==0){\n" +
+                            "\n" +
+                            "                col1= getCol(index1,comaList1[index1],r1);\n" +
+                            "                col2= getCol(index1,comaList2[index1],r2);\n" +
+                            "\n" +
+                            "            }else if(comaList1.length == index1){\n" +
+                            "\n" +
+                            "                col1= getCol(comaList1[comaList1.length-1]+1,r1.length(),r1);\n" +
+                            "                col2= getCol(comaList2[comaList2.length-1]+1,r2.length(),r2);\n" +
+                            "            }else{\n" +
+                            "                col1=getCol(comaList1[index1-1]+1,comaList1[index1],r1);\n" +
+                            "                col2=getCol(comaList2[index1-1]+1,comaList2[index1],r2);\n" +
+                            "            }\n";
+
+
+                    output+="if(col1.equals(\"\") || col2.equals(\"\")){\n" +
+                            "\n" +
+                            "                    if(col2.equals(col1)){\n" +
+                            "                        return 0;\n" +
+                            "                    }else\n" +
+                            "                    if(col1.equals(\"\") && !col2.equals(\"\")){\n" +
+                            "                        return 1;\n" +
+                            "                    }else {\n" +
+                            "                        return -1;\n" +
+                            "                    }\n" +
+                            "            }else{\n";
+                    System.out.println(types.find_type_col_in_table(colName,coloms.tablename));
+                    if(types.find_type_col_in_table(colName,coloms.tablename).equals("string")){
+                        output+="return (col1.compareTo(col2)) ";
+                    }else {
+                        output+=" return (Integer.parseInt(col1) - Integer.parseInt(col2)) ";
+                    }
+
+                    if(ctx.order_by_clause().order_by_col(i).T_DESC()!=null){
+                        output+=" * -1;\n" +
+                                "        }}};";
+                    }else{
+                        output+=";\n" +
+                                "        }}};";
+
+                    }
+
+                    try(BufferedWriter fileOutputStream = new BufferedWriter(new FileWriter(filePath,true))){
+
+                        fileOutputStream.write(output);
+
+                        fileOutputStream.close();
+                        output = "";
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+
+
 
                 }
 
-            }
-
-
-            for(int sum_a_red=0;sum_a_red<sum_all_red;sum_a_red++){
-                output+="sum_all_red("+(sum_a_red+1)+");\n";
-            }
-
-            output+="String all_path = tempdirectory+File.separator+\"All_red\";\n" +
-                    "        File n = new File(all_path);\n" +
-                    "        String[] list = n.list();\n\n";
-
-            output+="String all=\"\";";
-            if(sum_all_red == 2){
-                output+="all =concatReducer(list[0],list[1],tempdirectory+File.separator+\"All_red\",tempdirectory+File.separator+\"All_red\");\n";
-            }else if(sum_all_red > 2){
-                output+="all =concatReducer(list[0],list[1],tempdirectory+File.separator+\"All_red\",tempdirectory+File.separator+\"All_red\");\n";
-                output+="for(int i=1;i<list.length;i++){\n" +
-                        "            if(i+1 <list.length){\n" +
-                        "                all = concatReducer(all,list[i+1],tempdirectory,tempdirectory+File.separator+\"All_red\");\n" +
-                        "            }\n" +
-                        "\n" +
-                        "        }\n\n";
 
 
             }
 
-            // if order /////
+
+
+            map_reduce+="public static void map_reduce() throws IOException {\n" +
+                    "\n" +
+                    "        read_files();\n";
 
 
 
-            output+="if(list.length==1){\n" +
-                    "            printResult(tempdirectory+File.separator+\"All_red/1.txt\");\n" +
-                    "        }else {\n" +
-                    "            printResult(tempdirectory+File.separator+all);\n" +
-                    "        }\n\n";
 
 
-            output+="}\n\n";
 
 
-            output+=getPrintFunc(ctx);
 
-            output+=getMain(0);
 
-            output+="}\n\n";
-            try(BufferedWriter fileOutputStream = new BufferedWriter(new FileWriter(filePath,true))){
-
-                fileOutputStream.write(output);
-
-                fileOutputStream.close();
-                output = "";
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
 
         }else{
 
@@ -338,12 +441,36 @@ public class CodeG extends HplsqlBaseVisitor<Object> {
 
             if(joines.get(0).getJoin().equals("RIGHTJOIN") || joines.get(0).getJoin().equals("rightjoin")){
                 selectRightJoin1(Tabels_name,joines,sel_col_keys,vales);
+                map_reduce+="public static void map_reduce() throws IOException {\n" +
+                        "\n" +
+                        "        Rightjoin();\n";
             }else if(joines.get(0).getJoin().equals("fullouterjoin") || joines.get(0).getJoin().equals("FULLOUTERJOIN")){
                 selectJoin(Tabels_name,joines,sel_col_keys,vales);
                 selectRightJoin1(Tabels_name,joines,sel_col_keys,vales);
+                output+=getOutterJoin();
+
+                try(BufferedWriter fileOutputStream = new BufferedWriter(new FileWriter(filePath,true))){
+
+                    fileOutputStream.write(output);
+
+                    fileOutputStream.close();
+                    output = "";
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+
+                map_reduce+="public static void map_reduce() throws IOException {\n" +
+                        "\n" +
+                        "        fullOuterJoin();\n";
+
             }else{
                 selectJoin(Tabels_name,joines,sel_col_keys,vales);
+
+                map_reduce+="public static void map_reduce() throws IOException {\n" +
+                        "\n" +
+                        "        join();\n";
             }
+
 
 
             for(int i=0;i<ctx.order_by_clause().order_by_col().size();i++){
@@ -358,21 +485,30 @@ public class CodeG extends HplsqlBaseVisitor<Object> {
                     SelectCol coloms = null;
 
                     //for(colIndex=0;colIndex<ctx.new_select_col().size();colIndex++){
-                        coloms = (SelectCol)visit(ctx.new_select_col(colIndex));
-                       // if(coloms.colname.equals(colName))
-                       //     break;
-                   // }
+                    coloms = (SelectCol)visit(ctx.new_select_col(colIndex));
+                    // if(coloms.colname.equals(colName))
+                    //     break;
+                    // }
 
                     output+="static Comparator<String> comparator = new Comparator<String>() {\n" +
                             "        public int compare(String r1, String r2){\n";
 
                     output+="byte[] comaList1 = new byte[";
 
-                    output+=ctx.new_select_col().size();
+                    output+=ctx.new_select_col().size()-1;
 
                     output+="];\n";
 
                     output+="comaList1 =FindCommasInLine(r1,comaList1,',');";
+
+                    output+="byte[] comaList2 = new byte[";
+
+                    output+=ctx.new_select_col().size()-1;
+
+                    output+="];\n";
+
+                    output+="comaList2 =FindCommasInLine(r2,comaList2,',');";
+
 
                     output+="int index1 = " + colIndex +";\n";
 
@@ -382,16 +518,29 @@ public class CodeG extends HplsqlBaseVisitor<Object> {
                             "            if(index1==0){\n" +
                             "\n" +
                             "                col1= getCol(index1,comaList1[index1],r1);\n" +
-                            "                col2= getCol(index1,comaList1[index1],r2);\n" +
+                            "                col2= getCol(index1,comaList2[index1],r2);\n" +
                             "\n" +
-                            "            }else if(comaList1.length+1 == index1){\n" +
+                            "            }else if(comaList1.length == index1){\n" +
                             "\n" +
                             "                col1= getCol(comaList1[comaList1.length-1]+1,r1.length(),r1);\n" +
-                            "                col2= getCol(comaList1[comaList1.length-1]+1,r1.length(),r2);\n" +
+                            "                col2= getCol(comaList2[comaList2.length-1]+1,r2.length(),r2);\n" +
                             "            }else{\n" +
                             "                col1=getCol(comaList1[index1-1]+1,comaList1[index1],r1);\n" +
-                            "                col2=getCol(comaList1[index1-1]+1,comaList1[index1],r2);\n" +
+                            "                col2=getCol(comaList2[index1-1]+1,comaList2[index1],r2);\n" +
                             "            }\n";
+
+
+                    output+="if(col1.equals(\"\") || col2.equals(\"\")){\n" +
+                            "\n" +
+                            "                    if(col2.equals(col1)){\n" +
+                            "                        return 0;\n" +
+                            "                    }else\n" +
+                            "                    if(col1.equals(\"\") && !col2.equals(\"\")){\n" +
+                            "                        return 1;\n" +
+                            "                    }else {\n" +
+                            "                        return -1;\n" +
+                            "                    }\n" +
+                            "            }else{\n";
 
                     if(types.find_type_col_in_table(coloms.colname,coloms.tablename).equals("string")){
                         output+="return (col1.compareTo(col2)) ";
@@ -401,10 +550,10 @@ public class CodeG extends HplsqlBaseVisitor<Object> {
 
                     if(ctx.order_by_clause().order_by_col(i).T_DESC()!=null){
                         output+=" * -1;\n" +
-                                "        }};";
+                                "        }}};";
                     }else{
                         output+=";\n" +
-                                "        }};";
+                                "        }}};";
 
                     }
 
@@ -419,61 +568,81 @@ public class CodeG extends HplsqlBaseVisitor<Object> {
                     }
 
                 }else {
-                        int colIndex=0;
+                    int colIndex=0;
                     SelectCol coloms = null;
 
-                        for(colIndex=0;colIndex<ctx.new_select_col().size();colIndex++){
-                             coloms = (SelectCol)visit(ctx.new_select_col(colIndex));
-                             System.out.println("collll  "+ coloms.colname + " ttt  "+ coloms.tablename);
-                            if(coloms.colname.equals(colName))
-                                break;
-                        }
+                    for(colIndex=0;colIndex<ctx.new_select_col().size();colIndex++){
+                        coloms = (SelectCol)visit(ctx.new_select_col(colIndex));
+                        if(coloms.colname.equals(colName))
+                            break;
+                    }
 
-                        output+="static Comparator<String> comparator = new Comparator<String>() {\n" +
-                                "        public int compare(String r1, String r2){\n";
+                    output+="static Comparator<String> comparator = new Comparator<String>() {\n" +
+                            "        public int compare(String r1, String r2){\n";
 
-                        output+="byte[] comaList1 = new byte[";
+                    output+="byte[] comaList1 = new byte[";
 
-                        output+=ctx.new_select_col().size();
+                    output+=ctx.new_select_col().size()-1;
 
-                        output+="];\n";
+                    output+="];\n";
 
-                        output+="comaList1 =FindCommasInLine(r1,comaList1,',');";
+                    output+="comaList1 =FindCommasInLine(r1,comaList1,',');";
 
-                        output+="int index1 = " + colIndex +";\n";
+                    output+="byte[] comaList2 = new byte[";
+
+                    output+=ctx.new_select_col().size()-1;
+
+                    output+="];\n";
+
+                    output+="comaList2 =FindCommasInLine(r2,comaList2,',');";
 
 
-                        output+=" String col1=null;\n" +
-                                "            String col2 = null;\n" +
-                                "            if(index1==0){\n" +
-                                "\n" +
-                                "                col1= getCol(index1,comaList1[index1],r1);\n" +
-                                "                col2= getCol(index1,comaList1[index1],r2);\n" +
-                                "\n" +
-                                "            }else if(comaList1.length+1 == index1){\n" +
-                                "\n" +
-                                "                col1= getCol(comaList1[comaList1.length-1]+1,r1.length(),r1);\n" +
-                                "                col2= getCol(comaList1[comaList1.length-1]+1,r1.length(),r2);\n" +
-                                "            }else{\n" +
-                                "                col1=getCol(comaList1[index1-1]+1,comaList1[index1],r1);\n" +
-                                "                col2=getCol(comaList1[index1-1]+1,comaList1[index1],r2);\n" +
-                                "            }\n";
-                        System.out.println(coloms.tablename);
-                        System.out.println(types.find_type_col_in_table(colName,coloms.tablename));
-                        if(types.find_type_col_in_table(colName,coloms.tablename).equals("string")){
-                                output+="return (col1.compareTo(col2)) ";
-                        }else {
-                            output+=" return (Integer.parseInt(col1) - Integer.parseInt(col2)) ";
-                        }
-                    System.out.println("kgjgggku");
-                        if(ctx.order_by_clause().order_by_col(i).T_DESC()!=null){
-                            output+=" * -1;\n" +
-                                    "        }};";
-                        }else{
-                            output+=";\n" +
-                                    "        }};";
+                    output+="int index1 = " + colIndex +";\n";
 
-                        }
+
+                    output+=" String col1=null;\n" +
+                            "            String col2 = null;\n" +
+                            "            if(index1==0){\n" +
+                            "\n" +
+                            "                col1= getCol(index1,comaList1[index1],r1);\n" +
+                            "                col2= getCol(index1,comaList2[index1],r2);\n" +
+                            "\n" +
+                            "            }else if(comaList1.length == index1){\n" +
+                            "\n" +
+                            "                col1= getCol(comaList1[comaList1.length-1]+1,r1.length(),r1);\n" +
+                            "                col2= getCol(comaList2[comaList2.length-1]+1,r2.length(),r2);\n" +
+                            "            }else{\n" +
+                            "                col1=getCol(comaList1[index1-1]+1,comaList1[index1],r1);\n" +
+                            "                col2=getCol(comaList2[index1-1]+1,comaList2[index1],r2);\n" +
+                            "            }\n";
+
+
+                    output+="if(col1.equals(\"\") || col2.equals(\"\")){\n" +
+                            "\n" +
+                            "                    if(col2.equals(col1)){\n" +
+                            "                        return 0;\n" +
+                            "                    }else\n" +
+                            "                    if(col1.equals(\"\") && !col2.equals(\"\")){\n" +
+                            "                        return 1;\n" +
+                            "                    }else {\n" +
+                            "                        return -1;\n" +
+                            "                    }\n" +
+                            "            }else{\n";
+                    System.out.println(types.find_type_col_in_table(colName,coloms.tablename));
+                    if(types.find_type_col_in_table(colName,coloms.tablename).equals("string")){
+                        output+="return (col1.compareTo(col2)) ";
+                    }else {
+                        output+=" return (Integer.parseInt(col1) - Integer.parseInt(col2)) ";
+                    }
+
+                    if(ctx.order_by_clause().order_by_col(i).T_DESC()!=null){
+                        output+=" * -1;\n" +
+                                "        }}};";
+                    }else{
+                        output+=";\n" +
+                                "        }}};";
+
+                    }
 
                     try(BufferedWriter fileOutputStream = new BufferedWriter(new FileWriter(filePath,true))){
 
@@ -498,14 +667,145 @@ public class CodeG extends HplsqlBaseVisitor<Object> {
 
 
 
+            output+="public static void map_reduce() throws IOException {\n" +
+                    "\n" +
+                    "        read_files();\n";
 
 
 
 
+            map_reduce+="";
+
+        }
+
+
+        int map=0;
+        int sum_all_red =0;
+        for(Map.Entry<String, Integer> entry : vales.entrySet()){
+            map++;
+
+            sum_all_red+= entry.getValue();
+            String x ="";
+            for(SelectCol s :values){
+                if(s.colname.equals(entry.getKey())){
+                    if(!x.equals(s.is_distnict ? "1" :"0")){
+                        map_reduce+="shuffle11("+map+","+s.is_distnict+");\n";
+                        x = s.is_distnict ? "1" :"0";
+                    }
+
+                    if(shufRed.containsKey(map)){
+                        int r = shufRed.get(map)+1;
+                        shufRed.put(map,r);
+                    }else{
+                        shufRed.put(map,1);
+                    }
+                }
+
+            }
+
+        }
+
+
+        int redNum=1;
+        for(Map.Entry<Integer, Integer> entry : shufRed.entrySet()){
+
+            for(int red=0;red<entry.getValue();red++){
+
+                map_reduce+=" reducer("+entry.getKey()+","+(redNum)+",new MyFunction() {\n" +
+                        "            @Override\n" +
+                        "            public String operation(ArrayList<Integer> c) {\n";
+
+                map_reduce+=getFuncBody(values.get(redNum-1).func_name);
+                redNum++;
+            }
+
+        }
+
+        for(int sum_a_red=0;sum_a_red<sum_all_red;sum_a_red++){
+            map_reduce+="sum_all_red("+(sum_a_red+1)+");\n";
+        }
+
+        map_reduce+="String all_path = tempdirectory+File.separator+\"All_red\";\n" +
+                "        File n = new File(all_path);\n" +
+                "        String[] list = n.list();\n\n";
+
+        map_reduce+="String all=\"\";";
+
+
+        if(sum_all_red == 2){
+            map_reduce+="if(list.length == 2){\n" +
+                    "            all = concatReducer(list[0],list[1],tempdirectory+File.separator+\"All_red\",tempdirectory+File.separator+\"All_red\" , ',');\n" +
+                    "        }else if(list.length == 1){\n" +
+                    "            removeSlashFromRed(list,all_path);\n" +
+                    "        }else {\n" +
+                    "            all = concatReducer(list[0],list[1],tempdirectory+File.separator+\"All_red\",tempdirectory+File.separator+\"All_red\" , '/');\n" +
+                    "        }\n\n";
+        }else if(sum_all_red > 2){
+            map_reduce+="if(list.length == 2){\n" +
+                    "            all = concatReducer(list[0],list[1],tempdirectory+File.separator+\"All_red\",tempdirectory+File.separator+\"All_red\" , ',');\n" +
+                    "        }else if(list.length == 1){\n" +
+                    "            removeSlashFromRed(list,all_path);\n" +
+                    "        }else {\n" +
+                    "            all = concatReducer(list[0],list[1],tempdirectory+File.separator+\"All_red\",tempdirectory+File.separator+\"All_red\" , '/');\n" +
+                    "        }\n\n";
+            map_reduce+="for(int i=1;i<list.length;i++){\n" +
+                    "            if(i+1 <list.length){\n" +
+                    "                all = concatReducer(all,list[i+1],tempdirectory,tempdirectory+File.separator+\"All_red\" , '/');\n" +
+                    "            }else if(i+1 == list.length-1){\n" +
+                    "                all = concatReducer(all,list[i+1],tempdirectory,tempdirectory+File.separator+\"All_red\" , ',');\n" +
+                    "\n" +
+                    "            }\n" +
+                    "\n" +
+                    "        }\n\n";
+
+
+        }
 
 
 
+        map_reduce+="if(list.length==1){\n";
+        if(ctx.order_by_clause().order_by_col().size()>0){
+            map_reduce+="removeSlashFromRed(list,all_path);\n" +
+                    "order.start(tempdirectory+File.separator+\"All_red/result.txt\",tempdirectory+File.separator+\"All_red/result.txt\",comparator);\n";
+        }
+        map_reduce+=     "            printResult(tempdirectory+File.separator+\"All_red/result.txt\");\n";
 
+           map_reduce+= "        }else {\n" ;
+        if(ctx.order_by_clause().order_by_col().size()>0){
+            map_reduce+="order.start(tempdirectory+File.separator+all,tempdirectory+File.separator+all,comparator);\n";
+        }
+        map_reduce+=    "            printResult(tempdirectory+File.separator+all);\n";
+
+        map_reduce+=    "        }\n\n";
+
+
+        map_reduce+="}\n\n";
+
+
+        map_reduce+=getPrintFunc(ctx);
+
+        if(Tabels_name.size() ==1){
+            map_reduce+=getMain(0);
+        }else{
+            map_reduce+=getMain(Tabels_name.size());
+        }
+
+
+        map_reduce+="}\n\n";
+        try(BufferedWriter fileOutputStream = new BufferedWriter(new FileWriter(filePath,true))){
+
+            fileOutputStream.write(map_reduce);
+
+            fileOutputStream.close();
+            map_reduce = "";
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+
+
+        if(ctx.order_by_clause().order_by_col().size()>0){
+            generateOrderClass();
         }
 
 
@@ -709,40 +1009,31 @@ public class CodeG extends HplsqlBaseVisitor<Object> {
     }
 
     private String getconcatReducer(){
-        return "public static String concatReducer(String redu1, String redu2,String path1,String path2){\n" +
+        return " public static String concatReducer(String redu1, String redu2,String path1,String path2,char sp){\n" +
                 "\n" +
                 "        String reduce = tempdirectory + File.separator +redu1+redu2+\"res.txt\";\n" +
+                "        //String out_File = tempdirectory+File.separator+\"res.txt\";\n" +
                 "        String shuffl = path1 + File.separator +redu1;\n" +
+                "\n" +
+                "        //File stockDir = new File(reduce);\n" +
+                "        //     String[] list = stockDir.list();\n" +
+                "\n" +
                 "        try (BufferedReader br = new BufferedReader(new FileReader(shuffl))) {\n" +
                 "\n" +
                 "            String line;\n" +
+                "\n" +
                 "            while ((line = br.readLine()) != null){\n" +
                 "\n" +
-                "                byte slashIndex1 ;\n" +
-                "\n" +
-                "                slashIndex1 = FindSlash(line);\n" +
-                "\n" +
-                "                String Key1 = getCol(0,slashIndex1,line);\n" +
-                "\n" +
-                "                String val1 = getCol(slashIndex1+1,line.length(),line);\n" +
-                "\n" +
+                "                String[] KeyAndVal = line.split(\"/\");\n" +
                 "\n" +
                 "                String shuff2 = path2 + File.separator +redu2;\n" +
                 "                try (BufferedReader br2 = new BufferedReader(new FileReader(shuff2))) {\n" +
                 "                    String line2;\n" +
                 "                    while ((line2 = br2.readLine()) != null) {\n" +
                 "\n" +
-                "                        //String[] KeyAndVal2 = line2.split(\"/\");\n" +
-                "\n" +
-                "                        byte slashIndex2 ;\n" +
-                "\n" +
-                "                        slashIndex2 = FindSlash(line);\n" +
-                "                        String Key2 = getCol(0,slashIndex2,line2);\n" +
-                "                        String val2 = getCol(slashIndex2+1,line2.length(),line2);\n" +
-                "\n" +
-                "\n" +
-                "                        if(Key1.equals(Key2)){\n" +
-                "                            String output = Key2 + \"/\" + val1 + \",\" +val2+lineSeparator;\n" +
+                "                        String[] KeyAndVal2 = line2.split(\"/\");\n" +
+                "                        if(KeyAndVal[0].equals(KeyAndVal2[0])){\n" +
+                "                            String output = KeyAndVal[0] + sp + KeyAndVal[1] + \",\" +KeyAndVal2[1]+lineSeparator;\n" +
                 "                            try(BufferedWriter fileOutputStream = new BufferedWriter(new FileWriter(reduce,true))) {\n" +
                 "                                fileOutputStream.write(output);\n" +
                 "                                fileOutputStream.close();\n" +
@@ -760,7 +1051,7 @@ public class CodeG extends HplsqlBaseVisitor<Object> {
                 "        }\n" +
                 "\n" +
                 "        return redu1+redu2+\"res.txt\";\n" +
-                "    }\n\n";
+                "    }\n\n\n";
     }
 
     private String getMaper(){
@@ -784,7 +1075,7 @@ public class CodeG extends HplsqlBaseVisitor<Object> {
                 "                if(b==0){\n" +
                 "                    fileContent+= getCol(b,comalist[b],line)+\",\";\n" +
                 "\n" +
-                "                }else if(comalist.length+1 == b){\n" +
+                "                }else if(comalist.length == b){\n" +
                 "\n" +
                 "                    fileContent+= getCol(comalist[comalist.length-1]+1,line.length(),line)+\",\";\n" +
                 "                }else{\n" +
@@ -1259,6 +1550,225 @@ public class CodeG extends HplsqlBaseVisitor<Object> {
 
     }
 
+    public String getremoveSlashFromRed(){
+        return "private static void removeSlashFromRed(String[] list,String path) {\n" +
+                "\n" +
+                "\n" +
+                "        for(String name : list){\n" +
+                "            System.out.println(name);\n" +
+                "            try (BufferedReader br = new BufferedReader(new FileReader(path+File.separator+name))) {\n" +
+                "\n" +
+                "                String line;\n" +
+                "\n" +
+                "                while ((line = br.readLine()) != null) {\n" +
+                "                    line = line.replace(\"/\",\",\");\n" +
+                "\n" +
+                "                    String shuff2 = path + File.separator + \"result.txt\";\n" +
+                "\n" +
+                "                        try (BufferedWriter fileOutputStream = new BufferedWriter(new FileWriter(shuff2, true))) {\n" +
+                "                            fileOutputStream.write(line);\n" +
+                "                            fileOutputStream.newLine();\n" +
+                "                            fileOutputStream.close();\n" +
+                "                        }\n" +
+                "                }\n" +
+                "            } catch (FileNotFoundException e) {\n" +
+                "                e.printStackTrace();\n" +
+                "            } catch (IOException e) {\n" +
+                "                e.printStackTrace();\n" +
+                "            }\n" +
+                "\n" +
+                "            new File(path+File.separator+name).delete();\n" +
+                "     }\n" +
+                "\n" +
+                "    }\n";
+    }
+
+
+    public void generateOrderClass(){
+
+        String x = "package CG;\n" +
+                "\n" +
+                "import java.util.*;\n" +
+                "import java.io.*;\n" +
+                "public class order {\n" +
+                "\n" +
+                "\n" +
+                "    public static long estimateBestSizeOfBlocks(File filetobesorted) {\n" +
+                "        long sizeoffile = filetobesorted.length();\n" +
+                "     \n" +
+                "        \n" +
+                "        final int MAXTEMPFILES = 1024;\n" +
+                "        long blocksize = sizeoffile / MAXTEMPFILES ;\n" +
+                "       \n" +
+                "        long freemem = Runtime.getRuntime().freeMemory();\n" +
+                "        System.out.println(\"dree : \"+freemem);\n" +
+                "        if( blocksize < freemem/2)\n" +
+                "            blocksize = freemem/2;\n" +
+                "        else {\n" +
+                "            if(blocksize >= freemem)\n" +
+                "                System.err.println(\"We expect to run out of memory. \");\n" +
+                "        }\n" +
+                "        System.out.println(\"new block : \"+blocksize);\n" +
+                "        return blocksize;\n" +
+                "    }\n" +
+                "\n" +
+                "    public static List<File> sortInBatch(File file, Comparator<String> cmp) throws IOException {\n" +
+                "        List<File> files = new ArrayList<File>();\n" +
+                "        BufferedReader fbr = new BufferedReader(new FileReader(file));\n" +
+                "        long blocksize = estimateBestSizeOfBlocks(file);\n" +
+                "        try{\n" +
+                "            List<String> tmplist =  new ArrayList<String>();\n" +
+                "            String line = \"\";\n" +
+                "            try {\n" +
+                "                while(line != null) {\n" +
+                "                    long currentblocksize = 0;\n" +
+                "                    while((currentblocksize < blocksize) &&(   (line = fbr.readLine()) != null) ){\n" +
+                "                        tmplist.add(line);\n" +
+                "                        currentblocksize += line.length(); \n" +
+                "                    }\n" +
+                "                    files.add(sortAndSave(tmplist,cmp));\n" +
+                "                    tmplist.clear();\n" +
+                "                }\n" +
+                "            } catch(EOFException oef) {\n" +
+                "                if(tmplist.size()>0) {\n" +
+                "                    files.add(sortAndSave(tmplist,cmp));\n" +
+                "                    tmplist.clear();\n" +
+                "                }\n" +
+                "            }\n" +
+                "        } finally {\n" +
+                "            fbr.close();\n" +
+                "        }\n" +
+                "        return files;\n" +
+                "    }\n" +
+                "\n" +
+                "\n" +
+                "    public static File sortAndSave(List<String> tmplist, Comparator<String> cmp) throws IOException  {\n" +
+                "        Collections.sort(tmplist,cmp);  \n" +
+                "        File newtmpfile = File.createTempFile(\"sortInBatch\", \"flatfile\",new File(\"temp\"));\n" +
+                "       newtmpfile.deleteOnExit();\n" +
+                "        BufferedWriter fbw = new BufferedWriter(new FileWriter(newtmpfile));\n" +
+                "        try {\n" +
+                "            for(String r : tmplist) {\n" +
+                "                fbw.write(r);\n" +
+                "                fbw.newLine();\n" +
+                "            }\n" +
+                "        } finally {\n" +
+                "            fbw.close();\n" +
+                "        }\n" +
+                "        return newtmpfile;\n" +
+                "    }\n" +
+                "\n" +
+                "   \n" +
+                "\n" +
+                "    public static int mergeSortedFiles(List<File> files, File outputfile, final Comparator<String> cmp) throws IOException {\n" +
+                "        PriorityQueue<BinaryFileBuffer> pq = new PriorityQueue<BinaryFileBuffer>(11,\n" +
+                "                new Comparator<BinaryFileBuffer>() {\n" +
+                "                    public int compare(BinaryFileBuffer i, BinaryFileBuffer j) {\n" +
+                "                        return cmp.compare(i.peek(), j.peek());\n" +
+                "                    }\n" +
+                "                }\n" +
+                "        );\n" +
+                "        for (File f : files) {\n" +
+                "            BinaryFileBuffer bfb = new BinaryFileBuffer(f);\n" +
+                "            pq.add(bfb);\n" +
+                "        }\n" +
+                "\n" +
+                "\n" +
+                "\n" +
+                "        BufferedWriter fbw = new BufferedWriter(new FileWriter(outputfile));\n" +
+                "        int rowcounter = 0;\n" +
+                "        try {\n" +
+                "            while(pq.size()>0) {\n" +
+                "                BinaryFileBuffer bfb = pq.poll();\n" +
+                "                String r = bfb.pop();\n" +
+                "                fbw.write(r);\n" +
+                "                fbw.newLine();\n" +
+                "                ++rowcounter;\n" +
+                "                if(bfb.empty()) {\n" +
+                "                    bfb.fbr.close();\n" +
+                "                    bfb.originalfile.delete();\n" +
+                "                } else {\n" +
+                "                    pq.add(bfb); \n" +
+                "                }\n" +
+                "            }\n" +
+                "        } finally {\n" +
+                "            fbw.close();\n" +
+                "            for(BinaryFileBuffer bfb : pq ) bfb.close();\n" +
+                "        }\n" +
+                "        return rowcounter;\n" +
+                "    }\n" +
+                "\n" +
+                "    public static void start(String input ,String output,Comparator<String> comparator) throws IOException {\n" +
+                "        List<File> l = sortInBatch(new File(input), comparator) ;\n" +
+                "        mergeSortedFiles(l, new File(output), comparator);\n" +
+                "    }\n" +
+                "}\n" +
+                "\n" +
+                "\n" +
+                "class BinaryFileBuffer  {\n" +
+                "    public static int BUFFERSIZE = 2048;\n" +
+                "    public BufferedReader fbr;\n" +
+                "    public File originalfile;\n" +
+                "    private String cache;\n" +
+                "    private boolean empty;\n" +
+                "\n" +
+                "    public BinaryFileBuffer(File f) throws IOException {\n" +
+                "        originalfile = f;\n" +
+                "        fbr = new BufferedReader(new FileReader(f), BUFFERSIZE);\n" +
+                "        reload();\n" +
+                "    }\n" +
+                "\n" +
+                "    public boolean empty() {\n" +
+                "        return empty;\n" +
+                "    }\n" +
+                "\n" +
+                "    private void reload() throws IOException {\n" +
+                "        try {\n" +
+                "            if((this.cache = fbr.readLine()) == null){\n" +
+                "                empty = true;\n" +
+                "                cache = null;\n" +
+                "            }\n" +
+                "            else{\n" +
+                "                empty = false;\n" +
+                "            }\n" +
+                "        } catch(EOFException oef) {\n" +
+                "            empty = true;\n" +
+                "            cache = null;\n" +
+                "        }\n" +
+                "    }\n" +
+                "\n" +
+                "    public void close() throws IOException {\n" +
+                "        fbr.close();\n" +
+                "    }\n" +
+                "\n" +
+                "\n" +
+                "    public String peek() {\n" +
+                "        if(empty()) return null;\n" +
+                "        return cache.toString();\n" +
+                "    }\n" +
+                "    public String pop() throws IOException {\n" +
+                "        String answer = peek();\n" +
+                "        reload();\n" +
+                "        return answer;\n" +
+                "    }\n" +
+                "\n" +
+                "\n" +
+                "\n" +
+                "}\n";
+
+
+        try(BufferedWriter fileOutputStream = new BufferedWriter(new FileWriter(diroutput+ File.separator+"order.java",true))){
+
+            fileOutputStream.write(x);
+
+            fileOutputStream.close();
+            x = "";
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+    }
+
 
 
     private void selectRightJoin1(ArrayList<data> Tabels_name,ArrayList<joinStruct> joines,ArrayList<SelectCol> sel_col_keys,Map<String,Integer> vales){
@@ -1294,7 +1804,7 @@ public class CodeG extends HplsqlBaseVisitor<Object> {
                 "\n" +
                 "                        col1= getCol(index1,comaList1[index1],line1);\n" +
                 "\n" +
-                "                    }else if(comaList1.length+1 == index1){\n" +
+                "                    }else if(comaList1.length == index1){\n" +
                 "\n" +
                 "                        col1= getCol(comaList1[comaList1.length-1]+1,line1.length(),line1);\n" +
                 "                    }else{\n" +
@@ -1328,7 +1838,7 @@ public class CodeG extends HplsqlBaseVisitor<Object> {
                 "\n" +
                 "                        col2= getCol(index2,comaList2[index2],line2);\n" +
                 "\n" +
-                "                    }else if(comaList2.length+1 == index2){\n" +
+                "                    }else if(comaList2.length == index2){\n" +
                 "\n" +
                 "                        col2= getCol(comaList2[comaList2.length-1]+1,line2.length(),line2);\n" +
                 "                    }else{\n" +
@@ -1537,276 +2047,6 @@ public class CodeG extends HplsqlBaseVisitor<Object> {
 
     }
 
-    private void selectRightJoin(ArrayList<data> Tabels_name,ArrayList<joinStruct> joines,ArrayList<SelectCol> sel_col_keys,Map<String,Integer> vales){
-        output+= "public static void join() {\n\n";
-        for(int i=1;i<=Tabels_name.size();i++){
-            output+="File table"+(i)+" = new File(tableLocation"+i+");\n";
-            output+="String[] Table_"+i+"_list = table"+i+".list();\n";
-        }
-
-        output+="int length_country1 =0;\n" +
-                "for(String name2 : Table_2_list) {\n" +
-                "            String absolutePath2 = tableLocation2 + File.separator + name2;\n" +
-                "            try (BufferedReader br = new BufferedReader(new FileReader(absolutePath2))) {\n" +
-                "                String line1;\n" +
-                "                    int null_value =0;\n" +
-                "                    int i=0;\n\n"+
-                "\n" +
-                "                while ((line1 = br.readLine()) != null) {\n\n";
-
-
-        output+="byte[] comaList1 = new byte[";
-        output+=Tabels_name.get(1).getTyp().size()-1;
-        output+="];\n\n";
-
-        output+="comaList1 = FindCommasInLine(line1,comaList1,tableSpilt2);\n";
-
-        output+=" int index1 = "+Tabels_name.get(1).getIndexCol(joines.get(0).getCol2())+";\n\n";
-
-        output+="String col1;\n" +
-                "                    if(index1==0){\n" +
-                "\n" +
-                "                        col1= getCol(index1,comaList1[index1],line1);\n" +
-                "\n" +
-                "                    }else if(comaList1.length+1 == index1){\n" +
-                "\n" +
-                "                        col1= getCol(comaList1[comaList1.length-1]+1,line1.length(),line1);\n" +
-                "                    }else{\n" +
-                "                        col1=getCol(comaList1[index1-1]+1,comaList1[index1],line1);\n" +
-                "                    }\n\nlength_country1 = comaList1.length+1;\n" +
-                "\n" ;
-
-
-
-        try(BufferedWriter fileOutputStream = new BufferedWriter(new FileWriter(filePath,true))){
-
-            fileOutputStream.write(output);
-
-            fileOutputStream.close();
-            output = "";
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
-        int tbl=1;
-        output+="for (String name"+tbl+" : Table_"+tbl+"_list) {\n" +
-                "                            String absolutePath"+tbl+" = tableLocation"+tbl+" + File.separator + name"+tbl+";\n" +
-                "                            try (BufferedReader br"+(tbl+1)+" = new BufferedReader(new FileReader(absolutePath"+tbl+"))) {\n" +
-                "                                String line"+(tbl+1)+";\n" +
-                "\n" +
-                "                                while ((line"+(tbl+1)+" = br"+(tbl+1)+".readLine()) != null) {\n i++;\n" +
-                "                                 \n";
-
-
-
-        output+="byte[] comaList"+(tbl+1)+" = new byte[";
-        output+=Tabels_name.get(0).getTyp().size()-1;
-        output+="];\n\n";
-
-        output+="comaList"+(tbl+1)+" = FindCommasInLine(line"+(tbl+1)+",comaList"+(tbl+1)+",tableSpilt"+tbl+");";
-
-
-        output+=" int index"+(tbl+1)+" = "+Tabels_name.get(1).getIndexCol(joines.get(0).getCol1())+";\n\n";
-        output+="String col2;\n" +
-                "                    if(index2==0){\n" +
-                "\n" +
-                "                        col2= getCol(index2,comaList2[index2],line2);\n" +
-                "\n" +
-                "                    }else if(comaList2.length+1 == index2){\n" +
-                "\n" +
-                "                        col2= getCol(comaList2[comaList2.length-1]+1,line2.length(),line2);\n" +
-                "                    }else{\n" +
-                "                        col2=getCol(comaList2[index2-1]+1,comaList2[index2],line2);\n" +
-                "                    }\n\n";
-
-
-        try(BufferedWriter fileOutputStream = new BufferedWriter(new FileWriter(filePath,true))){
-
-            fileOutputStream.write(output);
-
-            fileOutputStream.close();
-            output = "";
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
-
-
-        String op = joines.get(0).getOnOP();
-        switch (op){
-            case "=":{
-                output+="if ((col"+(tbl)+".equals(col"+(tbl+1)+"))){\n";
-            }break;
-            default:{
-                output+="if ((Integer.parseInt(col"+(tbl)+") "+op+" Integer.parseInt(col"+(tbl+1)+"))){\n";
-            }break;
-        }
-
-        if(joines.get(0).getJoin().equals("rightjoin") || joines.get(0).getJoin().equals("RIGHTJOIN")){
-
-            output+="                                    line1 = line1.replace(tableSpilt1,',');\n" +
-                    "                                    line2 = line2.replace(tableSpilt2,',');\n" +
-                    "                                    String concat_line1 = line2+','+line1;\n" +
-                    "\n" +
-                    "                                    byte[] comaConcat1 = new byte[comaList1.length+comaList2.length+1];\n" +
-                    "\n" +
-                    "                                    comaConcat1 = FindCommasInLine(concat_line1,comaConcat1,',');\n";
-
-            output+=" byte[] Keys"+(1)+" = new byte[";
-
-            output+=sel_col_keys.size();
-
-            output+="];\n";
-            for(int j=0;j<sel_col_keys.size();j++){
-
-                int TableInde =0;
-
-
-                int colInde = Tabels_name.get(TableInde).getIndexCol(sel_col_keys.get(j).colname);
-
-                output+="Keys1["+j+"] =(byte) ( ";
-
-                for(int keys=0;keys<TableInde;keys++){
-
-                    output+="comaList"+(keys+1)+".length +";
-                    if(keys+1 == TableInde)
-                        output+="1+";
-
-                }
-
-                output+=colInde+");\n";
-
-
-                temp = output;
-
-
-                try(BufferedWriter fileOutputStream = new BufferedWriter(new FileWriter(filePath,true))){
-
-                    fileOutputStream.write(output);
-
-                    fileOutputStream.close();
-                    output = "";
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-
-
-
-            }
-
-
-            int TableInde=0;
-            int map=0;
-
-            for(int ii =0;ii<values.size();ii++){
-                map++;
-                output+="map("+map+",concat_line"+(1)+",name"+(1)+"+\"_\",comaConcat"+(1)+",Keys1,(byte) (";
-
-
-
-                int valIndex = Tabels_name.get(TableInde).getIndexCol(values.get(ii).colname);
-
-                for(int valus=0;valus<TableInde;valus++){
-
-                    output+="comaList"+(valus+1)+".length +";
-                    if(valus+1 == TableInde)
-                        output+="1+";
-
-                }
-
-                output+=valIndex+"));\n";
-                output+=  "                                }else{\n" +
-                        "                                    null_value++;\n" +
-                        "                                }\n";
-
-            }
-
-        }else{
-
-            output+="\n" +
-                    "\n" +
-                    "\n" +
-                    "                                }else{\n" +
-                    "                                    null_value++;\n" +
-                    "                                }\n";
-
-        }
-
-        try(BufferedWriter fileOutputStream = new BufferedWriter(new FileWriter(filePath,true))){
-
-            fileOutputStream.write(output);
-
-            fileOutputStream.close();
-            output = "";
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
-
-        output+="      }\n" +
-                "                            }\n" +
-                "                        }\n\n\n";
-
-
-
-            output+=" if(null_value==i){\n" +
-                    "                        String c_null = \"\";\n" +
-                    "                        for(int k=1;k<length_country1;k++){\n" +
-                    "                           c_null+=\",\";\n" +
-                    "                        }\n" +
-                    "                        line1 = line1.replace(tableSpilt1,',');\n" +
-                    "                        String concat_line1 = c_null+','+line1;\n" +
-                    "                        byte[] comaConcat1 = new byte[comaList1.length+c_null.length()+1];\n" +
-                    "\n" +
-                    "                        comaConcat1 = FindCommasInLine(concat_line1,comaConcat1,',');\n";
-
-            output+=temp;
-
-            int map=0;
-        for(int ii =0;ii<values.size();ii++){
-            map++;
-            output+="map("+map+",concat_line1,name2+\"_\",comaConcat"+(1)+",Keys1,(byte) (";
-
-
-
-            int valIndex = Tabels_name.get(1).getIndexCol(values.get(ii).colname);
-
-            for(int valus=0;valus<1;valus++){
-
-                output+="comaList"+(valus+1)+".length +";
-                if(valus+1 == 1)
-                    output+="1+";
-
-            }
-
-            output+=valIndex+"));\n";
-
-        }
-
-        output+="   }\n" +
-                "\n" +
-                "                }\n" +
-                "            } catch (FileNotFoundException e) {\n" +
-                "                e.printStackTrace();\n" +
-                "            } catch (IOException e) {\n" +
-                "                e.printStackTrace();\n" +
-                "            }\n" +
-                "        }}\n";
-
-
-
-        try(BufferedWriter fileOutputStream = new BufferedWriter(new FileWriter(filePath,true))){
-
-            fileOutputStream.write(output);
-
-            fileOutputStream.close();
-            output = "";
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
-    }
-
     private void selectJoin(ArrayList<data> Tabels_name,ArrayList<joinStruct> joines,ArrayList<SelectCol> sel_col_keys,Map<String,Integer> vales){
 
 
@@ -1839,7 +2079,7 @@ public class CodeG extends HplsqlBaseVisitor<Object> {
                 "\n" +
                 "                        col1= getCol(index1,comaList1[index1],line1);\n" +
                 "\n" +
-                "                    }else if(comaList1.length+1 == index1){\n" +
+                "                    }else if(comaList1.length == index1){\n" +
                 "\n" +
                 "                        col1= getCol(comaList1[comaList1.length-1]+1,line1.length(),line1);\n" +
                 "                    }else{\n" +
@@ -1885,7 +2125,7 @@ public class CodeG extends HplsqlBaseVisitor<Object> {
                     "\n" +
                     "                                        col"+tbl+"= getCol(index"+tbl+",comaList"+tbl+"[index"+tbl+"],line"+tbl+");\n" +
                     "\n" +
-                    "                                    }else if(comaList"+tbl+".length+1 == index"+tbl+"){\n" +
+                    "                                    }else if(comaList"+tbl+".length == index"+tbl+"){\n" +
                     "\n" +
                     "                                        col"+tbl+"= getCol(comaList"+tbl+"[comaList"+tbl+".length-1]+1,line"+tbl+".length(),line"+tbl+");\n" +
                     "                                    }else{\n" +
@@ -2218,18 +2458,16 @@ public class CodeG extends HplsqlBaseVisitor<Object> {
                 "\n" +
                 "            while ((line = br.readLine()) != null) {\n" +
                 "\n" +
-                "                String[] r = line.split(\"/\");\n" +
-                "                String[] k = r[0].split(\",\");\n" +
+                "              //  String[] r = line.split(\"/\");\n" +
+                "                String[] k = line.split(\",\");\n" +
                 "\n" +
                 "                for(String kk:k){\n" +
+                "                    if(kk.equals(\"\")){\n" +
+                "                        System.out.print(\"Nil \\t\\t \");\n" +
+                "                    }\n" +
                 "                    System.out.print(kk + \" \\t\\t \");\n" +
                 "                }\n" +
                 "\n" +
-                "                String[] values = r[1].split(\",\");\n" +
-                "\n" +
-                "                for(String kk:values){\n" +
-                "                    System.out.print(kk + \" \\t\\t \");\n" +
-                "                }\n" +
                 "                System.out.println(\"\\n\");\n" +
                 "            }\n" +
                 "        } catch (FileNotFoundException e) {\n" +

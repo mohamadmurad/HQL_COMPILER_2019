@@ -2,33 +2,16 @@ package mapreduce;
 
 import java.util.*;
 import java.io.*;
-
-
-// Goal: offer a generic external-memory sorting program in Java.
-//
-// It must be :
-//  - hackable (easy to adapt)
-//  - scalable to large files
-//  - sensibly efficient.
-
-// This software is in the public domain.
-
 public class order {
 
 
-    // we divide the file into small blocks. If the blocks
-    // are too small, we shall create too many temporary files.
-    // If they are too big, we shall be using too much memory.
     public static long estimateBestSizeOfBlocks(File filetobesorted) {
         long sizeoffile = filetobesorted.length();
-        System.out.println("file : "+sizeoffile);
-        // we don't want to open up much more than 1024 temporary files, better run
-        // out of memory first. (Even 1024 is stretching it.)
+
+
         final int MAXTEMPFILES = 1024;
         long blocksize = sizeoffile / MAXTEMPFILES ;
-        System.out.println("block : "+blocksize);
-        // on the other hand, we don't want to create many temporary files
-        // for naught. If blocksize is smaller than half the free memory, grow it.
+
         long freemem = Runtime.getRuntime().freeMemory();
         System.out.println("dree : "+freemem);
         if( blocksize < freemem/2)
@@ -41,26 +24,19 @@ public class order {
         return blocksize;
     }
 
-    // This will simply load the file by blocks of x rows, then
-    // sort them in-memory, and write the result to a bunch of
-    // temporary files that have to be merged later.
-    //
-    // @param file some flat  file
-    // @return a list of temporary flat files
-
     public static List<File> sortInBatch(File file, Comparator<String> cmp) throws IOException {
         List<File> files = new ArrayList<File>();
         BufferedReader fbr = new BufferedReader(new FileReader(file));
-        long blocksize = estimateBestSizeOfBlocks(file);// in bytes
+        long blocksize = estimateBestSizeOfBlocks(file);
         try{
             List<String> tmplist =  new ArrayList<String>();
             String line = "";
             try {
                 while(line != null) {
-                    long currentblocksize = 0;// in bytes
-                    while((currentblocksize < blocksize) &&(   (line = fbr.readLine()) != null) ){ // as long as you have 2MB
+                    long currentblocksize = 0;
+                    while((currentblocksize < blocksize) &&(   (line = fbr.readLine()) != null) ){
                         tmplist.add(line);
-                        currentblocksize += line.length(); // 2 + 40; // java uses 16 bits per character + 40 bytes of overhead (estimated)
+                        currentblocksize += line.length();
                     }
                     files.add(sortAndSave(tmplist,cmp));
                     tmplist.clear();
@@ -79,7 +55,7 @@ public class order {
 
 
     public static File sortAndSave(List<String> tmplist, Comparator<String> cmp) throws IOException  {
-        Collections.sort(tmplist,cmp);  //
+        Collections.sort(tmplist,cmp);
         File newtmpfile = File.createTempFile("sortInBatch", "flatfile",new File("temp"));
        newtmpfile.deleteOnExit();
         BufferedWriter fbw = new BufferedWriter(new FileWriter(newtmpfile));
@@ -94,10 +70,7 @@ public class order {
         return newtmpfile;
     }
 
-    // This merges a bunch of temporary flat files
-    // @param files
-    // @param output file
-    // @return The number of lines sorted. (P. Beaudoin)
+
 
     public static int mergeSortedFiles(List<File> files, File outputfile, final Comparator<String> cmp) throws IOException {
         PriorityQueue<BinaryFileBuffer> pq = new PriorityQueue<BinaryFileBuffer>(11,
@@ -125,9 +98,9 @@ public class order {
                 ++rowcounter;
                 if(bfb.empty()) {
                     bfb.fbr.close();
-                    bfb.originalfile.delete();// we don't need you anymore
+                    bfb.originalfile.delete();
                 } else {
-                    pq.add(bfb); // add it back
+                    pq.add(bfb);
                 }
             }
         } finally {
@@ -138,20 +111,7 @@ public class order {
     }
 
     public static void start(String input ,String output,Comparator<String> comparator) throws IOException {
-/*
-        String inputfile = "xx.csv";
-        String outputfile = "dd.txt";*/
-       /* Comparator<String> comparator = new Comparator<String>() {
-            public int compare(String r1, String r2){
-                String[] r11 = r1.split(",");
-                String[] r22 = r2.split(",");
-                int t1 = Integer.parseInt(r11[5]);
-                int t2 = Integer.parseInt(r22[5]);
-                return t2-t1;}};
-*/
         List<File> l = sortInBatch(new File(input), comparator) ;
-
-
         mergeSortedFiles(l, new File(output), comparator);
     }
 }

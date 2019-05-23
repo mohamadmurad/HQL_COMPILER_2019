@@ -127,9 +127,9 @@ public class withouJoin {
 
 
 
-       shuffle11(2,false);
+     //  shuffle11(2,false);
 
-       String red2 = reducer(2,2,new MyFunction() {
+     /*  String red2 = reducer(2,2,new MyFunction() {
             @Override
             public String operation(ArrayList<Integer> c) {
                 int sum = 0;
@@ -139,25 +139,30 @@ public class withouJoin {
                 }
                 return String.valueOf(sum/c.size());
             }
-        });
+        });*/
 
 
 
 
 
         sum_all_red(1);
-       sum_all_red(2);
+     //  sum_all_red(2);
         //sum_all_red(3);
 
         String all_path = tempdirectory+File.separator+"All_red";
         File n = new File(all_path);
         String[] list = n.list();
 
+
+
+
         String all = null;
 
         if(list.length == 2){
             all = concatReducer(list[0],list[1],tempdirectory+File.separator+"All_red",tempdirectory+File.separator+"All_red" , ',');
-        }else{
+        }else if(list.length == 1){
+            removeSlashFromRed(list,all_path);
+        }else {
             all = concatReducer(list[0],list[1],tempdirectory+File.separator+"All_red",tempdirectory+File.separator+"All_red" , '/');
         }
 
@@ -171,13 +176,44 @@ public class withouJoin {
 
         }
 
-       // order.start(tempdirectory+File.separator+all,tempdirectory+File.separator+all,comparator);
+       // otrder.start(tempdirectory+File.separator+all,tempdirectory+File.separator+all,comparaor);
         if(list.length==1){
-            printResult(tempdirectory+File.separator+"All_red/1.txt");
+            printResult(tempdirectory+File.separator+"All_red/result.txt");
         }else {
             printResult(tempdirectory+File.separator+all);
         }
 
+
+    }
+
+    private static void removeSlashFromRed(String[] list,String path) {
+
+
+        for(String name : list){
+            System.out.println(name);
+            try (BufferedReader br = new BufferedReader(new FileReader(path+File.separator+name))) {
+
+                String line;
+
+                while ((line = br.readLine()) != null) {
+                    line = line.replace("/",",");
+
+                    String shuff2 = path + File.separator + "result.txt";
+
+                        try (BufferedWriter fileOutputStream = new BufferedWriter(new FileWriter(shuff2, true))) {
+                            fileOutputStream.write(line);
+                            fileOutputStream.newLine();
+                            fileOutputStream.close();
+                        }
+                }
+            } catch (FileNotFoundException e) {
+                e.printStackTrace();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+            new File(path+File.separator+name).delete();
+     }
 
     }
 
