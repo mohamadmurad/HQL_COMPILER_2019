@@ -1,4 +1,4 @@
-// Generated from C:/Users/MouAz He/IdeaProjects/HQL_COMPILER_2019\Hplsql.g4 by ANTLR 4.7.2
+// Generated from C:/Users/Mero/IdeaProjects/HQL_COMPILER_2019\Hplsql.g4 by ANTLR 4.7.2
 package antGen;
 
     import AST.*;
@@ -1122,6 +1122,46 @@ public interface HplsqlListener extends ParseTreeListener {
 	 * @param ctx the parse tree
 	 */
 	void exitNew_where_condition(HplsqlParser.New_where_conditionContext ctx);
+	/**
+	 * Enter a parse tree produced by {@link HplsqlParser#new_where_item}.
+	 * @param ctx the parse tree
+	 */
+	void enterNew_where_item(HplsqlParser.New_where_itemContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link HplsqlParser#new_where_item}.
+	 * @param ctx the parse tree
+	 */
+	void exitNew_where_item(HplsqlParser.New_where_itemContext ctx);
+	/**
+	 * Enter a parse tree produced by {@link HplsqlParser#first_side}.
+	 * @param ctx the parse tree
+	 */
+	void enterFirst_side(HplsqlParser.First_sideContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link HplsqlParser#first_side}.
+	 * @param ctx the parse tree
+	 */
+	void exitFirst_side(HplsqlParser.First_sideContext ctx);
+	/**
+	 * Enter a parse tree produced by {@link HplsqlParser#sec_side}.
+	 * @param ctx the parse tree
+	 */
+	void enterSec_side(HplsqlParser.Sec_sideContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link HplsqlParser#sec_side}.
+	 * @param ctx the parse tree
+	 */
+	void exitSec_side(HplsqlParser.Sec_sideContext ctx);
+	/**
+	 * Enter a parse tree produced by {@link HplsqlParser#new_bol_exp}.
+	 * @param ctx the parse tree
+	 */
+	void enterNew_bol_exp(HplsqlParser.New_bol_expContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link HplsqlParser#new_bol_exp}.
+	 * @param ctx the parse tree
+	 */
+	void exitNew_bol_exp(HplsqlParser.New_bol_expContext ctx);
 	/**
 	 * Enter a parse tree produced by {@link HplsqlParser#select_stmt}.
 	 * @param ctx the parse tree

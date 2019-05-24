@@ -258,21 +258,21 @@ public class myvisitor extends HplsqlBaseVisitor<Object> {
                     }
 
                 }
-
+/*
                 if(ctx.new_where_condition()!=null){
-                    if(ctx.new_where_condition().bool_expr().bool_expr_atom()
+                    if(ctx.new_where_condition().new_where_item(0).bool_expr().bool_expr_atom()
                             .bool_expr_binary().expr(0).expr_agg_window_func()!=null){
                         ErrorPrinter.printFullError(myparser, ctx.start,
-                                "error: function :" + ctx.new_where_condition().bool_expr().bool_expr_atom()
+                                "error: function :" + ctx.new_where_condition().new_where_item(0).bool_expr().bool_expr_atom()
                                         .bool_expr_binary().expr(0).expr_agg_window_func().getText() + " should not contian in Where ",
                                 "",
                                 "location: select"
                         );
                     }
-                    if(ctx.new_where_condition().bool_expr().bool_expr_atom()
+                    if(ctx.new_where_condition().new_where_item(0).bool_expr().bool_expr_atom()
                             .bool_expr_binary().expr(0).expr_atom().ident().getText()!=null)
                     {
-                        String col_where = ctx.new_where_condition().bool_expr().bool_expr_atom()
+                        String col_where = ctx.new_where_condition().new_where_item(0).bool_expr().bool_expr_atom()
                                 .bool_expr_binary().expr(0).expr_atom().ident().getText();
                         if(types.find_col_in_table(col_where,table_name)){
 
@@ -287,7 +287,7 @@ public class myvisitor extends HplsqlBaseVisitor<Object> {
                     }
 
 
-                }
+                }*/
 
                 boolean iscol = false;
                 boolean isfun = false;

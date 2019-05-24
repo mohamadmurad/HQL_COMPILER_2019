@@ -641,8 +641,17 @@ new_from_join_clause :
 
 new_join_condition: table_name T_DOT ident op table_name T_DOT ident;
 
-new_where_condition:T_WHERE bool_expr
+new_where_condition:T_WHERE new_where_item ((T_AND | T_OR) new_where_item )*
                    ;
+new_where_item: first_side new_bol_exp sec_side?
+;
+
+first_side:(ident T_DOT)? expr;
+
+sec_side:(ident T_DOT)? expr;
+
+new_bol_exp:  T_IS T_NOT? T_NULL
+            | bool_expr_binary_operator;
 
 //////////////////////////////
 select_stmt returns [SelectNode b] :            // SELECT statement

@@ -31,7 +31,7 @@ public class CodeG extends HplsqlBaseVisitor<Object> {
     ArrayList<SelectCol> values = new ArrayList<>();
     String output = "";
     String map_reduce = "";
-    String shuffles ="";
+    String if_output ="";
     String temp ="";
     String diroutput = "src//CG";
     String fileName = "cg.java";
@@ -101,7 +101,8 @@ public class CodeG extends HplsqlBaseVisitor<Object> {
     @Override
     public Object visitNew_select_stmt(HplsqlParser.New_select_stmtContext ctx){
         ArrayList<data> Tabels_name = new ArrayList<>();
-       // Map<String,data> tables_alise_name = new HashMap<>();
+        ArrayList<whereStruct> where =null;
+        // Map<String,data> tables_alise_name = new HashMap<>();
 
       //  ArrayList<joinStruct> joines = new ArrayList<>();
 
@@ -170,13 +171,19 @@ public class CodeG extends HplsqlBaseVisitor<Object> {
             }
         }
 
+
+        if(ctx.new_where_condition()!=null){
+
+            where = (ArrayList<whereStruct>) visit(ctx.new_where_condition());
+        }
+
         if(ctx.new_from_join_clause().size() ==0){
             // no join
 
 
 
 
-            selectWitoutJoin(Tabels_name,sel_col_keys,vales);
+            selectWitoutJoin(Tabels_name,sel_col_keys,vales,where);
 
 
             for(int i=0;i<ctx.order_by_clause().order_by_col().size();i++){
@@ -334,7 +341,6 @@ public class CodeG extends HplsqlBaseVisitor<Object> {
                             "                        return -1;\n" +
                             "                    }\n" +
                             "            }else{\n";
-                    System.out.println(types.find_type_col_in_table(colName,coloms.tablename));
                     if(types.find_type_col_in_table(colName,coloms.tablename).equals("string")){
                         output+="return (col1.compareTo(col2)) ";
                     }else {
@@ -404,7 +410,6 @@ public class CodeG extends HplsqlBaseVisitor<Object> {
 
                     String join = ctx.new_from_join_clause(i).from_join_type_clause().getText();
 
-                    System.out.println(join);
                     String op = ctx.new_from_join_clause(i).new_join_condition().op().getText();
 
                     String tbl1 = ctx.new_from_join_clause(i).new_join_condition().table_name(0).getText();
@@ -628,7 +633,6 @@ public class CodeG extends HplsqlBaseVisitor<Object> {
                             "                        return -1;\n" +
                             "                    }\n" +
                             "            }else{\n";
-                    System.out.println(types.find_type_col_in_table(colName,coloms.tablename));
                     if(types.find_type_col_in_table(colName,coloms.tablename).equals("string")){
                         output+="return (col1.compareTo(col2)) ";
                     }else {
@@ -888,7 +892,6 @@ public class CodeG extends HplsqlBaseVisitor<Object> {
 
         String tableName = ctx.ident().getText();
 
-        System.out.println(paramiter + "  t  "+tableName);
         boolean isDistnict = ctx.expr_func_all_distinct() != null ? true :false;
 
         SelectCol temp = new SelectCol(tableName,func_name, paramiter,null,isDistnict);
@@ -896,6 +899,50 @@ public class CodeG extends HplsqlBaseVisitor<Object> {
 
 
         //return super.visitExpr_agg_window_func(ctx);
+    }
+
+    @Override
+    public Object visitNew_where_condition(HplsqlParser.New_where_conditionContext ctx) {
+        ArrayList<whereStruct> where = new ArrayList<>();
+        for(int i=0;i<ctx.new_where_item().size();i++){
+
+            String tbl1,tbl2,col1,col2,op;
+            if(ctx.new_where_item(i).first_side().ident()!=null){
+                tbl1 = ctx.new_where_item(i).first_side().ident().getText();
+            }else{
+                tbl1 = null;
+            }
+
+            col1= ctx.new_where_item(i).first_side().expr().getText();
+
+            if(ctx.new_where_item(i).sec_side().ident()!=null){
+                tbl2 = ctx.new_where_item(i).sec_side().ident().getText();
+            }else{
+                tbl2 = null;
+            }
+
+            if(ctx.new_where_item(i).sec_side().expr()!=null){
+                col2 = ctx.new_where_item(i).sec_side().expr().getText();
+            }else{
+                col2 = null;
+            }
+
+            op = ctx.new_where_item(i).new_bol_exp().getText();
+
+            if(ctx.T_AND(i) !=null){
+                System.out.println(i + "  "+ ctx.T_AND(i).getText());
+                where.add(new whereStruct(tbl1,tbl2,col1,col2,op," && "));
+            }else if(ctx.T_OR(i)!=null){
+                where.add(new whereStruct(tbl1,tbl2,col1,col2,op," || "));
+            }else {
+                where.add(new whereStruct(tbl1,tbl2,col1,col2,op,null));
+            }
+
+
+
+
+        }
+        return where;
     }
 
     private String getDeleteFunc() {
@@ -1757,7 +1804,7 @@ public class CodeG extends HplsqlBaseVisitor<Object> {
                 "}\n";
 
 
-        try(BufferedWriter fileOutputStream = new BufferedWriter(new FileWriter(diroutput+ File.separator+"order.java",true))){
+        try(BufferedWriter fileOutputStream = new BufferedWriter(new FileWriter(diroutput+ File.separator+"order.java"))){
 
             fileOutputStream.write(x);
 
@@ -2353,7 +2400,7 @@ public class CodeG extends HplsqlBaseVisitor<Object> {
 
 
 
-    private void selectWitoutJoin( ArrayList<data> Tabels_name,ArrayList<SelectCol> sel_col_keys,Map<String,Integer> vales){
+    private void selectWitoutJoin( ArrayList<data> Tabels_name,ArrayList<SelectCol> sel_col_keys,Map<String,Integer> vales,ArrayList<whereStruct> where){
 
         output+=getReadfilePart1();
 
@@ -2367,11 +2414,111 @@ public class CodeG extends HplsqlBaseVisitor<Object> {
 
         // where
 
-        output+="if ((";
 
-        output+="true";
+        if(where!=null){
 
-        output+=")){";
+            for(int w = 0;w<where.size();w++){
+                System.out.println(where.get(w).getAfter());
+                output+="int index"+w+(1)+" = ";
+                output+=Tabels_name.get(0).getIndexCol(where.get(w).getCol1());
+                output+=";\n";
+
+                output+="String col"+w+(1)+";";
+
+                output+="if(index"+w+(1)+"==0){\n" +
+                        "                        col"+w+(1)+"= getCol(index"+w+(1)+",comaList[index"+w+(1)+"],line);\n" +
+                        "\n" +
+                        "                    }else if(comaList.length == index"+w+(1)+"){\n" +
+                        "\n" +
+                        "                        col"+w+(1)+"= getCol(comaList[comaList.length-1]+1,line.length(),line);\n" +
+                        "                    }else{\n" +
+                        "\n" +
+                        "                        col"+w+(1)+"=getCol(comaList[index"+w+(1)+"-1]+1,comaList[index"+w+(1)+"],line);\n" +
+                        "\n" +
+                        "                    }\n";
+                boolean col2IsNum = false;
+                boolean col2IsString =false;
+                if(where.get(w).getCol2()!=null) {
+                    if (!where.get(w).getCol2().matches(numberREG) && !(where.get(w).getCol2().startsWith("\"") || where.get(w).getCol2().endsWith("\""))) {
+
+                        output += "int index" + w + (2) + " = ";
+                        output += Tabels_name.get(0).getIndexCol(where.get(w).getCol2());
+                        output += ";\n";
+
+                        output += "String col" + w + (2) + ";";
+
+                        output += "if(index" + w + (2) + "==0){\n" +
+                                "                        col" + w + (2) + "= getCol(index" + w + (2) + ",comaList[index" + w + (2) + "],line);\n" +
+                                "\n" +
+                                "                    }else if(comaList.length == index" + w + (2) + "){\n" +
+                                "\n" +
+                                "                        col" + w + (2) + "= getCol(comaList[comaList.length-1]+1,line.length(),line);\n" +
+                                "                    }else{\n" +
+                                "\n" +
+                                "                        col" + w + (2) + "=getCol(comaList[index" + w + (2) + "-1]+1,comaList[index" + w + (2) + "],line);\n" +
+                                "\n" +
+                                "                    }\n";
+                    }else if(where.get(w).getCol2().startsWith("\"") || where.get(w).getCol2().endsWith("\"")) {
+                        col2IsString = true;
+                    }else{
+                        col2IsNum=true;
+                    }
+                }
+
+                String op = where.get(w).getOp();
+                if(w==0){
+                    if_output+="if ((";
+                }
+                switch (op){
+                    case "isnotnull":{
+                        if_output+="!(col"+w+(w+1)+".equals(\"\"))";
+                    }break;
+                    case "isnull":{
+                        if_output+="(col"+w+(w+1)+".equals(\"\"))";
+                    }break;
+                    default:{
+
+                        if(types.find_type_col_in_table(where.get(w).getCol1(),Tabels_name.get(0).getName_typ()).equals("string")){
+                            if(col2IsString){
+                                if_output+=" (col"+w+(1)+" " + op +" "+where.get(w).getCol2() +")" ;
+                            }else {
+                                if_output+=" (col"+w+(1)+" " + op +" col"+w+(2)+" )";
+                            }
+
+                        }else {
+
+                            if(col2IsNum){
+                                if_output+=" (Integer.parseInt(col"+w+(1)+") " + op +" "+where.get(w).getCol2() +")" ;
+                            }else {
+                                if_output+=" (Integer.parseInt(col"+w+(1)+") " + op +" Integer.parseInt(col"+w+(2)+")) ";
+                            }
+                            //output+=" (Integer.parseInt(col"+w+(1)+") "+op+" Integer.parseInt(col"+w+(2)+")) ";
+                        }
+                    }
+                }
+
+                if(w+1 <where.size()){
+                    if_output+=" " + where.get(w).getAfter();
+                }
+
+
+
+                System.out.println(where.size());
+                System.out.println(where.get(w).getCol1());
+            }
+        }else{
+            output+="true";
+        }
+
+      //  output+="if ((";
+
+
+
+
+
+        if_output+=")){";
+
+        output+=if_output;
         int map=0;
         for(Map.Entry<String, Integer> entry : vales.entrySet()){
             map++;
