@@ -1,4 +1,4 @@
-// Generated from C:/Users/Mero/IdeaProjects/HQL_COMPILER_2019\Hplsql.g4 by ANTLR 4.7.2
+// Generated from C:/Users/MouAz He/IdeaProjects/HQL_COMPILER_2019\Hplsql.g4 by ANTLR 4.7.2
 package antGen;
 
     import AST.*;
@@ -1035,6 +1035,12 @@ public interface HplsqlVisitor<T> extends ParseTreeVisitor<T> {
 	 * @return the visitor result
 	 */
 	T visitExpr_agg_window_func(HplsqlParser.Expr_agg_window_funcContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link HplsqlParser#col_fun}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitCol_fun(HplsqlParser.Col_funContext ctx);
 	/**
 	 * Visit a parse tree produced by {@link HplsqlParser#expr_func_all_distinct}.
 	 * @param ctx the parse tree

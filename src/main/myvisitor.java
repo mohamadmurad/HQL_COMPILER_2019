@@ -1,21 +1,22 @@
 package main;
 
+import Error.ErrorPrinter;
 import ST.*;
-import TypeArray.*;
-import Error.*;
+import TypeArray.TypeArray;
+import TypeArray.name_type;
 import antGen.HplsqlBaseVisitor;
 import antGen.HplsqlParser;
 
-import javax.management.AttributeList;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.List;
 
 public class myvisitor extends HplsqlBaseVisitor<Object> {
 
     String numberREG = "^[-+]?\\d+(\\.\\d+)?$";
 
     int isReturn = 0, numbOfIfElseFor = 0;
+
+    boolean join=false;
 
 
     SymbolTable symbolTable;
@@ -195,6 +196,24 @@ public class myvisitor extends HplsqlBaseVisitor<Object> {
     @Override
     public Object visitNew_select_stmt(HplsqlParser.New_select_stmtContext ctx) {
         String table_name = ctx.new_from_table().from_table_name_clause().table_name().ident().getText();
+        String alias = "";
+        String table_name_join ="";
+
+        if(ctx.new_from_table().from_table_name_clause().from_alias_clause() != null){
+
+            alias = (String) visit(ctx.new_from_table().from_table_name_clause().from_alias_clause());
+            Record newTableName = new Record(alias,table_name,"tableOtherName");
+            symbolTable.put(alias,newTableName);
+
+        }
+        for(int i=0;i<ctx.new_from_join_clause().size();i++){
+            if(ctx.new_from_join_clause(i).new_from_table().from_table_name_clause().from_alias_clause()!=null){
+               alias = (String) visit(ctx.new_from_join_clause(i).new_from_table().from_table_name_clause().from_alias_clause());
+               table_name_join =  ctx.new_from_join_clause(i).new_from_table().from_table_name_clause().table_name().getText();
+                Record newTableName = new Record(alias,table_name_join,"tableOtherName");
+                symbolTable.put(alias,newTableName);
+            }
+        }
         Select currentSelect = null;
 
         if(types.find_typ(table_name)){
@@ -206,19 +225,55 @@ public class myvisitor extends HplsqlBaseVisitor<Object> {
 
                 SelectCol coloms = (SelectCol)visit(ctx.new_select_col(i));
 
+
                 if(!coloms.colname.equals("*")){
-                    if(types.find_col_in_table(coloms.colname,table_name)){
+                    if(coloms.tablename==null){
+                        if(ctx.new_from_join_clause().size()==0){
+                            if(types.find_col_in_table(coloms.colname,table_name)){
 
-                        sel_col.add(coloms);
+                                sel_col.add(coloms);
+                            }else {
+                                ErrorPrinter.printFullError(myparser, ctx.start,
+                                        "error: Column :" + coloms.colname + " Not found! In Table " + table_name,
+                                        "symbol:   Type " + table_name,
+                                        "location: Function " + symbolTable.getCurrentScopeName()
+                                );
+
+
+                            }
+                        }else {
+                            ErrorPrinter.printFullError(myparser, ctx.start,
+                                    "error: In Select Statment",
+                                    "symbol:   Type " + table_name,
+                                    "location: Function " + symbolTable.getCurrentScopeName()
+                            );
+                        }
+
                     }else {
-                        ErrorPrinter.printFullError(myparser, ctx.start,
-                                "error: Column :" + coloms.colname + " Not found! In Table " + table_name,
-                                "symbol:   Type " + table_name,
-                                "location: Function " + symbolTable.getCurrentScopeName()
-                        );
+                        String tableAlias = coloms.tablename;
+                        Record r = symbolTable.lookuplocaly(tableAlias);
+                        if(r!=null){
+                            if(types.find_col_in_table(coloms.colname,r.getType())){
+
+                                sel_col.add(coloms);
+                            }else {
+                                ErrorPrinter.printFullError(myparser, ctx.start,
+                                        "error: Column :" + coloms.colname + " Not found! In Table " + r.getType(),
+                                        "symbol:   Type " + table_name,
+                                        "location: Function " + symbolTable.getCurrentScopeName()
+                                );
 
 
+                            }
+                        }else {
+                            ErrorPrinter.printFullError(myparser, ctx.start,
+                                    "error: Table :" + tableAlias + " Not found! In Select Statment",
+                                    "symbol:   Type " + table_name,
+                                    "location: Function " + symbolTable.getCurrentScopeName()
+                            );
+                        }
                     }
+
                 }else{
                     sel_col.add(coloms);
                 }
@@ -236,15 +291,7 @@ public class myvisitor extends HplsqlBaseVisitor<Object> {
                 // set scope name
                 symbolTable.setCurrentScopeNameAndType("SELECT", ScopeTypes.SELECT.toString());
 
-                String alias = "";
 
-                if(ctx.new_from_table().from_table_name_clause().from_alias_clause() != null){
-
-                    alias = (String) visit(ctx.new_from_table().from_table_name_clause().from_alias_clause());
-                    Record newTableName = new Record(alias,table_name,"tableOtherName");
-                    symbolTable.put(alias,newTableName);
-
-                }
 
                 for(int i=0;i<sel_col.size();i++){
                     //System.out.println("ccc "  + sel_col.get(i).aslis);
@@ -258,21 +305,21 @@ public class myvisitor extends HplsqlBaseVisitor<Object> {
                     }
 
                 }
-/*
-                if(ctx.new_where_condition()!=null){
-                    if(ctx.new_where_condition().new_where_item(0).bool_expr().bool_expr_atom()
+
+               /* if(ctx.new_where_condition()!=null){
+                    if(ctx.new_where_condition().bool_expr().bool_expr_atom()
                             .bool_expr_binary().expr(0).expr_agg_window_func()!=null){
                         ErrorPrinter.printFullError(myparser, ctx.start,
-                                "error: function :" + ctx.new_where_condition().new_where_item(0).bool_expr().bool_expr_atom()
+                                "error: function :" + ctx.new_where_condition().bool_expr().bool_expr_atom()
                                         .bool_expr_binary().expr(0).expr_agg_window_func().getText() + " should not contian in Where ",
                                 "",
                                 "location: select"
                         );
                     }
-                    if(ctx.new_where_condition().new_where_item(0).bool_expr().bool_expr_atom()
+                    if(ctx.new_where_condition().bool_expr().bool_expr_atom()
                             .bool_expr_binary().expr(0).expr_atom().ident().getText()!=null)
                     {
-                        String col_where = ctx.new_where_condition().new_where_item(0).bool_expr().bool_expr_atom()
+                        String col_where = ctx.new_where_condition().bool_expr().bool_expr_atom()
                                 .bool_expr_binary().expr(0).expr_atom().ident().getText();
                         if(types.find_col_in_table(col_where,table_name)){
 
@@ -288,6 +335,10 @@ public class myvisitor extends HplsqlBaseVisitor<Object> {
 
 
                 }*/
+
+            if(ctx.new_from_join_clause().size()!=0){
+                join = true;
+            }
 
                 boolean iscol = false;
                 boolean isfun = false;
@@ -325,6 +376,7 @@ public class myvisitor extends HplsqlBaseVisitor<Object> {
 
                     }
                     if(count_groupby!=colom.size() || count_groupby!=count_select){
+
 
                         ErrorPrinter.printFullError(myparser, ctx.start,
                                 "error: In Group By Statment ",
@@ -386,6 +438,13 @@ public class myvisitor extends HplsqlBaseVisitor<Object> {
         ///System.out.println(b.aslis);
         return x;
         //return super.visitNew_select_col(ctx);
+    }
+
+    @Override
+    public Object visitCol_fun(HplsqlParser.Col_funContext ctx) {
+        Object x = visitChildren(ctx);
+
+        return  x;
     }
 
     @Override
@@ -455,11 +514,17 @@ public class myvisitor extends HplsqlBaseVisitor<Object> {
     @Override
     public Object visitExpr_agg_window_func(HplsqlParser.Expr_agg_window_funcContext ctx) {
 
+        SelectCol coloms = (SelectCol)visit(ctx.col_fun());
+
         String func_name = ctx.getChild(0).getText();
         //System.out.println(func_name);
-        String paramiter = ctx.expr().get(0).getText();
+        String paramiter = coloms.colname;
+        String alais = null;
+        if(coloms.tablename!=null){
+            alais = coloms.tablename;
+        }
         boolean isDistnict = ctx.expr_func_all_distinct() != null ? true :false;
-        SelectCol temp = new SelectCol("",func_name, paramiter,null,isDistnict);
+        SelectCol temp = new SelectCol(alais,func_name, paramiter,null,isDistnict);
         return  temp;
 
 
@@ -480,9 +545,39 @@ public class myvisitor extends HplsqlBaseVisitor<Object> {
             }
         }
         for(int i=0;i<ctx.ident().size();i++){
+            if(join){
+                ErrorPrinter.printFullError(myparser, ctx.start,
+                        "error: In Select Statment!",
+                        "",
+                        "location: select"
+                );
+            }
             String col = ctx.ident(i).getText();
             colom.add(col);
 
+        }
+        for(int i=0;i<ctx.tabledotcol().size();i++){
+            Record r = symbolTable.lookup(ctx.tabledotcol(i).ident().getText());
+            if(r==null){
+                ErrorPrinter.printFullError(myparser, ctx.start,
+                        "error: In Select Statment!",
+                        "",
+                        "location: select"
+                );
+            }else {
+                String col = ctx.tabledotcol(i).colom_name().ident().getText();
+                if(types.find_col_in_table(col,r.getType())){
+                    colom.add(col);
+                }else {
+                    ErrorPrinter.printFullError(myparser, ctx.start,
+                            "error: Column :" + col + " Not found! In Table " + r.getType(),
+                            "symbol:   Type " + r.getType(),
+                            "location: Function " + symbolTable.getCurrentScopeName()
+                    );
+
+                }
+
+            }
         }
         return colom;
 

@@ -1,4 +1,4 @@
-// Generated from C:/Users/Mero/IdeaProjects/HQL_COMPILER_2019\Hplsql.g4 by ANTLR 4.7.2
+// Generated from C:/Users/MouAz He/IdeaProjects/HQL_COMPILER_2019\Hplsql.g4 by ANTLR 4.7.2
 package antGen;
 
     import AST.*;
@@ -1712,6 +1712,16 @@ public interface HplsqlListener extends ParseTreeListener {
 	 * @param ctx the parse tree
 	 */
 	void exitExpr_agg_window_func(HplsqlParser.Expr_agg_window_funcContext ctx);
+	/**
+	 * Enter a parse tree produced by {@link HplsqlParser#col_fun}.
+	 * @param ctx the parse tree
+	 */
+	void enterCol_fun(HplsqlParser.Col_funContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link HplsqlParser#col_fun}.
+	 * @param ctx the parse tree
+	 */
+	void exitCol_fun(HplsqlParser.Col_funContext ctx);
 	/**
 	 * Enter a parse tree produced by {@link HplsqlParser#expr_func_all_distinct}.
 	 * @param ctx the parse tree
