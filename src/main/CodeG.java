@@ -447,13 +447,13 @@ public class CodeG extends HplsqlBaseVisitor<Object> {
 
 
             if(joines.get(0).getJoin().equals("RIGHTJOIN") || joines.get(0).getJoin().equals("rightjoin")){
-                selectRightJoin1(Tabels_name,joines,sel_col_keys,vales);
+                selectRightJoin1(Tabels_name,joines,sel_col_keys,vales,where,tables_alise_name);
                 map_reduce+="public static void map_reduce() throws IOException {\n" +
                         "\n" +
                         "        Rightjoin();\n";
             }else if(joines.get(0).getJoin().equals("fullouterjoin") || joines.get(0).getJoin().equals("FULLOUTERJOIN")){
                 selectJoin(Tabels_name,joines,sel_col_keys,vales,where,tables_alise_name);
-                selectRightJoin1(Tabels_name,joines,sel_col_keys,vales);
+                selectRightJoin1(Tabels_name,joines,sel_col_keys,vales,where,tables_alise_name);
                 output+=getOutterJoin();
 
                 try(BufferedWriter fileOutputStream = new BufferedWriter(new FileWriter(filePath,true))){
@@ -923,7 +923,7 @@ public class CodeG extends HplsqlBaseVisitor<Object> {
                 tbl2 = null;
             }
 
-            if(ctx.new_where_item(i).sec_side().expr()!=null){
+            if(ctx.new_where_item(i).sec_side().expr()!=null && !ctx.new_where_item(i).sec_side().expr().getText().equals("") ){
                 col2 = ctx.new_where_item(i).sec_side().expr().getText();
             }else{
                 col2 = null;
@@ -1819,8 +1819,7 @@ public class CodeG extends HplsqlBaseVisitor<Object> {
     }
 
 
-
-    private void selectRightJoin1(ArrayList<data> Tabels_name,ArrayList<joinStruct> joines,ArrayList<SelectCol> sel_col_keys,Map<String,Integer> vales){
+    private void selectRightJoin1(ArrayList<data> Tabels_name,ArrayList<joinStruct> joines,ArrayList<SelectCol> sel_col_keys,Map<String,Integer> vales,ArrayList<whereStruct> where,ArrayList<TablesData> tables_alise_name){
 
         output+= "public static void Rightjoin() {\n\n";
         for(int i=1;i<=Tabels_name.size();i++){
@@ -1893,6 +1892,147 @@ public class CodeG extends HplsqlBaseVisitor<Object> {
                 "                    }else{\n" +
                 "                        col2=getCol(comaList2[index2-1]+1,comaList2[index2],line2);\n" +
                 "                    }\n\n";
+
+        // where start
+        if(where!=null){
+
+            for(int w = 0;w<where.size();w++){
+
+                output+="int index"+w+(1)+" = ";
+                int TableInde=0;
+
+                for(TableInde=0;TableInde<tables_alise_name.size();TableInde++){
+                    if(tables_alise_name.get(TableInde).getData().getName_typ().equals(where.get(w).getTbl1())
+                            || tables_alise_name.get(TableInde).getAlis().equals(where.get(w).getTbl1())){
+                        System.out.println(TableInde+ "  " );
+                        break;
+                    }
+                }
+
+
+
+
+                output+=tables_alise_name.get(TableInde).getData().getIndexCol(where.get(w).getCol1());
+                output+=";\n";
+                output+="String col"+w+(1)+";";
+
+                output+="if(index"+w+(1)+"==0){\n" +
+                        "                        col"+w+(1)+"= getCol(index"+w+(1)+",comaList"+(TableInde+1)+"[index"+w+(1)+"],line"+(TableInde+1)+");\n" +
+                        "\n" +
+                        "                    }else if(comaList"+(TableInde+1)+".length == index"+w+(1)+"){\n" +
+                        "\n" +
+                        "                        col"+w+(1)+"= getCol(comaList"+(TableInde+1)+"[comaList"+(TableInde+1)+".length-1]+1,line"+(TableInde+1)+".length(),line"+(TableInde+1)+");\n" +
+                        "                    }else{\n" +
+                        "\n" +
+                        "                        col"+w+(1)+"=getCol(comaList"+(TableInde+1)+"[index"+w+(1)+"-1]+1,comaList"+(TableInde+1)+"[index"+w+(1)+"],line"+(TableInde+1)+");\n" +
+                        "\n" +
+                        "                    }\n";
+                boolean col2IsNum = false;
+                boolean col2IsString =false;
+
+                if(where.get(w).getCol2()!=null) {
+                    System.out.println("hoioiu" + where.get(w).getCol2());
+
+
+                    if (!where.get(w).getCol2().matches(numberREG) && !(where.get(w).getCol2().startsWith("\"") || where.get(w).getCol2().endsWith("\""))) {
+
+                        output += "int index" + w + (2) + " = ";
+                        int TableInde1=0;
+                        for(TableInde1=0;TableInde1<tables_alise_name.size();TableInde1++){
+                            if(tables_alise_name.get(TableInde1).getData().getName_typ().equals(where.get(w).getTbl2())
+                                    || tables_alise_name.get(TableInde1).getAlis().equals(where.get(w).getTbl2())){
+                                System.out.println(TableInde1+ "  " );
+                                break;
+                            }
+                        }
+                        output += tables_alise_name.get(TableInde1).getData().getIndexCol(where.get(w).getCol2());
+                        output += ";\n";
+
+                        output += "String col" + w + (2) + ";";
+
+                        output += "if(index" + w + (2) + "==0){\n" +
+                                "                        col" + w + (2) + "= getCol(index" + w + (2) + ",comaList"+(TableInde1+1)+"[index" + w + (2) + "],line"+(TableInde1+1)+");\n" +
+                                "\n" +
+                                "                    }else if(comaList"+(TableInde1+1)+".length == index" + w + (2) + "){\n" +
+                                "\n" +
+                                "                        col" + w + (2) + "= getCol(comaList"+(TableInde1+1)+"[comaList"+(TableInde1+1)+".length-1]+1,line"+(TableInde1+1)+".length(),line"+(TableInde1+1)+");\n" +
+                                "                    }else{\n" +
+                                "\n" +
+                                "                        col" + w + (2) + "=getCol(comaList"+(TableInde1+1)+"[index" + w + (2) + "-1]+1,comaList"+(TableInde1+1)+"[index" + w + (2) + "],line"+(TableInde1+1)+");\n" +
+                                "\n" +
+                                "                    }\n";
+                    }else if(where.get(w).getCol2().startsWith("\"") || where.get(w).getCol2().endsWith("\"")) {
+                        col2IsString = true;
+                    }else{
+                        col2IsNum=true;
+
+                    }
+                }
+
+                String op = where.get(w).getOp();
+
+                if(w==0){
+                    if_output+="if ((";
+                }
+                switch (op){
+                    case "isnotnull":{
+                        if_output+="!(col"+w+(w+1)+".equals(\"\"))";
+                    }break;
+                    case "isnull":{
+                        if_output+="(col"+w+(w+1)+".equals(\"\"))";
+                    }break;
+                    default:{
+
+                        if(types.find_type_col_in_table(where.get(w).getCol1(),tables_alise_name.get(TableInde).getData().getName_typ()).equals("string")){
+                            if(col2IsString){
+                                if_output+=" (col"+w+(1)+" " + op +" "+where.get(w).getCol2() +")" ;
+                            }else {
+                                if_output+=" (col"+w+(1)+" " + op +" col"+w+(2)+" )";
+                            }
+
+                        }else {
+
+                            if(col2IsNum){
+                                if_output+="(!col"+w+(1)+".equals(\"\")) && (Integer.parseInt(col"+w+(1)+") " + op +" "+where.get(w).getCol2() +")" ;
+                            }else {
+                                if_output+="(!col"+w+(1)+".equals(\"\")) && (!col"+w+(2)+".equals(\"\")) && (Integer.parseInt(col"+w+(1)+") " + op +" Integer.parseInt(col"+w+(2)+")) ";
+                            }
+                            //output+=" (Integer.parseInt(col"+w+(1)+") "+op+" Integer.parseInt(col"+w+(2)+")) ";
+                        }
+                    }
+                }
+
+                if(w+1 <where.size()){
+                    if_output+=" " + where.get(w).getAfter();
+                }
+
+
+
+                System.out.println(where.size());
+                System.out.println(where.get(w).getCol1());
+            }
+        }else{
+            output+="if ((";
+            output+="true";
+        }
+
+
+
+        output+=if_output;
+        output+=")){\n";
+
+        String where_temp = output;
+        if_output="";
+
+        try(BufferedWriter fileOutputStream = new BufferedWriter(new FileWriter(filePath,true))){
+
+            fileOutputStream.write(output);
+
+            fileOutputStream.close();
+            output = "";
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
 
 
         String op = joines.get(0).getOnOP();
@@ -2003,7 +2143,7 @@ public class CodeG extends HplsqlBaseVisitor<Object> {
                 }
                 output+=  "                                }else{\n" +
                         "                                    null_value++;\n" +
-                        "                                }\n";
+                        "                                }}\n";
 
 
 
@@ -2016,7 +2156,7 @@ public class CodeG extends HplsqlBaseVisitor<Object> {
                     "\n" +
                     "                                }else{\n" +
                     "                                    null_value++;\n" +
-                    "                                }\n";
+                    "                                }}\n";
 
         }
 
@@ -2028,9 +2168,163 @@ public class CodeG extends HplsqlBaseVisitor<Object> {
                 "                        }\n" +
                 "                    }\n";
 
-// ifffff
 
-        output+=" if(null_value==i){\n" +
+
+        output+=" if(null_value==i){\n" ;
+
+        if(where!=null){
+            int TableInde =0;
+            for(int w = 0;w<where.size();w++) {
+
+                for (TableInde = 0; TableInde < tables_alise_name.size(); TableInde++) {
+                    if (tables_alise_name.get(TableInde).getData().getName_typ().equals(where.get(w).getTbl1())
+                            || tables_alise_name.get(TableInde).getAlis().equals(where.get(w).getTbl1())) {
+                        System.out.println(TableInde + "  ");
+                        break;
+                    }
+                }
+
+                int TableInde1 = -1;
+                if(where.get(w).getTbl2() !=null){
+                    for (TableInde1 = 0; TableInde1 < tables_alise_name.size(); TableInde1++) {
+                        if (tables_alise_name.get(TableInde1).getData().getName_typ().equals(where.get(w).getTbl2())
+                                || tables_alise_name.get(TableInde1).getAlis().equals(where.get(w).getTbl2())) {
+                            System.out.println(TableInde1 + "  ");
+                            break;
+                        }
+                    }
+                }
+
+
+                if((TableInde ==0  && TableInde1==-1) || (TableInde ==0  && TableInde1==0)){
+
+                    output += "int index" + w + (1) + " = ";
+
+
+                    output += tables_alise_name.get(TableInde).getData().getIndexCol(where.get(w).getCol1());
+                    output += ";\n";
+                    output += "String col" + w + (1) + ";";
+
+                    output += "if(index" + w + (1) + "==0){\n" +
+                            "                        col" + w + (1) + "= getCol(index" + w + (1) + ",comaList" + (TableInde + 1) + "[index" + w + (1) + "],line" + (TableInde + 1) + ");\n" +
+                            "\n" +
+                            "                    }else if(comaList" + (TableInde + 1) + ".length == index" + w + (1) + "){\n" +
+                            "\n" +
+                            "                        col" + w + (1) + "= getCol(comaList" + (TableInde + 1) + "[comaList" + (TableInde + 1) + ".length-1]+1,line" + (TableInde + 1) + ".length(),line" + (TableInde + 1) + ");\n" +
+                            "                    }else{\n" +
+                            "\n" +
+                            "                        col" + w + (1) + "=getCol(comaList" + (TableInde + 1) + "[index" + w + (1) + "-1]+1,comaList" + (TableInde + 1) + "[index" + w + (1) + "],line" + (TableInde + 1) + ");\n" +
+                            "\n" +
+                            "                    }\n";
+                    boolean col2IsNum = false;
+                    boolean col2IsString = false;
+
+                    if (where.get(w).getCol2() != null) {
+
+
+                        if (!where.get(w).getCol2().matches(numberREG) && !(where.get(w).getCol2().startsWith("\"") || where.get(w).getCol2().endsWith("\""))) {
+
+                            output += "int index" + w + (2) + " = ";
+                            TableInde1 = 0;
+                            for (TableInde1 = 0; TableInde1 < tables_alise_name.size(); TableInde1++) {
+                                if (tables_alise_name.get(TableInde1).getData().getName_typ().equals(where.get(w).getTbl2())
+                                        || tables_alise_name.get(TableInde1).getAlis().equals(where.get(w).getTbl2())) {
+                                    System.out.println(TableInde1 + "  ");
+                                    break;
+                                }
+                            }
+                            output += tables_alise_name.get(TableInde1).getData().getIndexCol(where.get(w).getCol2());
+                            output += ";\n";
+
+                            output += "String col" + w + (2) + ";";
+
+                            output += "if(index" + w + (2) + "==0){\n" +
+                                    "                        col" + w + (2) + "= getCol(index" + w + (2) + ",comaList" + (TableInde1 + 1) + "[index" + w + (2) + "],line" + (TableInde1 + 1) + ");\n" +
+                                    "\n" +
+                                    "                    }else if(comaList" + (TableInde1 + 1) + ".length == index" + w + (2) + "){\n" +
+                                    "\n" +
+                                    "                        col" + w + (2) + "= getCol(comaList" + (TableInde1 + 1) + "[comaList" + (TableInde1 + 1) + ".length-1]+1,line" + (TableInde1 + 1) + ".length(),line" + (TableInde1 + 1) + ");\n" +
+                                    "                    }else{\n" +
+                                    "\n" +
+                                    "                        col" + w + (2) + "=getCol(comaList" + (TableInde1 + 1) + "[index" + w + (2) + "-1]+1,comaList" + (TableInde1 + 1) + "[index" + w + (2) + "],line" + (TableInde1 + 1) + ");\n" +
+                                    "\n" +
+                                    "                    }\n";
+                        } else if (where.get(w).getCol2().startsWith("\"") || where.get(w).getCol2().endsWith("\"")) {
+                            col2IsString = true;
+                        } else {
+                            col2IsNum = true;
+
+                        }
+                    }
+
+                    op = where.get(w).getOp();
+
+                    if (w == 0) {
+                        if_output += "if ((";
+                    }
+                    switch (op) {
+                        case "isnotnull": {
+                            if_output += "!(col" + w + (w + 1) + ".equals(\"\"))";
+                        }
+                        break;
+                        case "isnull": {
+                            if_output += "(col" + w + (w + 1) + ".equals(\"\"))";
+                        }
+                        break;
+                        default: {
+
+                            if (types.find_type_col_in_table(where.get(w).getCol1(), tables_alise_name.get(TableInde).getData().getName_typ()).equals("string")) {
+                                if (col2IsString) {
+                                    if_output += " (col" + w + (1) + " " + op + " " + where.get(w).getCol2() + ")";
+                                } else {
+                                    if_output += " (col" + w + (1) + " " + op + " col" + w + (2) + " )";
+                                }
+
+                            } else {
+
+                                if(col2IsNum){
+                                    if_output+="(!col"+w+(1)+".equals(\"\")) && (Integer.parseInt(col"+w+(1)+") " + op +" "+where.get(w).getCol2() +")" ;
+                                }else {
+                                    if_output+="(!col"+w+(1)+".equals(\"\")) && (!col"+w+(2)+".equals(\"\")) && (Integer.parseInt(col"+w+(1)+") " + op +" Integer.parseInt(col"+w+(2)+")) ";
+                                }
+                                //output+=" (Integer.parseInt(col"+w+(1)+") "+op+" Integer.parseInt(col"+w+(2)+")) ";
+                            }
+                        }
+                    }
+
+                    if (w + 1 < where.size()) {
+                        if_output += " " + where.get(w).getAfter();
+                    }
+
+
+                }else{
+                    output+="if ((";
+                    output+="true";
+                }
+            }
+        }else{
+            output+="if ((";
+            output+="true";
+        }
+
+
+        output+=if_output;
+        output+=")){\n";
+
+        /// where_temp = output;
+        if_output="";
+
+        try(BufferedWriter fileOutputStream = new BufferedWriter(new FileWriter(filePath,true))){
+
+            fileOutputStream.write(output);
+
+            fileOutputStream.close();
+            output = "";
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        output+=
                 "                        String c_null = \"\";\n" +
                 "                        for(int k=1;k<length_country1;k++){\n" +
                 "                           c_null+=\",\";\n" +
@@ -2072,7 +2366,7 @@ public class CodeG extends HplsqlBaseVisitor<Object> {
 
         }
 
-        output+="}\n\n";
+        output+="}}\n\n";
 
         output+=" }\n" +
                 "            } catch (FileNotFoundException e) {\n" +
@@ -2199,17 +2493,6 @@ public class CodeG extends HplsqlBaseVisitor<Object> {
                     output+="int index"+w+(1)+" = ";
                     int TableInde=0;
 
-
-                   // for(Map.Entry<String, data> entry : tables_alise_name.entrySet()){
-                      //  System.out.println(entry.getKey());
-                        /*if(entry.getKey().equals(where.get(w).getTbl1())
-                        || entry.getValue().getName_typ().equals(where.get(w).getTbl1())){
-                            System.out.println(TableInde+ "  " + entry.getKey());
-                            break;
-                        }*/
-                        //TableInde++;
-                    //}
-
                     for(TableInde=0;TableInde<tables_alise_name.size();TableInde++){
                         if(tables_alise_name.get(TableInde).getData().getName_typ().equals(where.get(w).getTbl1())
                                 || tables_alise_name.get(TableInde).getAlis().equals(where.get(w).getTbl1())){
@@ -2223,7 +2506,6 @@ public class CodeG extends HplsqlBaseVisitor<Object> {
 
                     output+=tables_alise_name.get(TableInde).getData().getIndexCol(where.get(w).getCol1());
                     output+=";\n";
-
                     output+="String col"+w+(1)+";";
 
                     output+="if(index"+w+(1)+"==0){\n" +
@@ -2241,6 +2523,7 @@ public class CodeG extends HplsqlBaseVisitor<Object> {
                     boolean col2IsString =false;
 
                     if(where.get(w).getCol2()!=null) {
+                        System.out.println("hoioiu" + where.get(w).getCol2());
 
 
                         if (!where.get(w).getCol2().matches(numberREG) && !(where.get(w).getCol2().startsWith("\"") || where.get(w).getCol2().endsWith("\""))) {
@@ -2279,6 +2562,7 @@ public class CodeG extends HplsqlBaseVisitor<Object> {
                     }
 
                     String op = where.get(w).getOp();
+
                     if(w==0){
                         if_output+="if ((";
                     }
@@ -2301,9 +2585,9 @@ public class CodeG extends HplsqlBaseVisitor<Object> {
                             }else {
 
                                 if(col2IsNum){
-                                    if_output+=" (Integer.parseInt(col"+w+(1)+") " + op +" "+where.get(w).getCol2() +")" ;
+                                    if_output+="(!col"+w+(1)+".equals(\"\")) && (Integer.parseInt(col"+w+(1)+") " + op +" "+where.get(w).getCol2() +")" ;
                                 }else {
-                                    if_output+=" (Integer.parseInt(col"+w+(1)+") " + op +" Integer.parseInt(col"+w+(2)+")) ";
+                                    if_output+="(!col"+w+(1)+".equals(\"\")) && (!col"+w+(2)+".equals(\"\")) && (Integer.parseInt(col"+w+(1)+") " + op +" Integer.parseInt(col"+w+(2)+")) ";
                                 }
                                 //output+=" (Integer.parseInt(col"+w+(1)+") "+op+" Integer.parseInt(col"+w+(2)+")) ";
                             }
@@ -2328,6 +2612,8 @@ public class CodeG extends HplsqlBaseVisitor<Object> {
 
             output+=if_output;
             output+=")){\n";
+
+            String where_temp = output;
             if_output="";
 
             try(BufferedWriter fileOutputStream = new BufferedWriter(new FileWriter(filePath,true))){
@@ -2476,7 +2762,168 @@ public class CodeG extends HplsqlBaseVisitor<Object> {
 
             if(joines.get(i).getJoin().equals("leftjoin") || joines.get(i).getJoin().equals("LEFTJOIN")
                     || joines.get(i).getJoin().equals("fullouterjoin") || joines.get(i).getJoin().equals("FULLOUTERJOIN")){
-                output+=" if(null_value==i){\n" +
+                output+=" if(null_value==i){\n" ;
+
+
+              //  output+=where_temp;
+
+
+
+                if(where!=null){
+
+                    for(int w = 0;w<where.size();w++) {
+
+                        for (TableInde = 0; TableInde < tables_alise_name.size(); TableInde++) {
+                            if (tables_alise_name.get(TableInde).getData().getName_typ().equals(where.get(w).getTbl1())
+                                    || tables_alise_name.get(TableInde).getAlis().equals(where.get(w).getTbl1())) {
+                                System.out.println(TableInde + "  ");
+                                break;
+                            }
+                        }
+
+                        int TableInde1 = -1;
+                        if(where.get(w).getTbl2() !=null){
+                            for (TableInde1 = 0; TableInde1 < tables_alise_name.size(); TableInde1++) {
+                                if (tables_alise_name.get(TableInde1).getData().getName_typ().equals(where.get(w).getTbl2())
+                                        || tables_alise_name.get(TableInde1).getAlis().equals(where.get(w).getTbl2())) {
+                                    System.out.println(TableInde1 + "  ");
+                                    break;
+                                }
+                            }
+                        }
+
+
+                        if((TableInde ==0  && TableInde1==-1) || (TableInde ==0  && TableInde1==0)){
+
+                        output += "int index" + w + (1) + " = ";
+
+
+                        output += tables_alise_name.get(TableInde).getData().getIndexCol(where.get(w).getCol1());
+                        output += ";\n";
+                        output += "String col" + w + (1) + ";";
+
+                        output += "if(index" + w + (1) + "==0){\n" +
+                                "                        col" + w + (1) + "= getCol(index" + w + (1) + ",comaList" + (TableInde + 1) + "[index" + w + (1) + "],line" + (TableInde + 1) + ");\n" +
+                                "\n" +
+                                "                    }else if(comaList" + (TableInde + 1) + ".length == index" + w + (1) + "){\n" +
+                                "\n" +
+                                "                        col" + w + (1) + "= getCol(comaList" + (TableInde + 1) + "[comaList" + (TableInde + 1) + ".length-1]+1,line" + (TableInde + 1) + ".length(),line" + (TableInde + 1) + ");\n" +
+                                "                    }else{\n" +
+                                "\n" +
+                                "                        col" + w + (1) + "=getCol(comaList" + (TableInde + 1) + "[index" + w + (1) + "-1]+1,comaList" + (TableInde + 1) + "[index" + w + (1) + "],line" + (TableInde + 1) + ");\n" +
+                                "\n" +
+                                "                    }\n";
+                        boolean col2IsNum = false;
+                        boolean col2IsString = false;
+
+                        if (where.get(w).getCol2() != null) {
+
+
+                            if (!where.get(w).getCol2().matches(numberREG) && !(where.get(w).getCol2().startsWith("\"") || where.get(w).getCol2().endsWith("\""))) {
+
+                                output += "int index" + w + (2) + " = ";
+                                 TableInde1 = 0;
+                                for (TableInde1 = 0; TableInde1 < tables_alise_name.size(); TableInde1++) {
+                                    if (tables_alise_name.get(TableInde1).getData().getName_typ().equals(where.get(w).getTbl2())
+                                            || tables_alise_name.get(TableInde1).getAlis().equals(where.get(w).getTbl2())) {
+                                        System.out.println(TableInde1 + "  ");
+                                        break;
+                                    }
+                                }
+                                output += tables_alise_name.get(TableInde1).getData().getIndexCol(where.get(w).getCol2());
+                                output += ";\n";
+
+                                output += "String col" + w + (2) + ";";
+
+                                output += "if(index" + w + (2) + "==0){\n" +
+                                        "                        col" + w + (2) + "= getCol(index" + w + (2) + ",comaList" + (TableInde1 + 1) + "[index" + w + (2) + "],line" + (TableInde1 + 1) + ");\n" +
+                                        "\n" +
+                                        "                    }else if(comaList" + (TableInde1 + 1) + ".length == index" + w + (2) + "){\n" +
+                                        "\n" +
+                                        "                        col" + w + (2) + "= getCol(comaList" + (TableInde1 + 1) + "[comaList" + (TableInde1 + 1) + ".length-1]+1,line" + (TableInde1 + 1) + ".length(),line" + (TableInde1 + 1) + ");\n" +
+                                        "                    }else{\n" +
+                                        "\n" +
+                                        "                        col" + w + (2) + "=getCol(comaList" + (TableInde1 + 1) + "[index" + w + (2) + "-1]+1,comaList" + (TableInde1 + 1) + "[index" + w + (2) + "],line" + (TableInde1 + 1) + ");\n" +
+                                        "\n" +
+                                        "                    }\n";
+                            } else if (where.get(w).getCol2().startsWith("\"") || where.get(w).getCol2().endsWith("\"")) {
+                                col2IsString = true;
+                            } else {
+                                col2IsNum = true;
+
+                            }
+                        }
+
+                         op = where.get(w).getOp();
+
+                        if (w == 0) {
+                            if_output += "if ((";
+                        }
+                        switch (op) {
+                            case "isnotnull": {
+                                if_output += "!(col" + w + (w + 1) + ".equals(\"\"))";
+                            }
+                            break;
+                            case "isnull": {
+                                if_output += "(col" + w + (w + 1) + ".equals(\"\"))";
+                            }
+                            break;
+                            default: {
+
+                                if (types.find_type_col_in_table(where.get(w).getCol1(), tables_alise_name.get(TableInde).getData().getName_typ()).equals("string")) {
+                                    if (col2IsString) {
+                                        if_output += " (col" + w + (1) + " " + op + " " + where.get(w).getCol2() + ")";
+                                    } else {
+                                        if_output += " (col" + w + (1) + " " + op + " col" + w + (2) + " )";
+                                    }
+
+                                } else {
+
+                                    if(col2IsNum){
+                                        if_output+="(!col"+w+(1)+".equals(\"\")) && (Integer.parseInt(col"+w+(1)+") " + op +" "+where.get(w).getCol2() +")" ;
+                                    }else {
+                                        if_output+="(!col"+w+(1)+".equals(\"\")) && (!col"+w+(2)+".equals(\"\")) && (Integer.parseInt(col"+w+(1)+") " + op +" Integer.parseInt(col"+w+(2)+")) ";
+                                    }
+                                    //output+=" (Integer.parseInt(col"+w+(1)+") "+op+" Integer.parseInt(col"+w+(2)+")) ";
+                                }
+                            }
+                        }
+
+                        if (w + 1 < where.size()) {
+                            if_output += " " + where.get(w).getAfter();
+                        }
+
+
+                    }else{
+                            output+="if ((";
+                            output+="true";
+                        }
+                    }
+                }else{
+                    output+="if ((";
+                    output+="true";
+                }
+
+
+                output+=if_output;
+                output+=")){\n";
+
+                /// where_temp = output;
+                if_output="";
+
+                try(BufferedWriter fileOutputStream = new BufferedWriter(new FileWriter(filePath,true))){
+
+                    fileOutputStream.write(output);
+
+                    fileOutputStream.close();
+                    output = "";
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+
+
+
+                output+=
                         "                        String c_null = \"\";\n" +
                         "                        for(int k=1;k<length_country2;k++){\n" +
                         "                           c_null+=\",\";\n" +
@@ -2520,6 +2967,7 @@ public class CodeG extends HplsqlBaseVisitor<Object> {
 
 
                 }
+                output+="}\n";
 
                 output+="}\n";
 
@@ -2561,8 +3009,6 @@ public class CodeG extends HplsqlBaseVisitor<Object> {
 
 
     }
-
-
 
     private void selectWitoutJoin( ArrayList<data> Tabels_name,ArrayList<SelectCol> sel_col_keys,Map<String,Integer> vales,ArrayList<whereStruct> where){
 
@@ -2652,9 +3098,9 @@ public class CodeG extends HplsqlBaseVisitor<Object> {
                         }else {
 
                             if(col2IsNum){
-                                if_output+=" (Integer.parseInt(col"+w+(1)+") " + op +" "+where.get(w).getCol2() +")" ;
+                                if_output+="(!col"+w+(1)+".equals(\"\")) && (Integer.parseInt(col"+w+(1)+") " + op +" "+where.get(w).getCol2() +")" ;
                             }else {
-                                if_output+=" (Integer.parseInt(col"+w+(1)+") " + op +" Integer.parseInt(col"+w+(2)+")) ";
+                                if_output+="(!col"+w+(1)+".equals(\"\")) && (!col"+w+(2)+".equals(\"\")) && (Integer.parseInt(col"+w+(1)+") " + op +" Integer.parseInt(col"+w+(2)+")) ";
                             }
                             //output+=" (Integer.parseInt(col"+w+(1)+") "+op+" Integer.parseInt(col"+w+(2)+")) ";
                         }
