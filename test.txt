@@ -1,1 +1,1 @@
-select temperature.id , sum(temperature.temp),avg(temperature.temp) from temperature temperature where id > 1 AND id < 4 group by id order by 1 asc;
+select Customers.name , sum(Orders.o_id) from Customers Customers full outer join Orders Orders on Customers.id=Orders.cust_id where Orders.cust_id is not null group by name order by 2 asc;
