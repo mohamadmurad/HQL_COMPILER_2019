@@ -2,7 +2,7 @@ package ST;
 
 public class SymbolTable {
 
-    private Scope root ; // the root scope
+    private Scope root; // the root scope
     private Scope current; // current scope
     boolean debug = true;
 
@@ -15,19 +15,19 @@ public class SymbolTable {
         return root;
     }
 
-    public String getCurrentScopeName(){
+    public String getCurrentScopeName() {
         return this.current.getScopeName();
     }
 
-    public String getCurrentScopeType(){
+    public String getCurrentScopeType() {
         return this.current.getScopeType();
     }
 
-    public Scope getCurrentScope(){
+    public Scope getCurrentScope() {
         return this.current;
     }
 
-    public void setCurrentScopeNameAndType(String scopeName, String scopeType){
+    public void setCurrentScopeNameAndType(String scopeName, String scopeType) {
         this.current.setScopeNameAndType(scopeName, scopeType);
     }
 
@@ -75,7 +75,7 @@ public class SymbolTable {
         root.resetScope();
     }
 
-    public void printScopeTree(){
+    public void printScopeTree() {
         System.out.println("\n\n");
         root.printScopeDebug();
     }

@@ -111,7 +111,6 @@ public class CodeG extends HplsqlBaseVisitor<Object> {
             data d = types.get(table_name);
             Tabels_name.add(d);
             tables_alise_name.add(new TablesData(d, table_alis));
-            System.out.println(table_alis);
 
             for (int i = 0; i < ctx.new_from_join_clause().size(); i++) {
                 String table_name1 = ctx.new_from_join_clause(i).new_from_table().from_table_name_clause().table_name().ident().getText();
@@ -462,7 +461,6 @@ public class CodeG extends HplsqlBaseVisitor<Object> {
             }
 
 
-            //System.out.println(ctx.order_by_clause().order_by_col().size());
             if (ctx.order_by_clause() != null) {
 
                 for (int i = 0; i < ctx.order_by_clause().order_by_col().size(); i++) {
@@ -546,11 +544,9 @@ public class CodeG extends HplsqlBaseVisitor<Object> {
                         if (types.find_type_col_in_table(coloms.colname, tbOrgName).equals("string")) {
                             output += "return (col1.compareTo(col2)) ";
                         } else {
-                            System.out.println("aa");
                             output += " return (Integer.parseInt(col1) - Integer.parseInt(col2)) ";
                         }
 
-                        System.out.println("dsdssssssssssssssssssssss " );
 
                         if (ctx.order_by_clause().order_by_col(i).T_DESC() != null) {
                             output += " * -1;\n" +
@@ -911,7 +907,6 @@ public class CodeG extends HplsqlBaseVisitor<Object> {
         SelectCol coloms = (SelectCol)visit(ctx.col_fun());
 
         String func_name = ctx.getChild(0).getText();
-        //System.out.println(func_name);
         String paramiter = coloms.colname;
         String alais = null;
         if(coloms.tablename!=null){
@@ -954,7 +949,6 @@ public class CodeG extends HplsqlBaseVisitor<Object> {
             op = ctx.new_where_item(i).new_bol_exp().getText();
 
             if(ctx.T_AND(i) !=null){
-                System.out.println(i + "  "+ ctx.T_AND(i).getText());
                 where.add(new whereStruct(tbl1,tbl2,col1,col2,op," && "));
             }else if(ctx.T_OR(i)!=null){
                 where.add(new whereStruct(tbl1,tbl2,col1,col2,op," || "));
@@ -1626,7 +1620,7 @@ public class CodeG extends HplsqlBaseVisitor<Object> {
                 "\n" +
                 "\n" +
                 "        for(String name : list){\n" +
-                "            System.out.println(name);\n" +
+
                 "            try (BufferedReader br = new BufferedReader(new FileReader(path+File.separator+name))) {\n" +
                 "\n" +
                 "                String line;\n" +
@@ -1672,14 +1666,14 @@ public class CodeG extends HplsqlBaseVisitor<Object> {
                 "        long blocksize = sizeoffile / MAXTEMPFILES ;\n" +
                 "       \n" +
                 "        long freemem = Runtime.getRuntime().freeMemory();\n" +
-                "        System.out.println(\"dree : \"+freemem);\n" +
+
                 "        if( blocksize < freemem/2)\n" +
                 "            blocksize = freemem/2;\n" +
                 "        else {\n" +
                 "            if(blocksize >= freemem)\n" +
                 "                System.err.println(\"We expect to run out of memory. \");\n" +
                 "        }\n" +
-                "        System.out.println(\"new block : \"+blocksize);\n" +
+
                 "        return blocksize;\n" +
                 "    }\n" +
                 "\n" +
@@ -1926,7 +1920,6 @@ public class CodeG extends HplsqlBaseVisitor<Object> {
                 for(TableInde=0;TableInde<tables_alise_name.size();TableInde++){
                     if(tables_alise_name.get(TableInde).getData().getName_typ().equals(where.get(w).getTbl1())
                             || tables_alise_name.get(TableInde).getAlis().equals(where.get(w).getTbl1())){
-                        System.out.println(TableInde+ "  " );
                         break;
                     }
                 }
@@ -1953,7 +1946,6 @@ public class CodeG extends HplsqlBaseVisitor<Object> {
                 boolean col2IsString =false;
 
                 if(where.get(w).getCol2()!=null) {
-                    System.out.println("hoioiu" + where.get(w).getCol2());
 
 
                     if (!where.get(w).getCol2().matches(numberREG) && !(where.get(w).getCol2().startsWith("\"") || where.get(w).getCol2().endsWith("\""))) {
@@ -1963,7 +1955,6 @@ public class CodeG extends HplsqlBaseVisitor<Object> {
                         for(TableInde1=0;TableInde1<tables_alise_name.size();TableInde1++){
                             if(tables_alise_name.get(TableInde1).getData().getName_typ().equals(where.get(w).getTbl2())
                                     || tables_alise_name.get(TableInde1).getAlis().equals(where.get(w).getTbl2())){
-                                System.out.println(TableInde1+ "  " );
                                 break;
                             }
                         }
@@ -2030,8 +2021,7 @@ public class CodeG extends HplsqlBaseVisitor<Object> {
 
 
 
-                System.out.println(where.size());
-                System.out.println(where.get(w).getCol1());
+
             }
         }else{
             output+="if ((";
@@ -2203,7 +2193,7 @@ public class CodeG extends HplsqlBaseVisitor<Object> {
                 for (TableInde = 0; TableInde < tables_alise_name.size(); TableInde++) {
                     if (tables_alise_name.get(TableInde).getData().getName_typ().equals(where.get(w).getTbl1())
                             || tables_alise_name.get(TableInde).getAlis().equals(where.get(w).getTbl1())) {
-                        System.out.println(TableInde + "  ");
+
                         break;
                     }
                 }
@@ -2213,7 +2203,7 @@ public class CodeG extends HplsqlBaseVisitor<Object> {
                     for (TableInde1 = 0; TableInde1 < tables_alise_name.size(); TableInde1++) {
                         if (tables_alise_name.get(TableInde1).getData().getName_typ().equals(where.get(w).getTbl2())
                                 || tables_alise_name.get(TableInde1).getAlis().equals(where.get(w).getTbl2())) {
-                            System.out.println(TableInde1 + "  ");
+
                             break;
                         }
                     }
@@ -2253,7 +2243,6 @@ public class CodeG extends HplsqlBaseVisitor<Object> {
                             for (TableInde1 = 0; TableInde1 < tables_alise_name.size(); TableInde1++) {
                                 if (tables_alise_name.get(TableInde1).getData().getName_typ().equals(where.get(w).getTbl2())
                                         || tables_alise_name.get(TableInde1).getAlis().equals(where.get(w).getTbl2())) {
-                                    System.out.println(TableInde1 + "  ");
                                     break;
                                 }
                             }
@@ -2522,7 +2511,6 @@ public class CodeG extends HplsqlBaseVisitor<Object> {
                     for(TableInde=0;TableInde<tables_alise_name.size();TableInde++){
                         if(tables_alise_name.get(TableInde).getData().getName_typ().equals(where.get(w).getTbl1())
                                 || tables_alise_name.get(TableInde).getAlis().equals(where.get(w).getTbl1())){
-                            System.out.println(TableInde+ "  " );
                             break;
                         }
                     }
@@ -2549,7 +2537,6 @@ public class CodeG extends HplsqlBaseVisitor<Object> {
                     boolean col2IsString =false;
 
                     if(where.get(w).getCol2()!=null) {
-                        System.out.println("hoioiu" + where.get(w).getCol2());
 
 
                         if (!where.get(w).getCol2().matches(numberREG) && !(where.get(w).getCol2().startsWith("\"") || where.get(w).getCol2().endsWith("\""))) {
@@ -2559,7 +2546,6 @@ public class CodeG extends HplsqlBaseVisitor<Object> {
                             for(TableInde1=0;TableInde1<tables_alise_name.size();TableInde1++){
                                 if(tables_alise_name.get(TableInde1).getData().getName_typ().equals(where.get(w).getTbl2())
                                         || tables_alise_name.get(TableInde1).getAlis().equals(where.get(w).getTbl2())){
-                                    System.out.println(TableInde1+ "  " );
                                     break;
                                 }
                             }
@@ -2626,8 +2612,6 @@ public class CodeG extends HplsqlBaseVisitor<Object> {
 
 
 
-                    System.out.println(where.size());
-                    System.out.println(where.get(w).getCol1());
                 }
             }else{
                 output+="if ((";
@@ -2806,7 +2790,6 @@ public class CodeG extends HplsqlBaseVisitor<Object> {
                         for (TableInde = 0; TableInde < tables_alise_name.size(); TableInde++) {
                             if (tables_alise_name.get(TableInde).getData().getName_typ().equals(where.get(w).getTbl1())
                                     || tables_alise_name.get(TableInde).getAlis().equals(where.get(w).getTbl1())) {
-                                System.out.println(TableInde + "  ");
                                 break;
                             }
                         }
@@ -2816,7 +2799,6 @@ public class CodeG extends HplsqlBaseVisitor<Object> {
                             for (TableInde1 = 0; TableInde1 < tables_alise_name.size(); TableInde1++) {
                                 if (tables_alise_name.get(TableInde1).getData().getName_typ().equals(where.get(w).getTbl2())
                                         || tables_alise_name.get(TableInde1).getAlis().equals(where.get(w).getTbl2())) {
-                                    System.out.println(TableInde1 + "  ");
                                     break;
                                 }
                             }
@@ -2856,7 +2838,6 @@ public class CodeG extends HplsqlBaseVisitor<Object> {
                                 for (TableInde1 = 0; TableInde1 < tables_alise_name.size(); TableInde1++) {
                                     if (tables_alise_name.get(TableInde1).getData().getName_typ().equals(where.get(w).getTbl2())
                                             || tables_alise_name.get(TableInde1).getAlis().equals(where.get(w).getTbl2())) {
-                                        System.out.println(TableInde1 + "  ");
                                         break;
                                     }
                                 }
@@ -3060,7 +3041,6 @@ public class CodeG extends HplsqlBaseVisitor<Object> {
         if(where!=null){
 
             for(int w = 0;w<where.size();w++){
-                System.out.println(where.get(w).getAfter());
                 output+="int index"+w+(1)+" = ";
                 output+=Tabels_name.get(0).getIndexCol(where.get(w).getCol1());
                 output+=";\n";
@@ -3145,8 +3125,6 @@ public class CodeG extends HplsqlBaseVisitor<Object> {
 
 
 
-                System.out.println(where.size());
-                System.out.println(where.get(w).getCol1());
             }
         }else{
             output+="if ((";

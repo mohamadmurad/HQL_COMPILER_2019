@@ -17,21 +17,22 @@ public class Table extends Record {
         this.columns.add(col);
 
     }
+
     public boolean containColumn(String col) {
         // hash map
-        for(int i=0;i<columns.size();i++){
-            if(columns.get(i).id.equals(col)){
+        for (int i = 0; i < columns.size(); i++) {
+            if (columns.get(i).id.equals(col)) {
                 return true;
             }
         }
         return false;
     }
 
-    public int getIndexOfCol(String col){
+    public int getIndexOfCol(String col) {
 
         System.out.println(col);
-        for(int i=0;i<columns.size();i++){
-            if(columns.get(i).id.equals(col)){
+        for (int i = 0; i < columns.size(); i++) {
+            if (columns.get(i).id.equals(col)) {
                 return i;
             }
         }

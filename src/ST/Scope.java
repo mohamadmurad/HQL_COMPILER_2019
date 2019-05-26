@@ -12,8 +12,8 @@ public class Scope {
     private Map<String, Record> records = new HashMap<String, Record>();
 
     //int type; // Function=0,block=1
-    private String scopeName= "";
-    private String scopeType= "";
+    private String scopeName = "";
+    private String scopeType = "";
 
     public Scope(Scope parent) {
         this.parent = parent;
@@ -32,11 +32,11 @@ public class Scope {
         return records;
     }
 
-    public String getScopeName(){
+    public String getScopeName() {
         return this.scopeName;
     }
 
-    public String getScopeType(){
+    public String getScopeType() {
         return scopeType;
     }
 
@@ -50,18 +50,18 @@ public class Scope {
         while (it.hasNext()) {
             Map.Entry pair = (Map.Entry) it.next();
             Record temp = (Record) pair.getValue();
-            if(temp instanceof FunctionRecord)
-            printLine(pair.getKey().toString() + " : Method" ,  temp.getType(), scopeName+" [ "+scopeType+" ]");
-            else if(temp instanceof Record)
-                printLine(pair.getKey().toString() + " : " + ((Record) pair.getValue()).getKind() ,  temp.getType(), scopeName+" [ "+scopeType+" ]");
-            //else if(temp instanceof ForRecord)
-               // printLine(pair.getKey().toString() + " : Loop" ,  temp.getType(), scopeName+" [ "+scopeType+" ]");
-            else if(temp instanceof Table)
-                printLine(pair.getKey().toString() + " : Table" ,  temp.getType(), scopeName+" [ "+scopeType+" ]");
-            else if(temp instanceof Select)
-                printLine(pair.getKey().toString() + " : Select" ,  temp.getType(), scopeName+" [ "+scopeType+" ]");
-            else if(temp instanceof SelectCol)
-                printLine(pair.getKey().toString() + " : Select Col Alias ("+((SelectCol) temp).colname+")" ,  ((SelectCol) temp).aslis, scopeName+" [ "+scopeType+" ]");
+            if (temp instanceof FunctionRecord)
+                printLine(pair.getKey().toString() + " : Method", temp.getType(), scopeName + " [ " + scopeType + " ]");
+            else if (temp instanceof Record)
+                printLine(pair.getKey().toString() + " : " + ((Record) pair.getValue()).getKind(), temp.getType(), scopeName + " [ " + scopeType + " ]");
+                //else if(temp instanceof ForRecord)
+                // printLine(pair.getKey().toString() + " : Loop" ,  temp.getType(), scopeName+" [ "+scopeType+" ]");
+            else if (temp instanceof Table)
+                printLine(pair.getKey().toString() + " : Table", temp.getType(), scopeName + " [ " + scopeType + " ]");
+            else if (temp instanceof Select)
+                printLine(pair.getKey().toString() + " : Select", temp.getType(), scopeName + " [ " + scopeType + " ]");
+            else if (temp instanceof SelectCol)
+                printLine(pair.getKey().toString() + " : Select Col Alias (" + ((SelectCol) temp).colname + ")", ((SelectCol) temp).aslis, scopeName + " [ " + scopeType + " ]");
 
         }
         // print children
@@ -70,7 +70,7 @@ public class Scope {
         }
     }
 
-    public Record lookup2(String key){
+    public Record lookup2(String key) {
         System.out.println("Sdsds");
         if (records.containsKey(key)) { // is the key in current scope?
             Record rec = (Record) records.get(key);
@@ -80,31 +80,31 @@ public class Scope {
         }
         for (Scope scopeIt : children) {
             Record rec = scopeIt.lookup2(key);
-            if(rec != null){
+            if (rec != null) {
                 return rec;
             }
         }
         return null;
     }
 
-    public void printScopeDebug(){
-        System.out.println("SCOPE: "+scopeName+" | "+scopeType+" \t");
+    public void printScopeDebug() {
+        System.out.println("SCOPE: " + scopeName + " | " + scopeType + " \t");
         System.out.println(" RECORDS: ");
         Iterator it = records.entrySet().iterator();
         while (it.hasNext()) {
             Map.Entry pair = (Map.Entry) it.next();
             Record temp = (Record) pair.getValue();
 
-            if(temp instanceof FunctionRecord){
+            if (temp instanceof FunctionRecord) {
                 System.out.println("\t METHOD RECORD");
-            }else{
+            } else {
                 System.out.println("\t VAR RECORD");
             }
-            printLine(pair.getKey().toString(), temp.getId() + " - " + temp.getType(), scopeName+" [ "+scopeType+" ]");
+            printLine(pair.getKey().toString(), temp.getId() + " - " + temp.getType(), scopeName + " [ " + scopeType + " ]");
         }
         System.out.println("-");
         for (Scope scopeIt : children) {
-            System.out.println(scopeName+" | "+scopeType+" -> CHILDREN: "+scopeIt.getScopeName()+" | "+scopeIt.getScopeType());
+            System.out.println(scopeName + " | " + scopeType + " -> CHILDREN: " + scopeIt.getScopeName() + " | " + scopeIt.getScopeType());
             scopeIt.printScopeDebug();
         }
 
@@ -171,8 +171,6 @@ public class Scope {
     public Scope getParent() {
         return this.parent;
     }
-
-
 
 
 }

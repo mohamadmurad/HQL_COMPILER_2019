@@ -1,8 +1,4 @@
-package TypeArray;/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
+package TypeArray;
 
 import org.stringtemplate.v4.ST;
 
@@ -10,11 +6,6 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
-
-/**
- *
- * @author MouAz HE
- */
 public class data implements Serializable {
     String name_typ;
     boolean isTable;
@@ -22,16 +13,16 @@ public class data implements Serializable {
     String TsbleDELIMITER = "";
     String store = "";
     ArrayList<name_type> typ = new ArrayList<name_type>();
-    
-    public data(String name_typ , ArrayList<name_type> typ,boolean isTable)
-    {
-       this.name_typ = name_typ;
-       this.typ = typ;
-       this.isTable = isTable;
+
+    public data(String name_typ, ArrayList<name_type> typ, boolean isTable) {
+        this.name_typ = name_typ;
+        this.typ = typ;
+        this.isTable = isTable;
     }
-    public int getIndexCol(String col){
-        for(int i=0;i<typ.size();i++){
-            if(typ.get(i).name.equals(col)){
+
+    public int getIndexCol(String col) {
+        for (int i = 0; i < typ.size(); i++) {
+            if (typ.get(i).name.equals(col)) {
                 return i;
             }
         }
@@ -63,7 +54,9 @@ public class data implements Serializable {
         return name_typ;
     }
 
-    public ArrayList<name_type> getTyp() {return typ;}
+    public ArrayList<name_type> getTyp() {
+        return typ;
+    }
 
     public void setStore(String store) {
         this.store = store;

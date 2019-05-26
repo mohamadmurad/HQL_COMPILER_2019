@@ -10,7 +10,7 @@ public class SymbolListener extends HplsqlBaseListener {
     Table currentTable;
     Select currentSelect;
 
-    Table selectTable = new Table("","");
+    Table selectTable = new Table("", "");
 
     boolean debug = true;
 
@@ -19,8 +19,7 @@ public class SymbolListener extends HplsqlBaseListener {
         Loop("Loop"),
         METHOD("method"),
         TABLE("table"),
-        SELECT("select")
-        ;
+        SELECT("select");
 
         private final String text;
 
@@ -47,12 +46,12 @@ public class SymbolListener extends HplsqlBaseListener {
     @Override
     public void enterFunction_stmt(HplsqlParser.Function_stmtContext ctx) {
 
-       // if(debug)System.out.println("Method declaration entered: " + ctx.getChild(1).getChild(0).toString());
+        // if(debug)System.out.println("Method declaration entered: " + ctx.getChild(1).getChild(0).toString());
         String type, id;
         type = ctx.dtype().getText(); // get type
         id = ctx.ident().getText(); // get ID
 
-        currentFunc = new FunctionRecord(id,type);
+        currentFunc = new FunctionRecord(id, type);
 
         symbolTable.put(id, currentFunc);
 
@@ -60,17 +59,16 @@ public class SymbolListener extends HplsqlBaseListener {
         // set scope name
         symbolTable.setCurrentScopeNameAndType(id, ScopeTypes.METHOD.toString());
 
-     //   if(debug)System.out.println("\tEntered the SCOPE: " + symbolTable.getCurrentScopeName() + " || "+symbolTable.getCurrentScopeType()+" \n");
+        //   if(debug)System.out.println("\tEntered the SCOPE: " + symbolTable.getCurrentScopeName() + " || "+symbolTable.getCurrentScopeType()+" \n");
 
     }
 
     @Override
     public void exitFunction_stmt(HplsqlParser.Function_stmtContext ctx) {
-      //  if(debug)System.out.println("Exit METHOD declaration: "+ ctx.getChild(1).getChild(0).toString());
+        //  if(debug)System.out.println("Exit METHOD declaration: "+ ctx.getChild(1).getChild(0).toString());
         //if(debug)System.out.println("\tLeaving the scope: "+symbolTable.getCurrentScopeName()+ " || "+symbolTable.getCurrentScopeType());
         symbolTable.exitScope();
         //if(debug)System.out.println("\tNew scope: "+symbolTable.getCurrentScopeName()+ " || "+symbolTable.getCurrentScopeType()+" \n");
-
 
 
     }
@@ -83,7 +81,7 @@ public class SymbolListener extends HplsqlBaseListener {
         type = ctx.dtype().getText(); // get type
         id = ctx.ident().getText(); // get ID
 
-        Record parameter = new Record(id, type,"colom");
+        Record parameter = new Record(id, type, "colom");
 
         currentFunc.addParameter(parameter);
         symbolTable.put(id, parameter);
@@ -91,20 +89,21 @@ public class SymbolListener extends HplsqlBaseListener {
 
     }
 
-    @Override public void enterCpp_var_decleration(HplsqlParser.Cpp_var_declerationContext ctx) {
+    @Override
+    public void enterCpp_var_decleration(HplsqlParser.Cpp_var_declerationContext ctx) {
 
         String type, id;
         type = ctx.dtype().getText(); // get type
         id = ctx.ident().getText(); // get ID
 
-        if(symbolTable.lookuplocaly(id) != null){
-            System.out.println("Duplicated identifier ["+id+"]");
+        if (symbolTable.lookuplocaly(id) != null) {
+            System.out.println("Duplicated identifier [" + id + "]");
             return;
         }
 
 
         // create record
-        Record newField = new Record(id, type,"dd");
+        Record newField = new Record(id, type, "dd");
 
         symbolTable.put(id, newField);
 
@@ -112,8 +111,8 @@ public class SymbolListener extends HplsqlBaseListener {
     }
 
 
-
-    @Override public void enterCpp_for_stmt(HplsqlParser.Cpp_for_stmtContext ctx) {
+    @Override
+    public void enterCpp_for_stmt(HplsqlParser.Cpp_for_stmtContext ctx) {
 /*
         System.out.println("kkkkkkk");
         currentFor = new ForRecord("For","Loop Statment");
@@ -154,19 +153,21 @@ return;
 */
     }
 
-    @Override public void exitCpp_for_stmt(HplsqlParser.Cpp_for_stmtContext ctx) {
+    @Override
+    public void exitCpp_for_stmt(HplsqlParser.Cpp_for_stmtContext ctx) {
 
         symbolTable.exitScope();
     }
 
-    @Override public void enterCreate_table_stmt(HplsqlParser.Create_table_stmtContext ctx) {
+    @Override
+    public void enterCreate_table_stmt(HplsqlParser.Create_table_stmtContext ctx) {
 
         String id_type;
 
 
-        id_type  = ctx.table_name.ident().getText();
+        id_type = ctx.table_name.ident().getText();
 
-        currentTable = new Table(id_type,id_type);
+        currentTable = new Table(id_type, id_type);
 
         symbolTable.put(id_type, currentTable);
 
@@ -175,37 +176,38 @@ return;
         symbolTable.setCurrentScopeNameAndType(id_type, ScopeTypes.TABLE.toString());
 
 
-
     }
 
-    @Override public void exitCreate_table_stmt(HplsqlParser.Create_table_stmtContext ctx) {
+    @Override
+    public void exitCreate_table_stmt(HplsqlParser.Create_table_stmtContext ctx) {
         symbolTable.exitScope();
 
 
     }
 
-    @Override public void enterCreate_table_columns_item(HplsqlParser.Create_table_columns_itemContext ctx) {
+    @Override
+    public void enterCreate_table_columns_item(HplsqlParser.Create_table_columns_itemContext ctx) {
 
         String type, id;
         type = ctx.dtype().getText(); // get type
         id = ctx.column_name.ident().getText(); // get ID
 
 
-
-        if(currentTable.containColumn(id)){
-            System.out.println("dublicates column "+id+" in table "+currentTable.getId().toString());
+        if (currentTable.containColumn(id)) {
+            System.out.println("dublicates column " + id + " in table " + currentTable.getId().toString());
             return;
         }
-        Record col = new Record(id, type,"col");
+        Record col = new Record(id, type, "col");
         currentTable.addColumn(col);
-        symbolTable.put(id,col);
+        symbolTable.put(id, col);
     }
 
-    @Override public void enterSubselect_stmt(HplsqlParser.Subselect_stmtContext ctx) {
-System.out.println("hhhhhh");
-     //   currentSelect = new Select("Select","Select Statment");
+    @Override
+    public void enterSubselect_stmt(HplsqlParser.Subselect_stmtContext ctx) {
+        System.out.println("hhhhhh");
+        //   currentSelect = new Select("Select","Select Statment");
 
-       // symbolTable.put("Select", currentSelect);
+        // symbolTable.put("Select", currentSelect);
 
         symbolTable.enterScope();
         // set scope name
@@ -214,7 +216,8 @@ System.out.println("hhhhhh");
         tablename = ctx.from_clause.from_table_clause.from_table_name_clause().table_name().ident().getText();
     }
 
-    @Override public void exitSubselect_stmt(HplsqlParser.Subselect_stmtContext ctx) {
+    @Override
+    public void exitSubselect_stmt(HplsqlParser.Subselect_stmtContext ctx) {
 
         symbolTable.exitScope();
     }
@@ -233,11 +236,6 @@ System.out.println("hhhhhh");
         currentSelect.addColumn(col);
 
     }*/
-
-
-
-
-
 
 
 }

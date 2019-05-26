@@ -17,13 +17,13 @@ public class towFunctionSameCol {
     static String lineSeparator = System.getProperty("line.separator");
 
     static String tableLocation = "temperature";
-    static String tableSpilt  = ",";
+    static String tableSpilt = ",";
 
     public static void main(String[] args) {
 
         initFIleDir();
         File tableDir = new File(tableLocation);
-        if(tableDir.exists() && tableDir.isDirectory()){
+        if (tableDir.exists() && tableDir.isDirectory()) {
 
             try {
                 map_reduce(tableDir.list());
@@ -36,7 +36,7 @@ public class towFunctionSameCol {
     }
 
 
-    public static void initFIleDir(){
+    public static void initFIleDir() {
         File stockDir = new File(tempdirectory);
 
         try {
@@ -47,7 +47,7 @@ public class towFunctionSameCol {
         } catch (SecurityException Se) {
 
             System.out.println("Error while creating directory in Java:" + Se);
-        }catch (IOException e) {
+        } catch (IOException e) {
 
             e.printStackTrace();
         }
@@ -58,10 +58,12 @@ public class towFunctionSameCol {
     public static void map_reduce(String[] FilesName) throws IOException {
 
 
-        File stockDir1 = new File(tempdirectory+File.separator+"temperature");
-        if(!stockDir1.exists()){stockDir1.mkdir();}
+        File stockDir1 = new File(tempdirectory + File.separator + "temperature");
+        if (!stockDir1.exists()) {
+            stockDir1.mkdir();
+        }
 
-        for(String name : FilesName){
+        for (String name : FilesName) {
             mapper1(name);
         }
 
@@ -71,29 +73,29 @@ public class towFunctionSameCol {
             @Override
             public String operation(ArrayList<Integer> c) {
                 int sum = 0;
-                for(int i=0;i<c.size();i++){
+                for (int i = 0; i < c.size(); i++) {
 
-                    sum+=c.get(i);
+                    sum += c.get(i);
                 }
-                return String.valueOf(sum/c.size());
+                return String.valueOf(sum / c.size());
             }
         });
         String red2 = reducer2(new MyFunction() {
             @Override
             public String operation(ArrayList<Integer> c) {
                 int sum = 0;
-                for(int i=0;i<c.size();i++){
+                for (int i = 0; i < c.size(); i++) {
 
-                    sum+=c.get(i);
+                    sum += c.get(i);
                 }
                 return String.valueOf(sum);
             }
         });
 
-        String re1 = concatReducer(red1,red2,tempdirectory+File.separator+"temperature"+File.separator+"red1",tempdirectory+File.separator+"temperature"+File.separator+"red2");
+        String re1 = concatReducer(red1, red2, tempdirectory + File.separator + "temperature" + File.separator + "red1", tempdirectory + File.separator + "temperature" + File.separator + "red2");
 
 
-       printResult( re1);
+        printResult(re1);
 
 
     }
@@ -101,10 +103,10 @@ public class towFunctionSameCol {
     private static void printResult(String ResultFile) {
         String colName = "";
         //colName+=""
-         colName += "id \t\t t_date \t\t avg(temp) \t\t sum(temp) \t\t\n";
+        colName += "id \t\t t_date \t\t avg(temp) \t\t sum(temp) \t\t\n";
         System.out.println(colName);
-        String absolutePath = tempdirectory + File.separator +ResultFile;
-        try(BufferedReader br = new BufferedReader(new FileReader(absolutePath))) {
+        String absolutePath = tempdirectory + File.separator + ResultFile;
+        try (BufferedReader br = new BufferedReader(new FileReader(absolutePath))) {
 
             String line;
 
@@ -113,13 +115,13 @@ public class towFunctionSameCol {
                 String[] r = line.split("/");
                 String[] k = r[0].split(",");
 
-                for(String kk:k){
+                for (String kk : k) {
                     System.out.print(kk + " \t\t ");
                 }
 
                 String[] values = r[1].split(",");
 
-                for(String kk:values){
+                for (String kk : values) {
                     System.out.print(kk + " \t\t ");
                 }
                 System.out.println("\n");
@@ -132,33 +134,34 @@ public class towFunctionSameCol {
     }
 
 
-    public static void mapper1(String filename){
+    public static void mapper1(String filename) {
 
-        String maperPath = tempdirectory+File.separator+"temperature"+File.separator+"map1";
+        String maperPath = tempdirectory + File.separator + "temperature" + File.separator + "map1";
 
         File stockDir1 = new File(maperPath);
-        if(!stockDir1.exists()){stockDir1.mkdir();}
+        if (!stockDir1.exists()) {
+            stockDir1.mkdir();
+        }
 
-        try (BufferedReader br = new BufferedReader(new FileReader(tableLocation+File.separator+filename))) {
-            String line =  br.readLine();
-            while ((line ) != null) {
+        try (BufferedReader br = new BufferedReader(new FileReader(tableLocation + File.separator + filename))) {
+            String line = br.readLine();
+            while ((line) != null) {
 
                 String[] country = line.split(tableSpilt);
 
                 String FileName = filename + "1.txt";
                 String absolutePath = maperPath + File.separator + FileName;
 
-                try(FileOutputStream fileOutputStream = new FileOutputStream(absolutePath,true)) {
+                try (FileOutputStream fileOutputStream = new FileOutputStream(absolutePath, true)) {
 
-                    String fileContent = country[0] +","+country[1] + "/" + country[2];
+                    String fileContent = country[0] + "," + country[1] + "/" + country[2];
 
                     fileOutputStream.write(fileContent.getBytes());
 
-                    line =  br.readLine();
-                    if(line != null){
+                    line = br.readLine();
+                    if (line != null) {
                         fileOutputStream.write(lineSeparator.getBytes());
                     }
-
 
 
                     fileOutputStream.flush();
@@ -180,40 +183,42 @@ public class towFunctionSameCol {
 
     }
 
-    public static  void shuffle1() throws IOException {
-        String maperPath = tempdirectory+File.separator+"temperature"+File.separator+"map1";
-        String shuffPath = tempdirectory+File.separator+"temperature"+File.separator+"shuff1";
+    public static void shuffle1() throws IOException {
+        String maperPath = tempdirectory + File.separator + "temperature" + File.separator + "map1";
+        String shuffPath = tempdirectory + File.separator + "temperature" + File.separator + "shuff1";
 
         File stockDir1 = new File(shuffPath);
-        if(!stockDir1.exists()){stockDir1.mkdir();}
+        if (!stockDir1.exists()) {
+            stockDir1.mkdir();
+        }
 
-        Map<ArrayList<Integer>,ArrayList<Integer>> mmm = new HashMap<>();
+        Map<ArrayList<Integer>, ArrayList<Integer>> mmm = new HashMap<>();
 
         File stockDir = new File(maperPath);
         String[] list = stockDir.list();
-        for(String name : list){
+        for (String name : list) {
             String absolutePath = maperPath + File.separator + name;
-            try(BufferedReader br = new BufferedReader(new FileReader(absolutePath))) {
+            try (BufferedReader br = new BufferedReader(new FileReader(absolutePath))) {
 
                 String line;
 
-                while ((line = br.readLine()) != null){
+                while ((line = br.readLine()) != null) {
                     String[] KeyAndVal = line.split("/");
                     String[] Keys = KeyAndVal[0].split(",");
                     ArrayList<Integer> ALKeys = new ArrayList<>();
-                    for(String k :Keys){
+                    for (String k : Keys) {
                         ALKeys.add(Integer.parseInt(k));
                     }
 
 
-                    if(mmm.containsKey(ALKeys)){
+                    if (mmm.containsKey(ALKeys)) {
                         mmm.get(ALKeys).add(Integer.parseInt(KeyAndVal[1]));
 
-                    }else {
+                    } else {
 
                         ArrayList<Integer> dd = new ArrayList<>();
                         dd.add(Integer.parseInt(KeyAndVal[1]));
-                        mmm.put(ALKeys,dd);
+                        mmm.put(ALKeys, dd);
                     }
                 }
 
@@ -226,29 +231,28 @@ public class towFunctionSameCol {
             }
 
 
-
         }
 
-        String shuffl = shuffPath + File.separator +"shufflResult1.txt";
+        String shuffl = shuffPath + File.separator + "shufflResult1.txt";
 
-        try(BufferedWriter fileOutputStream = new BufferedWriter(new FileWriter(shuffl,true))) {
+        try (BufferedWriter fileOutputStream = new BufferedWriter(new FileWriter(shuffl, true))) {
 
 
             for (Map.Entry<ArrayList<Integer>, ArrayList<Integer>> entry : mmm.entrySet()) {
-                System.out.println(entry.getKey()+" : "+entry.getValue());
+                System.out.println(entry.getKey() + " : " + entry.getValue());
                 String output = "";
 
-                for(int key : entry.getKey()){
+                for (int key : entry.getKey()) {
                     output += key + ",";
                 }
-                output +="/";
-                output = output.replaceFirst(",/","/");
+                output += "/";
+                output = output.replaceFirst(",/", "/");
 
-                for(int val :entry.getValue()){
-                    output+=","+val;
+                for (int val : entry.getValue()) {
+                    output += "," + val;
                 }
                 output += System.lineSeparator();
-                output = output.replaceFirst("/,","/");
+                output = output.replaceFirst("/,", "/");
                 fileOutputStream.write(output);
 
             }
@@ -264,38 +268,40 @@ public class towFunctionSameCol {
     }
 
 
-    public static String reducer1(MyFunction obj1){
-        String shuffPath = tempdirectory+File.separator+"temperature"+File.separator+"shuff1";
-        String redusPath = tempdirectory+File.separator+"temperature"+File.separator+"red1";
+    public static String reducer1(MyFunction obj1) {
+        String shuffPath = tempdirectory + File.separator + "temperature" + File.separator + "shuff1";
+        String redusPath = tempdirectory + File.separator + "temperature" + File.separator + "red1";
         String FileName = "redu1.txt";
         File stockDir1 = new File(redusPath);
-        if(!stockDir1.exists()){stockDir1.mkdir();}
+        if (!stockDir1.exists()) {
+            stockDir1.mkdir();
+        }
 
         File stockDir = new File(shuffPath);
         String[] list = stockDir.list();
-        for(String name : list){
+        for (String name : list) {
 
-            String shuffl = shuffPath + File.separator +name;
+            String shuffl = shuffPath + File.separator + name;
             try (BufferedReader br = new BufferedReader(new FileReader(shuffl))) {
 
                 String line;
 
-                while ((line = br.readLine()) != null){
+                while ((line = br.readLine()) != null) {
 
                     String[] KeyAndVal = line.split("/");
 
                     String[] vlas = KeyAndVal[1].split(",");
                     ArrayList<Integer> values = new ArrayList<>();
 
-                    for(String s : vlas){
+                    for (String s : vlas) {
                         values.add(Integer.parseInt(s));
                     }
 
                     String opResult1 = obj1.operation(values);
 
-                    String reduce = redusPath + File.separator +FileName;
-                    try(BufferedWriter fileOutputStream = new BufferedWriter(new FileWriter(reduce,true))) {
-                        fileOutputStream.write(KeyAndVal[0] + "/" + opResult1+ System.lineSeparator());
+                    String reduce = redusPath + File.separator + FileName;
+                    try (BufferedWriter fileOutputStream = new BufferedWriter(new FileWriter(reduce, true))) {
+                        fileOutputStream.write(KeyAndVal[0] + "/" + opResult1 + System.lineSeparator());
                         fileOutputStream.close();
                     }
 
@@ -315,40 +321,42 @@ public class towFunctionSameCol {
 
     }
 
-    public static String reducer2(MyFunction obj1){
+    public static String reducer2(MyFunction obj1) {
         // efficts
-        String shuffPath = tempdirectory+File.separator+"temperature"+File.separator+"shuff1";
+        String shuffPath = tempdirectory + File.separator + "temperature" + File.separator + "shuff1";
 
-        String redusPath = tempdirectory+File.separator+"temperature"+File.separator+"red2";
+        String redusPath = tempdirectory + File.separator + "temperature" + File.separator + "red2";
         String FileName = "redu2.txt";
         File stockDir1 = new File(redusPath);
-        if(!stockDir1.exists()){stockDir1.mkdir();}
+        if (!stockDir1.exists()) {
+            stockDir1.mkdir();
+        }
 
         File stockDir = new File(shuffPath);
         String[] list = stockDir.list();
-        for(String name : list){
+        for (String name : list) {
 
-            String shuffl = shuffPath + File.separator +name;
+            String shuffl = shuffPath + File.separator + name;
             try (BufferedReader br = new BufferedReader(new FileReader(shuffl))) {
 
                 String line;
 
-                while ((line = br.readLine()) != null){
+                while ((line = br.readLine()) != null) {
 
                     String[] KeyAndVal = line.split("/");
 
                     String[] vlas = KeyAndVal[1].split(",");
                     ArrayList<Integer> values = new ArrayList<>();
 
-                    for(String s : vlas){
+                    for (String s : vlas) {
                         values.add(Integer.parseInt(s));
                     }
 
-                    String  opResult1 = obj1.operation(values);
+                    String opResult1 = obj1.operation(values);
 
-                    String reduce = redusPath + File.separator +FileName;
-                    try(BufferedWriter fileOutputStream = new BufferedWriter(new FileWriter(reduce,true))) {
-                        fileOutputStream.write(KeyAndVal[0] + "/" + opResult1+ System.lineSeparator());
+                    String reduce = redusPath + File.separator + FileName;
+                    try (BufferedWriter fileOutputStream = new BufferedWriter(new FileWriter(reduce, true))) {
+                        fileOutputStream.write(KeyAndVal[0] + "/" + opResult1 + System.lineSeparator());
                         fileOutputStream.close();
                     }
 
@@ -367,32 +375,31 @@ public class towFunctionSameCol {
         return FileName;
 
 
-
     }
 
 
-    public static String concatReducer(String redu1, String redu2,String path1,String path2){
+    public static String concatReducer(String redu1, String redu2, String path1, String path2) {
       /* String redusPath1 = tempdirectory+File.separator+"temperature"+File.separator+redu1;
         String redusPath2 = tempdirectory+File.separator+"temperature"+File.separator+redu1;
 */
-        String reduce = tempdirectory + File.separator +redu1+redu2+".txt";
+        String reduce = tempdirectory + File.separator + redu1 + redu2 + ".txt";
         // File stockDir1 = new File(redusPath1);
         // File stockDir2 = new File(redusPath2);
         // String[] list1 = stockDir1.list();
         // String[] list2 = stockDir2.list();
         //for(String name1 : list1){
 
-        String shuffl = path1 + File.separator +redu1;
+        String shuffl = path1 + File.separator + redu1;
         try (BufferedReader br = new BufferedReader(new FileReader(shuffl))) {
 
             String line;
 
-            while ((line = br.readLine()) != null){
+            while ((line = br.readLine()) != null) {
 
                 String[] KeyAndVal = line.split("/");
 
                 //for(String name2 : list2){
-                String shuff2 = path2 + File.separator +redu2;
+                String shuff2 = path2 + File.separator + redu2;
                 try (BufferedReader br2 = new BufferedReader(new FileReader(shuff2))) {
 
                     String line2;
@@ -400,9 +407,9 @@ public class towFunctionSameCol {
                     while ((line = br2.readLine()) != null) {
 
                         String[] KeyAndVal2 = line.split("/");
-                        if(KeyAndVal[0].equals(KeyAndVal2[0])){
-                            String output = KeyAndVal[0] + "/" + KeyAndVal[1] + "," +KeyAndVal2[1]+lineSeparator;
-                            try(BufferedWriter fileOutputStream = new BufferedWriter(new FileWriter(reduce,true))) {
+                        if (KeyAndVal[0].equals(KeyAndVal2[0])) {
+                            String output = KeyAndVal[0] + "/" + KeyAndVal[1] + "," + KeyAndVal2[1] + lineSeparator;
+                            try (BufferedWriter fileOutputStream = new BufferedWriter(new FileWriter(reduce, true))) {
                                 fileOutputStream.write(output);
                                 fileOutputStream.close();
                             }
@@ -421,21 +428,21 @@ public class towFunctionSameCol {
         }
         //  }
 
-        return redu1+redu2+".txt";
+        return redu1 + redu2 + ".txt";
     }
 
     public static void delete(File file)
-            throws IOException{
+            throws IOException {
 
-        if(file.isDirectory()){
+        if (file.isDirectory()) {
 
             //directory is empty, then delete it
-            if(file.list().length==0){
+            if (file.list().length == 0) {
 
                 file.delete();
 
 
-            }else{
+            } else {
 
                 //list all the directory contents
                 String files[] = file.list();
@@ -449,13 +456,13 @@ public class towFunctionSameCol {
                 }
 
                 //check the directory again, if empty then delete it
-                if(file.list().length==0){
+                if (file.list().length == 0) {
                     file.delete();
 
                 }
             }
 
-        }else{
+        } else {
             //if file, then delete it
             file.delete();
         }

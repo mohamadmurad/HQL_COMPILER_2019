@@ -23,10 +23,9 @@ public class threeJoin {
     static String tableLocation1 = "student";
     static String tableLocation2 = "marks";
     static String tableLocation3 = "details";
-    static String tableSpilt1  = ",";
-    static String tableSpilt2  = ",";
-    static String tableSpilt3  = ",";
-
+    static String tableSpilt1 = ",";
+    static String tableSpilt2 = ",";
+    static String tableSpilt3 = ",";
 
 
     public static void main(String[] args) {
@@ -36,7 +35,7 @@ public class threeJoin {
         File tableDir3 = new File(tableLocation3);
 
 
-        if(tableDir1.exists() && tableDir1.isDirectory() && tableDir2.exists() && tableDir2.isDirectory()){
+        if (tableDir1.exists() && tableDir1.isDirectory() && tableDir2.exists() && tableDir2.isDirectory()) {
 
             try {
 
@@ -49,19 +48,21 @@ public class threeJoin {
 
     }
 
-    public static void map1(String[] line,String fileName){
+    public static void map1(String[] line, String fileName) {
 
-        String maperPath = tempdirectory+File.separator+"map1";
+        String maperPath = tempdirectory + File.separator + "map1";
         File stockDir1 = new File(maperPath);
-        if(!stockDir1.exists()){stockDir1.mkdir();}
+        if (!stockDir1.exists()) {
+            stockDir1.mkdir();
+        }
         String FileName = fileName + ".txt";
         String outPath = maperPath + File.separator + FileName;
-        try(FileOutputStream fileOutputStream = new FileOutputStream(outPath,true)) {
+        try (FileOutputStream fileOutputStream = new FileOutputStream(outPath, true)) {
 
-            for(int i=0;i<line.length;i++) {
+            for (int i = 0; i < line.length; i++) {
                 //line[i] = line[i].replace("\"", "");
             }
-            String fileContent = line[1]+","+line[4]+","+line[5]+","+line[6] +","+line[7]+","+line[9];
+            String fileContent = line[1] + "," + line[4] + "," + line[5] + "," + line[6] + "," + line[7] + "," + line[9];
 
             fileOutputStream.write(fileContent.getBytes());
             fileOutputStream.write(lineSeparator.getBytes());
@@ -80,18 +81,20 @@ public class threeJoin {
 
     }
 
-    public static void map2(String[] line,String fileName){
-        String maperPath = tempdirectory+File.separator+"map2";
+    public static void map2(String[] line, String fileName) {
+        String maperPath = tempdirectory + File.separator + "map2";
         File stockDir1 = new File(maperPath);
-        if(!stockDir1.exists()){stockDir1.mkdir();}
+        if (!stockDir1.exists()) {
+            stockDir1.mkdir();
+        }
         String FileName = fileName + ".txt";
         String outPath = maperPath + File.separator + FileName;
-        try(FileOutputStream fileOutputStream = new FileOutputStream(outPath,true)) {
+        try (FileOutputStream fileOutputStream = new FileOutputStream(outPath, true)) {
 
-            for(int i=0;i<line.length;i++) {
+            for (int i = 0; i < line.length; i++) {
                 line[i] = line[i].replace("\"", "");
             }
-            String fileContent = line[5] +"/"+line[4];
+            String fileContent = line[5] + "/" + line[4];
 
             fileOutputStream.write(fileContent.getBytes());
             fileOutputStream.write(lineSeparator.getBytes());
@@ -116,8 +119,8 @@ public class threeJoin {
         innerJoin1();
 
 
-       shuffle(1);
-       // shuffle(2);
+        shuffle(1);
+        // shuffle(2);
 /*
         String red1 = reducer(1,new MyFunction() {
             @Override
@@ -173,7 +176,7 @@ public class threeJoin {
         colName += "id \t\t t_date \t\t avg(temp) \t\t sum(temp) \t\t\n";
         System.out.println(colName);
         //String absolutePath = ResultFile;
-        try(BufferedReader br = new BufferedReader(new FileReader(ResultFile))) {
+        try (BufferedReader br = new BufferedReader(new FileReader(ResultFile))) {
 
             String line;
 
@@ -182,13 +185,13 @@ public class threeJoin {
                 String[] r = line.split("/");
                 String[] k = r[0].split(",");
 
-                for(String kk:k){
+                for (String kk : k) {
                     System.out.print(kk + " \t\t ");
                 }
 
                 String[] values = r[1].split(",");
 
-                for(String kk:values){
+                for (String kk : values) {
                     System.out.print(kk + " \t\t ");
                 }
                 System.out.println("\n");
@@ -214,7 +217,7 @@ public class threeJoin {
         String[] Table_3_list = table3.list();
 
 
-        for(String name1 : Table_1_list) {
+        for (String name1 : Table_1_list) {
             String absolutePath1 = Table_1_path + File.separator + name1;
             try (BufferedReader br = new BufferedReader(new FileReader(absolutePath1))) {
                 String line;
@@ -224,73 +227,73 @@ public class threeJoin {
                     String[] country1 = line.split(tableSpilt1);
                     //if (!(country1[2].matches("null") || country1[2].matches("NULL"))) {
 
-                        // for table 2
-                        for (String name2 : Table_2_list) {
-                            String absolutePath2 = Table_2_path + File.separator + name2;
-                            try (BufferedReader depbr = new BufferedReader(new FileReader(absolutePath2))) {
-                                String dep_line;
+                    // for table 2
+                    for (String name2 : Table_2_list) {
+                        String absolutePath2 = Table_2_path + File.separator + name2;
+                        try (BufferedReader depbr = new BufferedReader(new FileReader(absolutePath2))) {
+                            String dep_line;
 
-                                while ((dep_line = depbr.readLine()) != null) {
-                                    String[] country2 = dep_line.split(tableSpilt2);
+                            while ((dep_line = depbr.readLine()) != null) {
+                                String[] country2 = dep_line.split(tableSpilt2);
 
-                                    // on
-                                    if ((country1[0].equals(country2[1]))){
+                                // on
+                                if ((country1[0].equals(country2[1]))) {
 /*
                                         String[] concat_Line =new String[country1.length+country2.length];
                                         System.arraycopy(country1, 0, concat_Line, 0, country1.length);
                                         System.arraycopy(country2, 0, concat_Line, country1.length, country2.length);
 */
-                                        // for table 3 ..... join
+                                    // for table 3 ..... join
 
-                                        for (String name3 : Table_3_list) {
-                                            String absolutePath3 = Table_3_path + File.separator + name3;
-                                            try (BufferedReader depbr3 = new BufferedReader(new FileReader(absolutePath3))) {
-                                                String dep_line3;
+                                    for (String name3 : Table_3_list) {
+                                        String absolutePath3 = Table_3_path + File.separator + name3;
+                                        try (BufferedReader depbr3 = new BufferedReader(new FileReader(absolutePath3))) {
+                                            String dep_line3;
 
-                                                while ((dep_line3 = depbr3.readLine()) != null) {
-                                                    String[] country3 = dep_line3.split(tableSpilt3);
+                                            while ((dep_line3 = depbr3.readLine()) != null) {
+                                                String[] country3 = dep_line3.split(tableSpilt3);
 
-                                                    // on
-                                                    if ((country2[0].equals(country3[2]))){
+                                                // on
+                                                if ((country2[0].equals(country3[2]))) {
 
-                                                        String[] concat_Line =new String[country1.length+country2.length+country3.length];
+                                                    String[] concat_Line = new String[country1.length + country2.length + country3.length];
                                                    /*     System.arraycopy(country1, 0, concat_Line, 0, country1.length);
                                                         System.arraycopy(country2, 0, concat_Line, country1.length, country2.length);
                                                         System.arraycopy(country3, 0, concat_Line, country2.length, country3.length);
 */
-                                                      int i=0;
-                                                      for(int j=0;j<country1.length;j++){
-                                                          concat_Line[i++] = country1[j];
-                                                      }
-                                                        for(int j=0;j<country2.length;j++){
-                                                            concat_Line[i++] = country2[j];
-                                                        }
-                                                        for(int j=0;j<country3.length;j++){
-                                                            concat_Line[i++] = country3[j];
-                                                        }
-                                                                        System.out.println(country2[2]);
-
-
-                                                        map1(concat_Line,name1+"_"+name2+"_"+name3);
-                                                      //  map2(concat_Line,name1+name2);
-
-
+                                                    int i = 0;
+                                                    for (int j = 0; j < country1.length; j++) {
+                                                        concat_Line[i++] = country1[j];
                                                     }
+                                                    for (int j = 0; j < country2.length; j++) {
+                                                        concat_Line[i++] = country2[j];
+                                                    }
+                                                    for (int j = 0; j < country3.length; j++) {
+                                                        concat_Line[i++] = country3[j];
+                                                    }
+                                                    System.out.println(country2[2]);
+
+
+                                                    map1(concat_Line, name1 + "_" + name2 + "_" + name3);
+                                                    //  map2(concat_Line,name1+name2);
+
 
                                                 }
+
                                             }
                                         }
-
-                                        //map1(concat_Line,name1+"_"+name2);
-                                     //   map2(concat_Line,name1+name2);
-
-
                                     }
 
+                                    //map1(concat_Line,name1+"_"+name2);
+                                    //   map2(concat_Line,name1+name2);
+
+
                                 }
+
                             }
                         }
-                  //  }
+                    }
+                    //  }
                 }
             } catch (FileNotFoundException e) {
                 e.printStackTrace();
@@ -300,41 +303,42 @@ public class threeJoin {
         }
 
 
-
     }
 
 
-    public static  void shuffle(int map) throws IOException {
+    public static void shuffle(int map) throws IOException {
 
-        String maperPath = tempdirectory+File.separator+"map"+map;
-        String shuffPath = tempdirectory+File.separator+"shuff"+map;
+        String maperPath = tempdirectory + File.separator + "map" + map;
+        String shuffPath = tempdirectory + File.separator + "shuff" + map;
 
         File stockDir1 = new File(shuffPath);
-        if(!stockDir1.exists()){stockDir1.mkdir();}
+        if (!stockDir1.exists()) {
+            stockDir1.mkdir();
+        }
 
-        Map<ArrayList<Integer>,ArrayList<Integer>> mmm = new HashMap<>();
+        Map<ArrayList<Integer>, ArrayList<Integer>> mmm = new HashMap<>();
 
         File stockDir = new File(maperPath);
         String[] list = stockDir.list();
-        for(String name : list){
+        for (String name : list) {
             String absolutePath = maperPath + File.separator + name;
-            try(BufferedReader br = new BufferedReader(new FileReader(absolutePath))) {
+            try (BufferedReader br = new BufferedReader(new FileReader(absolutePath))) {
 
                 String line;
 
-                while ((line = br.readLine()) != null){
+                while ((line = br.readLine()) != null) {
                     String[] KeyAndVal = line.split("/");
 
                     String shuffname = KeyAndVal[0];
-                    String ou_file = shuffPath+File.separator+shuffname+".txt";
+                    String ou_file = shuffPath + File.separator + shuffname + ".txt";
                     File n = new File(ou_file);
-                    if(n.exists()){
+                    if (n.exists()) {
                         // for distnict
-                        try(BufferedWriter fileOutputStream = new BufferedWriter(new FileWriter(ou_file,true))) {
-                            fileOutputStream.write(","+KeyAndVal[1]);
+                        try (BufferedWriter fileOutputStream = new BufferedWriter(new FileWriter(ou_file, true))) {
+                            fileOutputStream.write("," + KeyAndVal[1]);
                         }
-                    }else{
-                        try(BufferedWriter fileOutputStream = new BufferedWriter(new FileWriter(ou_file,true))) {
+                    } else {
+                        try (BufferedWriter fileOutputStream = new BufferedWriter(new FileWriter(ou_file, true))) {
                             fileOutputStream.write(KeyAndVal[0] + "/" + KeyAndVal[1]);
                         }
                     }
@@ -353,40 +357,43 @@ public class threeJoin {
 
     }
 
-    public static String reducer(int shuff,MyFunction obj1){
+    public static String reducer(int shuff, MyFunction obj1) {
 
-        String shuffPath = tempdirectory+File.separator+"shuff"+shuff;;
-        String redusPath = tempdirectory+File.separator+"red"+shuff;
+        String shuffPath = tempdirectory + File.separator + "shuff" + shuff;
+        ;
+        String redusPath = tempdirectory + File.separator + "red" + shuff;
         // String FileName = "redu"+numReduce+".txt";
 
         File stockDir1 = new File(redusPath);
-        if(!stockDir1.exists()){stockDir1.mkdir();}
+        if (!stockDir1.exists()) {
+            stockDir1.mkdir();
+        }
 
         File stockDir = new File(shuffPath);
         String[] list = stockDir.list();
-        for(String name : list){
+        for (String name : list) {
 
-            String shuffl = shuffPath + File.separator +name;
+            String shuffl = shuffPath + File.separator + name;
             try (BufferedReader br = new BufferedReader(new FileReader(shuffl))) {
 
                 String line;
 
-                while ((line = br.readLine()) != null){
+                while ((line = br.readLine()) != null) {
 
                     String[] KeyAndVal = line.split("/");
 
                     String[] vlas = KeyAndVal[1].split(",");
                     ArrayList<Integer> values = new ArrayList<>();
 
-                    for(String s : vlas){
+                    for (String s : vlas) {
                         values.add(Integer.parseInt(s));
                     }
 
                     String opResult1 = obj1.operation(values);
 
-                    String reduce = redusPath + File.separator +name;
-                    try(BufferedWriter fileOutputStream = new BufferedWriter(new FileWriter(reduce,true))) {
-                        fileOutputStream.write(KeyAndVal[0] + "/" + opResult1+ System.lineSeparator());
+                    String reduce = redusPath + File.separator + name;
+                    try (BufferedWriter fileOutputStream = new BufferedWriter(new FileWriter(reduce, true))) {
+                        fileOutputStream.write(KeyAndVal[0] + "/" + opResult1 + System.lineSeparator());
                         fileOutputStream.close();
                     }
 
@@ -406,30 +413,32 @@ public class threeJoin {
 
     }
 
-    public static void sum_all_red(int red){
+    public static void sum_all_red(int red) {
 
-        String redusPath = tempdirectory+File.separator+"red"+red;
-        String ALl_red_path = tempdirectory+File.separator+"All_red";
-        String all_file = ALl_red_path + File.separator+red+".txt";
+        String redusPath = tempdirectory + File.separator + "red" + red;
+        String ALl_red_path = tempdirectory + File.separator + "All_red";
+        String all_file = ALl_red_path + File.separator + red + ".txt";
         // String FileName = "redu"+numReduce+".txt";
 
         File stockDir1 = new File(ALl_red_path);
-        if(!stockDir1.exists()){stockDir1.mkdir();}
+        if (!stockDir1.exists()) {
+            stockDir1.mkdir();
+        }
 
 
         File stockDir = new File(redusPath);
         String[] list = stockDir.list();
-        for(String name : list){
+        for (String name : list) {
 
-            String all = redusPath + File.separator +name;
+            String all = redusPath + File.separator + name;
             try (BufferedReader br = new BufferedReader(new FileReader(all))) {
 
                 String line;
 
-                while ((line = br.readLine()) != null){
+                while ((line = br.readLine()) != null) {
 
-                    try(BufferedWriter fileOutputStream = new BufferedWriter(new FileWriter(all_file,true))) {
-                        fileOutputStream.write(line+ System.lineSeparator());
+                    try (BufferedWriter fileOutputStream = new BufferedWriter(new FileWriter(all_file, true))) {
+                        fileOutputStream.write(line + System.lineSeparator());
                         fileOutputStream.close();
                     }
 
@@ -447,11 +456,11 @@ public class threeJoin {
 
     }
 
-    public static String concatReducer(String redu1, String redu2,String path1,String path2){
+    public static String concatReducer(String redu1, String redu2, String path1, String path2) {
 
-        String reduce = tempdirectory + File.separator +redu1+redu2+"res.txt";
+        String reduce = tempdirectory + File.separator + redu1 + redu2 + "res.txt";
         //String out_File = tempdirectory+File.separator+"res.txt";
-        String shuffl = path1 + File.separator +redu1;
+        String shuffl = path1 + File.separator + redu1;
 
         //File stockDir = new File(reduce);
         //     String[] list = stockDir.list();
@@ -460,19 +469,19 @@ public class threeJoin {
 
             String line;
 
-            while ((line = br.readLine()) != null){
+            while ((line = br.readLine()) != null) {
 
                 String[] KeyAndVal = line.split("/");
 
-                String shuff2 = path2 + File.separator +redu2;
+                String shuff2 = path2 + File.separator + redu2;
                 try (BufferedReader br2 = new BufferedReader(new FileReader(shuff2))) {
                     String line2;
                     while ((line2 = br2.readLine()) != null) {
 
                         String[] KeyAndVal2 = line2.split("/");
-                        if(KeyAndVal[0].equals(KeyAndVal2[0])){
-                            String output = KeyAndVal[0] + "/" + KeyAndVal[1] + "," +KeyAndVal2[1]+lineSeparator;
-                            try(BufferedWriter fileOutputStream = new BufferedWriter(new FileWriter(reduce,true))) {
+                        if (KeyAndVal[0].equals(KeyAndVal2[0])) {
+                            String output = KeyAndVal[0] + "/" + KeyAndVal[1] + "," + KeyAndVal2[1] + lineSeparator;
+                            try (BufferedWriter fileOutputStream = new BufferedWriter(new FileWriter(reduce, true))) {
                                 fileOutputStream.write(output);
                                 fileOutputStream.close();
                             }
@@ -488,21 +497,20 @@ public class threeJoin {
             e.printStackTrace();
         }
 
-        return redu1+redu2+"res.txt";
+        return redu1 + redu2 + "res.txt";
     }
 
 
+    public static void delete(File file) throws IOException {
 
-    public static void delete(File file) throws IOException{
-
-        if(file.isDirectory()){
+        if (file.isDirectory()) {
 
             //directory is empty, then delete it
-            if(file.list().length==0){
+            if (file.list().length == 0) {
 
                 file.delete();
 
-            }else{
+            } else {
 
                 //list all the directory contents
                 String files[] = file.list();
@@ -516,19 +524,19 @@ public class threeJoin {
                 }
 
                 //check the directory again, if empty then delete it
-                if(file.list().length==0){
+                if (file.list().length == 0) {
                     file.delete();
 
                 }
             }
 
-        }else{
+        } else {
             //if file, then delete it
             file.delete();
         }
     }
 
-    public static void initFIleDir(){
+    public static void initFIleDir() {
         File stockDir = new File(tempdirectory);
 
         try {
@@ -539,7 +547,7 @@ public class threeJoin {
         } catch (SecurityException Se) {
 
             System.out.println("Error while creating directory in Java:" + Se);
-        }catch (IOException e) {
+        } catch (IOException e) {
 
             e.printStackTrace();
         }

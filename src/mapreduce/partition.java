@@ -18,7 +18,7 @@ public class partition {
 
     static String tableLocation1 = "exam";
 
-    static String tableSpilt1  = ",";
+    static String tableSpilt1 = ",";
 
 
     public static void main(String[] args) {
@@ -26,8 +26,7 @@ public class partition {
         File tableDir1 = new File(tableLocation1);
 
 
-
-        if(tableDir1.exists() && tableDir1.isDirectory()){
+        if (tableDir1.exists() && tableDir1.isDirectory()) {
 
             try {
 
@@ -40,18 +39,20 @@ public class partition {
 
     }
 
-    public static void map1(String[] line,String fileName){
-        String maperPath = tempdirectory+File.separator+"map1";
+    public static void map1(String[] line, String fileName) {
+        String maperPath = tempdirectory + File.separator + "map1";
         File stockDir1 = new File(maperPath);
-        if(!stockDir1.exists()){stockDir1.mkdir();}
+        if (!stockDir1.exists()) {
+            stockDir1.mkdir();
+        }
         String FileName = fileName + ".txt";
         String outPath = maperPath + File.separator + FileName;
-        try(FileOutputStream fileOutputStream = new FileOutputStream(outPath,true)) {
+        try (FileOutputStream fileOutputStream = new FileOutputStream(outPath, true)) {
 
-            for(int i=0;i<line.length;i++) {
+            for (int i = 0; i < line.length; i++) {
                 line[i] = line[i].replace("\"", "");
             }
-            String fileContent = line[0]+","+line[1]+","+line[2] +"/"+line[2];
+            String fileContent = line[0] + "," + line[1] + "," + line[2] + "/" + line[2];
 
             fileOutputStream.write(fileContent.getBytes());
             fileOutputStream.write(lineSeparator.getBytes());
@@ -70,18 +71,20 @@ public class partition {
 
     }
 
-    public static void map2(String[] line,String fileName){
-        String maperPath = tempdirectory+File.separator+"map2";
+    public static void map2(String[] line, String fileName) {
+        String maperPath = tempdirectory + File.separator + "map2";
         File stockDir1 = new File(maperPath);
-        if(!stockDir1.exists()){stockDir1.mkdir();}
+        if (!stockDir1.exists()) {
+            stockDir1.mkdir();
+        }
         String FileName = fileName + ".txt";
         String outPath = maperPath + File.separator + FileName;
-        try(FileOutputStream fileOutputStream = new FileOutputStream(outPath,true)) {
+        try (FileOutputStream fileOutputStream = new FileOutputStream(outPath, true)) {
 
-            for(int i=0;i<line.length;i++) {
+            for (int i = 0; i < line.length; i++) {
                 line[i] = line[i].replace("\"", "");
             }
-            String fileContent = line[0]+","+line[1] +"/"+line[1];
+            String fileContent = line[0] + "," + line[1] + "/" + line[1];
 
             fileOutputStream.write(fileContent.getBytes());
             fileOutputStream.write(lineSeparator.getBytes());
@@ -105,14 +108,14 @@ public class partition {
         read_files();
 
         shuffle11(1);
-        String red1 = reducer(1,1,new MyFunction() {
+        String red1 = reducer(1, 1, new MyFunction() {
             @Override
             public String operation(ArrayList<Integer> c) {
                 int sum = 0;
 
-                for(int i=0;i<c.size();i++){
+                for (int i = 0; i < c.size(); i++) {
 
-                    sum+=c.get(i);
+                    sum += c.get(i);
                 }
 
                 return String.valueOf(sum);
@@ -222,9 +225,6 @@ public class partition {
         });*/
 
 
-
-
-
         sum_all_red(1);
         partition();
         //sum_all_red(2);
@@ -254,7 +254,7 @@ public class partition {
         colName += "id \t\t t_date \t\t avg(temp) \t\t sum(temp) \t\t\n";
         System.out.println(colName);
         //String absolutePath = ResultFile;
-        try(BufferedReader br = new BufferedReader(new FileReader(ResultFile))) {
+        try (BufferedReader br = new BufferedReader(new FileReader(ResultFile))) {
 
             String line;
 
@@ -263,13 +263,13 @@ public class partition {
                 String[] r = line.split("/");
                 String[] k = r[0].split(",");
 
-                for(String kk:k){
+                for (String kk : k) {
                     System.out.print(kk + " \t\t ");
                 }
 
                 String[] values = r[1].split(",");
 
-                for(String kk:values){
+                for (String kk : values) {
                     System.out.print(kk + " \t\t ");
                 }
                 System.out.println("\n");
@@ -288,7 +288,7 @@ public class partition {
         File table1 = new File(Table_1_path);
         String[] Table_1_list = table1.list();
 
-        for(String name1 : Table_1_list) {
+        for (String name1 : Table_1_list) {
             String absolutePath1 = Table_1_path + File.separator + name1;
             try (BufferedReader br = new BufferedReader(new FileReader(absolutePath1))) {
                 String line;
@@ -298,8 +298,8 @@ public class partition {
                     String[] country1 = line.split(tableSpilt1);
 
                     // where
-                    if ((true)){
-                        map1(country1,name1);
+                    if ((true)) {
+                        map1(country1, name1);
                         //map2(country1,name1);
                     }
 
@@ -399,38 +399,40 @@ public class partition {
          }
 
      }*/
-    public static  void shuffle11(int map) throws IOException {
+    public static void shuffle11(int map) throws IOException {
         //   RandomAccessFile raf = new RandomAccessFile("c:/test.txt", "rw");
 
-        String maperPath = tempdirectory+File.separator+"map"+map;
-        String shuffPath = tempdirectory+File.separator+"shuff"+map;
+        String maperPath = tempdirectory + File.separator + "map" + map;
+        String shuffPath = tempdirectory + File.separator + "shuff" + map;
 
         File stockDir1 = new File(shuffPath);
-        if(!stockDir1.exists()){stockDir1.mkdir();}
+        if (!stockDir1.exists()) {
+            stockDir1.mkdir();
+        }
 
-        Map<String,String> mmm = new HashMap<>();
+        Map<String, String> mmm = new HashMap<>();
 
         File stockDir = new File(maperPath);
         String[] list = stockDir.list();
-        int fNum=0;
-        for(String name : list){
+        int fNum = 0;
+        for (String name : list) {
             String absolutePath = maperPath + File.separator + name;
-            try(BufferedReader br = new BufferedReader(new FileReader(absolutePath))) {
+            try (BufferedReader br = new BufferedReader(new FileReader(absolutePath))) {
 
                 String line;
 
-                while ((line = br.readLine()) != null){
+                while ((line = br.readLine()) != null) {
                     String[] KeyAndVal = line.split("/");
                     String[] keys = KeyAndVal[0].split(",");
                     String shuffname = mmm.get(KeyAndVal[0]);
-                    if(shuffname == null){
-                        shuffname = ++fNum+"_"+KeyAndVal[0];
-                        mmm.put(KeyAndVal[0],shuffname);
+                    if (shuffname == null) {
+                        shuffname = ++fNum + "_" + KeyAndVal[0];
+                        mmm.put(KeyAndVal[0], shuffname);
                     }
-                    String ou_file = shuffPath+File.separator+shuffname+".txt";
+                    String ou_file = shuffPath + File.separator + shuffname + ".txt";
                     File n = new File(ou_file);
-                    if(n.exists()){
-                        try(RandomAccessFile fileOutputStream = new RandomAccessFile(ou_file,"rw")){
+                    if (n.exists()) {
+                        try (RandomAccessFile fileOutputStream = new RandomAccessFile(ou_file, "rw")) {
 
 
                             String l = fileOutputStream.readLine();
@@ -438,7 +440,7 @@ public class partition {
                             String[] KVal = l.split("/");
 
                             //String[] val = l.split("/")[1].split(",");
-                            if(KVal.length == 2){
+                            if (KVal.length == 2) {
                                 String[] val = KVal[1].split(",");
 
                                 boolean dis = false;
@@ -451,16 +453,14 @@ public class partition {
 
                                 }*/
 
-                                if(!dis){
-                                    fileOutputStream.write((","+KeyAndVal[1]).getBytes());
+                                if (!dis) {
+                                    fileOutputStream.write(("," + KeyAndVal[1]).getBytes());
                                 }
 
 
-                            }else{
-                                fileOutputStream.write((","+KeyAndVal[1]).getBytes());
+                            } else {
+                                fileOutputStream.write(("," + KeyAndVal[1]).getBytes());
                             }
-
-
 
 
                         }
@@ -474,12 +474,12 @@ public class partition {
                             }
 
                         }*/
-                    }else{
-                        try(BufferedWriter fileOutputStream = new BufferedWriter(new FileWriter(ou_file,true))) {
-                            if(KeyAndVal.length == 2){
+                    } else {
+                        try (BufferedWriter fileOutputStream = new BufferedWriter(new FileWriter(ou_file, true))) {
+                            if (KeyAndVal.length == 2) {
                                 fileOutputStream.write(KeyAndVal[0] + "/" + KeyAndVal[1]);
-                            }else{
-                                fileOutputStream.write(KeyAndVal[0] + "/" );
+                            } else {
+                                fileOutputStream.write(KeyAndVal[0] + "/");
                             }
 
                         }
@@ -509,16 +509,16 @@ public class partition {
         int numOfLine = 0;
         int MAXLINES = 5;
         List<String> temp = new ArrayList<>();
-        int i=0;
+        int i = 0;
         String Line = "";
         String ou_file = null;
-        for(String name :list){
+        for (String name : list) {
             String absolutePath = shuffPath + File.separator + name;
-            try(BufferedReader br = new BufferedReader(new FileReader(absolutePath))) {
+            try (BufferedReader br = new BufferedReader(new FileReader(absolutePath))) {
 
 
-                ou_file = shuffPath + File.separator +(++i) +".txt" ;
-                while ((numOfLine<MAXLINES) && (Line = br.readLine()) !=null){
+                ou_file = shuffPath + File.separator + (++i) + ".txt";
+                while ((numOfLine < MAXLINES) && (Line = br.readLine()) != null) {
 
                     //while ((Line = br.readLine()) != null){
 
@@ -529,16 +529,14 @@ public class partition {
                     //  }
 
 
-
-
                 }
 
-                if((numOfLine>=MAXLINES)){
+                if ((numOfLine >= MAXLINES)) {
 
-                    numOfLine =0;
-                    ou_file = shuffPath + File.separator +(++i) +".txt" ;
-                    try(BufferedWriter fileOutputStream = new BufferedWriter(new FileWriter(ou_file,true))) {
-                        for(String r : temp) {
+                    numOfLine = 0;
+                    ou_file = shuffPath + File.separator + (++i) + ".txt";
+                    try (BufferedWriter fileOutputStream = new BufferedWriter(new FileWriter(ou_file, true))) {
+                        for (String r : temp) {
 
                             fileOutputStream.write(r);
                             fileOutputStream.newLine();
@@ -550,8 +548,6 @@ public class partition {
                 }
 
 
-
-
             } catch (FileNotFoundException e) {
                 e.printStackTrace();
             } catch (IOException e) {
@@ -560,12 +556,12 @@ public class partition {
             new File(absolutePath).delete();
         }
 
-        if((temp.size()!=0)){
+        if ((temp.size() != 0)) {
 
-            numOfLine =0;
+            numOfLine = 0;
 
-            try(BufferedWriter fileOutputStream = new BufferedWriter(new FileWriter(ou_file,true))) {
-                for(String r : temp) {
+            try (BufferedWriter fileOutputStream = new BufferedWriter(new FileWriter(ou_file, true))) {
+                for (String r : temp) {
 
                     fileOutputStream.write(r);
                     fileOutputStream.newLine();
@@ -582,40 +578,43 @@ public class partition {
 
     }
 
-    public static String reducer(int shuff,int red,MyFunction obj1){
+    public static String reducer(int shuff, int red, MyFunction obj1) {
 
-        String shuffPath = tempdirectory+File.separator+"shuff"+shuff;;
-        String redusPath = tempdirectory+File.separator+"red"+red;
+        String shuffPath = tempdirectory + File.separator + "shuff" + shuff;
+        ;
+        String redusPath = tempdirectory + File.separator + "red" + red;
         // String FileName = "redu"+numReduce+".txt";
 
         File stockDir1 = new File(redusPath);
-        if(!stockDir1.exists()){stockDir1.mkdir();}
+        if (!stockDir1.exists()) {
+            stockDir1.mkdir();
+        }
 
         File stockDir = new File(shuffPath);
         String[] list = stockDir.list();
-        for(String name : list){
+        for (String name : list) {
 
-            String shuffl = shuffPath + File.separator +name;
+            String shuffl = shuffPath + File.separator + name;
             try (BufferedReader br = new BufferedReader(new FileReader(shuffl))) {
 
                 String line;
 
-                while ((line = br.readLine()) != null){
+                while ((line = br.readLine()) != null) {
 
                     String[] KeyAndVal = line.split("/");
 
                     String[] vlas = KeyAndVal[1].split(",");
                     ArrayList<Integer> values = new ArrayList<>();
 
-                    for(String s : vlas){
+                    for (String s : vlas) {
                         values.add(Integer.parseInt(s));
                     }
 
                     String opResult1 = obj1.operation(values);
 
-                    String reduce = redusPath + File.separator +name;
-                    try(BufferedWriter fileOutputStream = new BufferedWriter(new FileWriter(reduce,true))) {
-                        fileOutputStream.write(KeyAndVal[0] + "/" + opResult1+ System.lineSeparator());
+                    String reduce = redusPath + File.separator + name;
+                    try (BufferedWriter fileOutputStream = new BufferedWriter(new FileWriter(reduce, true))) {
+                        fileOutputStream.write(KeyAndVal[0] + "/" + opResult1 + System.lineSeparator());
                         fileOutputStream.close();
                     }
 
@@ -635,38 +634,40 @@ public class partition {
 
     }
 
-    public static void partition(){
-        String maperPath = tempdirectory+File.separator+"map1";
-        String ALl_red_path = tempdirectory+File.separator+"All_red";
-        String out = tempdirectory+File.separator;
+    public static void partition() {
+        String maperPath = tempdirectory + File.separator + "map1";
+        String ALl_red_path = tempdirectory + File.separator + "All_red";
+        String out = tempdirectory + File.separator;
         File stockDir1 = new File(out);
-        if(!stockDir1.exists()){stockDir1.mkdir();}
+        if (!stockDir1.exists()) {
+            stockDir1.mkdir();
+        }
         File stockDir_map = new File(maperPath);
         String[] list_map = stockDir_map.list();
         File stockDir = new File(ALl_red_path);
         String[] list = stockDir.list();
-        for(String name : list){
-            String all = ALl_red_path + File.separator +name;
+        for (String name : list) {
+            String all = ALl_red_path + File.separator + name;
             try (BufferedReader br = new BufferedReader(new FileReader(all))) {
 
                 String line;
 
-                while ((line = br.readLine()) != null){
+                while ((line = br.readLine()) != null) {
                     String[] key_val = line.split("/");
                     String[] keys = key_val[0].split(",");
-                    for(String name1 : list_map){
-                        String map = maperPath + File.separator +name1;
+                    for (String name1 : list_map) {
+                        String map = maperPath + File.separator + name1;
                         try (BufferedReader br1 = new BufferedReader(new FileReader(map))) {
 
                             String line1;
 
-                            while ((line1 = br1.readLine()) != null){
+                            while ((line1 = br1.readLine()) != null) {
                                 String[] key_val1 = line1.split("/");
                                 String[] keys1 = key_val1[0].split(",");
-                                if(key_val[0].equals(key_val1[0])){
+                                if (key_val[0].equals(key_val1[0])) {
                                     String output = key_val1[0] + "/" + key_val[1];
-                                    try(BufferedWriter fileOutputStream = new BufferedWriter(new FileWriter(out+File.separator+"res.txt",true))) {
-                                        fileOutputStream.write(output+ System.lineSeparator());
+                                    try (BufferedWriter fileOutputStream = new BufferedWriter(new FileWriter(out + File.separator + "res.txt", true))) {
+                                        fileOutputStream.write(output + System.lineSeparator());
                                         fileOutputStream.close();
                                     }
                                 }
@@ -678,8 +679,7 @@ public class partition {
 
                 }
 
-            }
-            catch (FileNotFoundException e) {
+            } catch (FileNotFoundException e) {
                 e.printStackTrace();
             } catch (IOException e) {
                 e.printStackTrace();
@@ -689,30 +689,32 @@ public class partition {
 
     }
 
-    public static void sum_all_red(int red){
+    public static void sum_all_red(int red) {
 
-        String redusPath = tempdirectory+File.separator+"red"+red;
-        String ALl_red_path = tempdirectory+File.separator+"All_red";
-        String all_file = ALl_red_path + File.separator+red+".txt";
+        String redusPath = tempdirectory + File.separator + "red" + red;
+        String ALl_red_path = tempdirectory + File.separator + "All_red";
+        String all_file = ALl_red_path + File.separator + red + ".txt";
         // String FileName = "redu"+numReduce+".txt";
 
         File stockDir1 = new File(ALl_red_path);
-        if(!stockDir1.exists()){stockDir1.mkdir();}
+        if (!stockDir1.exists()) {
+            stockDir1.mkdir();
+        }
 
 
         File stockDir = new File(redusPath);
         String[] list = stockDir.list();
-        for(String name : list){
+        for (String name : list) {
 
-            String all = redusPath + File.separator +name;
+            String all = redusPath + File.separator + name;
             try (BufferedReader br = new BufferedReader(new FileReader(all))) {
 
                 String line;
 
-                while ((line = br.readLine()) != null){
+                while ((line = br.readLine()) != null) {
 
-                    try(BufferedWriter fileOutputStream = new BufferedWriter(new FileWriter(all_file,true))) {
-                        fileOutputStream.write(line+ System.lineSeparator());
+                    try (BufferedWriter fileOutputStream = new BufferedWriter(new FileWriter(all_file, true))) {
+                        fileOutputStream.write(line + System.lineSeparator());
                         fileOutputStream.close();
                     }
 
@@ -730,11 +732,11 @@ public class partition {
 
     }
 
-    public static String concatReducer(String redu1, String redu2,String path1,String path2){
+    public static String concatReducer(String redu1, String redu2, String path1, String path2) {
 
-        String reduce = tempdirectory + File.separator +redu1+redu2+"res.txt";
+        String reduce = tempdirectory + File.separator + redu1 + redu2 + "res.txt";
         //String out_File = tempdirectory+File.separator+"res.txt";
-        String shuffl = path1 + File.separator +redu1;
+        String shuffl = path1 + File.separator + redu1;
 
         //File stockDir = new File(reduce);
         //     String[] list = stockDir.list();
@@ -743,19 +745,19 @@ public class partition {
 
             String line;
 
-            while ((line = br.readLine()) != null){
+            while ((line = br.readLine()) != null) {
 
                 String[] KeyAndVal = line.split("/");
 
-                String shuff2 = path2 + File.separator +redu2;
+                String shuff2 = path2 + File.separator + redu2;
                 try (BufferedReader br2 = new BufferedReader(new FileReader(shuff2))) {
                     String line2;
                     while ((line2 = br2.readLine()) != null) {
 
                         String[] KeyAndVal2 = line2.split("/");
-                        if(KeyAndVal[0].equals(KeyAndVal2[0])){
-                            String output = KeyAndVal[0] + "/" + KeyAndVal[1] + "," +KeyAndVal2[1]+lineSeparator;
-                            try(BufferedWriter fileOutputStream = new BufferedWriter(new FileWriter(reduce,true))) {
+                        if (KeyAndVal[0].equals(KeyAndVal2[0])) {
+                            String output = KeyAndVal[0] + "/" + KeyAndVal[1] + "," + KeyAndVal2[1] + lineSeparator;
+                            try (BufferedWriter fileOutputStream = new BufferedWriter(new FileWriter(reduce, true))) {
                                 fileOutputStream.write(output);
                                 fileOutputStream.close();
                             }
@@ -771,21 +773,20 @@ public class partition {
             e.printStackTrace();
         }
 
-        return redu1+redu2+"res.txt";
+        return redu1 + redu2 + "res.txt";
     }
 
 
+    public static void delete(File file) throws IOException {
 
-    public static void delete(File file) throws IOException{
-
-        if(file.isDirectory()){
+        if (file.isDirectory()) {
 
             //directory is empty, then delete it
-            if(file.list().length==0){
+            if (file.list().length == 0) {
 
                 file.delete();
 
-            }else{
+            } else {
 
                 //list all the directory contents
                 String files[] = file.list();
@@ -799,19 +800,19 @@ public class partition {
                 }
 
                 //check the directory again, if empty then delete it
-                if(file.list().length==0){
+                if (file.list().length == 0) {
                     file.delete();
 
                 }
             }
 
-        }else{
+        } else {
             //if file, then delete it
             file.delete();
         }
     }
 
-    public static void initFIleDir(){
+    public static void initFIleDir() {
         File stockDir = new File(tempdirectory);
 
         try {
@@ -822,7 +823,7 @@ public class partition {
         } catch (SecurityException Se) {
 
             System.out.println("Error while creating directory in Java:" + Se);
-        }catch (IOException e) {
+        } catch (IOException e) {
 
             e.printStackTrace();
         }

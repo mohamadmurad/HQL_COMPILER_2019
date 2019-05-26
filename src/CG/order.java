@@ -1,27 +1,26 @@
-package mapreduce;
+package CG;
 
 import java.util.*;
 import java.io.*;
-
 public class order {
 
 
     public static long estimateBestSizeOfBlocks(File filetobesorted) {
         long sizeoffile = filetobesorted.length();
-
-
+     
+        
         final int MAXTEMPFILES = 1024;
-        long blocksize = sizeoffile / MAXTEMPFILES;
-
+        long blocksize = sizeoffile / MAXTEMPFILES ;
+       
         long freemem = Runtime.getRuntime().freeMemory();
-        System.out.println("dree : " + freemem);
-        if (blocksize < freemem / 2)
-            blocksize = freemem / 2;
+        System.out.println("dree : "+freemem);
+        if( blocksize < freemem/2)
+            blocksize = freemem/2;
         else {
-            if (blocksize >= freemem)
+            if(blocksize >= freemem)
                 System.err.println("We expect to run out of memory. ");
         }
-        System.out.println("new block : " + blocksize);
+        System.out.println("new block : "+blocksize);
         return blocksize;
     }
 
@@ -29,22 +28,22 @@ public class order {
         List<File> files = new ArrayList<File>();
         BufferedReader fbr = new BufferedReader(new FileReader(file));
         long blocksize = estimateBestSizeOfBlocks(file);
-        try {
-            List<String> tmplist = new ArrayList<String>();
+        try{
+            List<String> tmplist =  new ArrayList<String>();
             String line = "";
             try {
-                while (line != null) {
+                while(line != null) {
                     long currentblocksize = 0;
-                    while ((currentblocksize < blocksize) && ((line = fbr.readLine()) != null)) {
+                    while((currentblocksize < blocksize) &&(   (line = fbr.readLine()) != null) ){
                         tmplist.add(line);
-                        currentblocksize += line.length();
+                        currentblocksize += line.length(); 
                     }
-                    files.add(sortAndSave(tmplist, cmp));
+                    files.add(sortAndSave(tmplist,cmp));
                     tmplist.clear();
                 }
-            } catch (EOFException oef) {
-                if (tmplist.size() > 0) {
-                    files.add(sortAndSave(tmplist, cmp));
+            } catch(EOFException oef) {
+                if(tmplist.size()>0) {
+                    files.add(sortAndSave(tmplist,cmp));
                     tmplist.clear();
                 }
             }
@@ -55,13 +54,13 @@ public class order {
     }
 
 
-    public static File sortAndSave(List<String> tmplist, Comparator<String> cmp) throws IOException {
-        Collections.sort(tmplist, cmp);
-        File newtmpfile = File.createTempFile("sortInBatch", "flatfile", new File("temp"));
-        newtmpfile.deleteOnExit();
+    public static File sortAndSave(List<String> tmplist, Comparator<String> cmp) throws IOException  {
+        Collections.sort(tmplist,cmp);  
+        File newtmpfile = File.createTempFile("sortInBatch", "flatfile",new File("temp"));
+       newtmpfile.deleteOnExit();
         BufferedWriter fbw = new BufferedWriter(new FileWriter(newtmpfile));
         try {
-            for (String r : tmplist) {
+            for(String r : tmplist) {
                 fbw.write(r);
                 fbw.newLine();
             }
@@ -71,6 +70,7 @@ public class order {
         return newtmpfile;
     }
 
+   
 
     public static int mergeSortedFiles(List<File> files, File outputfile, final Comparator<String> cmp) throws IOException {
         PriorityQueue<BinaryFileBuffer> pq = new PriorityQueue<BinaryFileBuffer>(11,
@@ -86,37 +86,38 @@ public class order {
         }
 
 
+
         BufferedWriter fbw = new BufferedWriter(new FileWriter(outputfile));
         int rowcounter = 0;
         try {
-            while (pq.size() > 0) {
+            while(pq.size()>0) {
                 BinaryFileBuffer bfb = pq.poll();
                 String r = bfb.pop();
                 fbw.write(r);
                 fbw.newLine();
                 ++rowcounter;
-                if (bfb.empty()) {
+                if(bfb.empty()) {
                     bfb.fbr.close();
                     bfb.originalfile.delete();
                 } else {
-                    pq.add(bfb);
+                    pq.add(bfb); 
                 }
             }
         } finally {
             fbw.close();
-            for (BinaryFileBuffer bfb : pq) bfb.close();
+            for(BinaryFileBuffer bfb : pq ) bfb.close();
         }
         return rowcounter;
     }
 
-    public static void start(String input, String output, Comparator<String> comparator) throws IOException {
-        List<File> l = sortInBatch(new File(input), comparator);
+    public static void start(String input ,String output,Comparator<String> comparator) throws IOException {
+        List<File> l = sortInBatch(new File(input), comparator) ;
         mergeSortedFiles(l, new File(output), comparator);
     }
 }
 
 
-class BinaryFileBuffer {
+class BinaryFileBuffer  {
     public static int BUFFERSIZE = 2048;
     public BufferedReader fbr;
     public File originalfile;
@@ -135,13 +136,14 @@ class BinaryFileBuffer {
 
     private void reload() throws IOException {
         try {
-            if ((this.cache = fbr.readLine()) == null) {
+            if((this.cache = fbr.readLine()) == null){
                 empty = true;
                 cache = null;
-            } else {
+            }
+            else{
                 empty = false;
             }
-        } catch (EOFException oef) {
+        } catch(EOFException oef) {
             empty = true;
             cache = null;
         }
@@ -153,10 +155,9 @@ class BinaryFileBuffer {
 
 
     public String peek() {
-        if (empty()) return null;
+        if(empty()) return null;
         return cache.toString();
     }
-
     public String pop() throws IOException {
         String answer = peek();
         reload();
@@ -164,5 +165,5 @@ class BinaryFileBuffer {
     }
 
 
-}
 
+}

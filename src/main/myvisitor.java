@@ -16,7 +16,7 @@ public class myvisitor extends HplsqlBaseVisitor<Object> {
 
     int isReturn = 0, numbOfIfElseFor = 0;
 
-    boolean join=false;
+    boolean join = false;
 
 
     SymbolTable symbolTable;
@@ -45,8 +45,7 @@ public class myvisitor extends HplsqlBaseVisitor<Object> {
         METHOD("method"),
         TABLE("table"),
         SELECT("select"),
-        IF_STATMENT("if")
-        ;
+        IF_STATMENT("if");
 
         private final String text;
 
@@ -78,34 +77,30 @@ public class myvisitor extends HplsqlBaseVisitor<Object> {
         String id_type;
 
 
-        id_type  = ctx.table_name.ident().getText();
+        id_type = ctx.table_name.ident().getText();
 
-        if(types.find_typ(id_type)){
-            ErrorPrinter.printSymbolAlreadyDefinedError(myparser, ctx.getStart(), "Table", id_type, symbolTable.getCurrentScopeName());
+        if (types.find_typ(id_type)) {
+            ErrorPrinter.varAlreadyDef( ctx.getStart(), "Table", id_type, symbolTable.getCurrentScopeName());
 
 
-
-        }else{
+        } else {
 
             ArrayList<Record> colom = (ArrayList<Record>) visit(ctx.create_table_definition());
             ArrayList<name_type> nameType = new ArrayList<>();
 
-            for(int i=0;i<colom.size();i++){
+            for (int i = 0; i < colom.size(); i++) {
 
-                if(types.find_typ(colom.get(i).getType())){
-                    name_type colname = new name_type(colom.get(i).getId(),colom.get(i).getType());
+                if (types.find_typ(colom.get(i).getType())) {
+                    name_type colname = new name_type(colom.get(i).getId(), colom.get(i).getType());
                     nameType.add(colname);
 
-                }else{
+                } else {
 
-                    ErrorPrinter.printFullError(myparser, ctx.start,
-                            "error: cannot find Type. \n symbol:   Type "+colom.get(i).getType(),
-                            "symbol:   Type " + colom.get(i).getType(),
+                    ErrorPrinter.PrintError( ctx.start,
+                            "error: cannot find Type. \n symbol:   Type " + colom.get(i).getType(),
+                           
                             "location: Function " + symbolTable.getCurrentScopeName()
                     );
-
-                   // System.out.println("Error Type :" + colom.get(i).getType() + " Not found!");
-
 
                 }
 
@@ -113,38 +108,34 @@ public class myvisitor extends HplsqlBaseVisitor<Object> {
 
 
             String delimeter = (String) visit(ctx.create_table_definition().new_delimiter());
-            delimeter = delimeter.substring(1, delimeter.length()-1);
+            delimeter = delimeter.substring(1, delimeter.length() - 1);
 
             String location = (String) visit(ctx.create_table_definition().new_location());
-            location = location.substring(1, location.length()-1);
+            location = location.substring(1, location.length() - 1);
 
             String store = (String) visit(ctx.create_table_definition().new_store());
-            store = store.substring(1, store.length()-1);
+            store = store.substring(1, store.length() - 1);
 
 
-            ///System.out.println(delimeter + "  " + location + " " + store);
+            try {
+                types.set(id_type, nameType, location, delimeter, store);
 
-                try{
-                    types.set(id_type,nameType,location,delimeter,store);
+                Table currentTable = new Table(id_type, id_type);
 
-                    Table currentTable = new Table(id_type,id_type);
+                symbolTable.put(id_type, currentTable);
 
-                    symbolTable.put(id_type, currentTable);
+                symbolTable.enterScope();
+                symbolTable.setCurrentScopeNameAndType(id_type, ScopeTypes.TABLE.toString());
 
-                    symbolTable.enterScope();
-                    // set scope name
-                    symbolTable.setCurrentScopeNameAndType(id_type, ScopeTypes.TABLE.toString());
-
-                    for(int i =0 ; i<colom.size();i++){
-                        currentTable.addColumn(colom.get(i));
-                        symbolTable.put(colom.get(i).getId(),colom.get(i));
-                    }
-
-                    symbolTable.exitScope();
-                } catch (IOException e) {
-                    e.printStackTrace();
+                for (int i = 0; i < colom.size(); i++) {
+                    currentTable.addColumn(colom.get(i));
+                    symbolTable.put(colom.get(i).getId(), colom.get(i));
                 }
 
+                symbolTable.exitScope();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
 
 
         }
@@ -161,12 +152,12 @@ public class myvisitor extends HplsqlBaseVisitor<Object> {
     public Object visitCreate_table_columns(HplsqlParser.Create_table_columnsContext ctx) {
 
         ArrayList<Object> colom = new ArrayList<>();
-        for(int i=0;i<ctx.create_table_columns_item().size();i++){
-            String type = ctx.create_table_columns_item(i).dtype().getText(); // get type
-            String id = ctx.create_table_columns_item(i).column_name.ident().getText(); // get ID
+        for (int i = 0; i < ctx.create_table_columns_item().size(); i++) {
+            String type = ctx.create_table_columns_item(i).dtype().getText();
+            String id = ctx.create_table_columns_item(i).column_name.ident().getText();
 
 
-            Record col = new Record(id, type,"colom");
+            Record col = new Record(id, type, "colom");
             colom.add(col);
 
         }
@@ -197,84 +188,82 @@ public class myvisitor extends HplsqlBaseVisitor<Object> {
     public Object visitNew_select_stmt(HplsqlParser.New_select_stmtContext ctx) {
         String table_name = ctx.new_from_table().from_table_name_clause().table_name().ident().getText();
         String alias = "";
-        String table_name_join ="";
+        String table_name_join = "";
 
-        if(ctx.new_from_table().from_table_name_clause().from_alias_clause() != null){
+        if (ctx.new_from_table().from_table_name_clause().from_alias_clause() != null) {
 
             alias = (String) visit(ctx.new_from_table().from_table_name_clause().from_alias_clause());
-            Record newTableName = new Record(alias,table_name,"tableOtherName");
-            symbolTable.put(alias,newTableName);
+            Record newTableName = new Record(alias, table_name, "tableOtherName");
+            symbolTable.put(alias, newTableName);
 
         }
-        for(int i=0;i<ctx.new_from_join_clause().size();i++){
-            if(ctx.new_from_join_clause(i).new_from_table().from_table_name_clause().from_alias_clause()!=null){
-               alias = (String) visit(ctx.new_from_join_clause(i).new_from_table().from_table_name_clause().from_alias_clause());
-               table_name_join =  ctx.new_from_join_clause(i).new_from_table().from_table_name_clause().table_name().getText();
-                Record newTableName = new Record(alias,table_name_join,"tableOtherName");
-                symbolTable.put(alias,newTableName);
+        for (int i = 0; i < ctx.new_from_join_clause().size(); i++) {
+            if (ctx.new_from_join_clause(i).new_from_table().from_table_name_clause().from_alias_clause() != null) {
+                alias = (String) visit(ctx.new_from_join_clause(i).new_from_table().from_table_name_clause().from_alias_clause());
+                table_name_join = ctx.new_from_join_clause(i).new_from_table().from_table_name_clause().table_name().getText();
+                Record newTableName = new Record(alias, table_name_join, "tableOtherName");
+                symbolTable.put(alias, newTableName);
             }
         }
         Select currentSelect = null;
 
-        if(types.find_typ(table_name)){
+        if (types.find_typ(table_name)) {
 
             ArrayList<SelectCol> sel_col = new ArrayList<>();
 
-            for(int i =0 ; i<ctx.new_select_col().size();i++){
+            for (int i = 0; i < ctx.new_select_col().size(); i++) {
 
 
-                SelectCol coloms = (SelectCol)visit(ctx.new_select_col(i));
+                SelectCol coloms = (SelectCol) visit(ctx.new_select_col(i));
 
 
-                if(!coloms.colname.equals("*")){
-                    if(coloms.tablename==null){
-                        if(ctx.new_from_join_clause().size()==0){
-                            if(types.find_col_in_table(coloms.colname,table_name)){
+                if (!coloms.colname.equals("*")) {
+                    if (coloms.tablename == null) {
+                        if (ctx.new_from_join_clause().size() == 0) {
+                            if (types.find_col_in_table(coloms.colname, table_name)) {
 
                                 sel_col.add(coloms);
-                            }else {
-                                ErrorPrinter.printFullError(myparser, ctx.start,
+                            } else {
+                                ErrorPrinter.PrintError( ctx.start,
                                         "error: Column :" + coloms.colname + " Not found! In Table " + table_name,
-                                        "symbol:   Type " + table_name,
                                         "location: Function " + symbolTable.getCurrentScopeName()
                                 );
 
 
                             }
-                        }else {
-                            ErrorPrinter.printFullError(myparser, ctx.start,
+                        } else {
+                            ErrorPrinter.PrintError( ctx.start,
                                     "error: In Select Statment",
-                                    "symbol:   Type " + table_name,
+                                   
                                     "location: Function " + symbolTable.getCurrentScopeName()
                             );
                         }
 
-                    }else {
+                    } else {
                         String tableAlias = coloms.tablename;
                         Record r = symbolTable.lookuplocaly(tableAlias);
-                        if(r!=null){
-                            if(types.find_col_in_table(coloms.colname,r.getType())){
+                        if (r != null) {
+                            if (types.find_col_in_table(coloms.colname, r.getType())) {
 
                                 sel_col.add(coloms);
-                            }else {
-                                ErrorPrinter.printFullError(myparser, ctx.start,
+                            } else {
+                                ErrorPrinter.PrintError( ctx.start,
                                         "error: Column :" + coloms.colname + " Not found! In Table " + r.getType(),
-                                        "symbol:   Type " + table_name,
+                                        
                                         "location: Function " + symbolTable.getCurrentScopeName()
                                 );
 
 
                             }
-                        }else {
-                            ErrorPrinter.printFullError(myparser, ctx.start,
+                        } else {
+                            ErrorPrinter.PrintError( ctx.start,
                                     "error: Table :" + tableAlias + " Not found! In Select Statment",
-                                    "symbol:   Type " + table_name,
                                     "location: Function " + symbolTable.getCurrentScopeName()
                             );
                         }
                     }
 
-                }else{
+                } else {
                     sel_col.add(coloms);
                 }
 
@@ -282,34 +271,29 @@ public class myvisitor extends HplsqlBaseVisitor<Object> {
             }
 
 
+            currentSelect = new Select("SELECT", "SELECT STATMENT", table_name);
+            currentSelect.setColumn(sel_col);
+            symbolTable.put("SELECT", currentSelect);
 
-                currentSelect = new Select("SELECT","SELECT STATMENT",table_name);
-                currentSelect.setColumn(sel_col);
-                symbolTable.put("SELECT", currentSelect);
-
-                symbolTable.enterScope();
-                // set scope name
-                symbolTable.setCurrentScopeNameAndType("SELECT", ScopeTypes.SELECT.toString());
+            symbolTable.enterScope();
+            symbolTable.setCurrentScopeNameAndType("SELECT", ScopeTypes.SELECT.toString());
 
 
+            for (int i = 0; i < sel_col.size(); i++) {
 
-                for(int i=0;i<sel_col.size();i++){
-                    //System.out.println("ccc "  + sel_col.get(i).aslis);
+                String as = sel_col.get(i).aslis;
 
-                    String as = sel_col.get(i).aslis;
-
-                    if(sel_col.get(i).aslis!=null){
-                       // System.out.println("eeeeeeee");
-                        Record newColName = new Record(sel_col.get(i).aslis,sel_col.get(i).colname+ " In [ "+ table_name +" ]","ColOtherName");
-                        symbolTable.put(sel_col.get(i).aslis,newColName);
-                    }
-
+                if (sel_col.get(i).aslis != null) {
+                    Record newColName = new Record(sel_col.get(i).aslis, sel_col.get(i).colname + " In [ " + table_name + " ]", "ColOtherName");
+                    symbolTable.put(sel_col.get(i).aslis, newColName);
                 }
+
+            }
 
                /* if(ctx.new_where_condition()!=null){
                     if(ctx.new_where_condition().bool_expr().bool_expr_atom()
                             .bool_expr_binary().expr(0).expr_agg_window_func()!=null){
-                        ErrorPrinter.printFullError(myparser, ctx.start,
+                        ErrorPrinter.PrintError(myparser, ctx.start,
                                 "error: function :" + ctx.new_where_condition().bool_expr().bool_expr_atom()
                                         .bool_expr_binary().expr(0).expr_agg_window_func().getText() + " should not contian in Where ",
                                 "",
@@ -325,7 +309,7 @@ public class myvisitor extends HplsqlBaseVisitor<Object> {
 
 
                         }else{
-                            ErrorPrinter.printFullError(myparser, ctx.start,
+                            ErrorPrinter.PrintError(myparser, ctx.start,
                                     "error: Column :" +col_where + " Not found! In Table " + table_name,
                                     "symbol:   Type " + table_name,
                                     "location: Function " + symbolTable.getCurrentScopeName()
@@ -336,94 +320,91 @@ public class myvisitor extends HplsqlBaseVisitor<Object> {
 
                 }*/
 
-            if(ctx.new_from_join_clause().size()!=0){
+            if (ctx.new_from_join_clause().size() != 0) {
                 join = true;
             }
 
-                boolean iscol = false;
-                boolean isfun = false;
-                for(int j=0;j<currentSelect.columns.size();j++){
-                    if(currentSelect.columns.get(j).is_func){
-                        isfun = true;
-                    }else if(currentSelect.columns.get(j).is_colom){
-                        iscol = true;
-                    }
+            boolean iscol = false;
+            boolean isfun = false;
+            for (int j = 0; j < currentSelect.columns.size(); j++) {
+                if (currentSelect.columns.get(j).is_func) {
+                    isfun = true;
+                } else if (currentSelect.columns.get(j).is_colom) {
+                    iscol = true;
                 }
+            }
 
-                if(ctx.group_by_clause()!=null){
-                    ArrayList<String> colom_groupby = new ArrayList<>();
-                    int count_groupby =0;
-                    int count_select =0;
-                    ArrayList<String> colom = (ArrayList<String>) visit(ctx.group_by_clause());
-                    for(int i=0;i<colom.size();i++){
-                        if(!colom_groupby.contains(colom.get(i))){
-                            for(int j=0;j<currentSelect.columns.size();j++){
-                                if(!currentSelect.columns.get(j).is_func){
-                                    if(colom.get(i).equals(currentSelect.columns.get(j).colname)){
-                                        colom_groupby.add(colom.get(i));
-                                        count_groupby++;
-                                    }
+            if (ctx.group_by_clause() != null) {
+                ArrayList<String> colom_groupby = new ArrayList<>();
+                int count_groupby = 0;
+                int count_select = 0;
+                ArrayList<String> colom = (ArrayList<String>) visit(ctx.group_by_clause());
+                for (int i = 0; i < colom.size(); i++) {
+                    if (!colom_groupby.contains(colom.get(i))) {
+                        for (int j = 0; j < currentSelect.columns.size(); j++) {
+                            if (!currentSelect.columns.get(j).is_func) {
+                                if (colom.get(i).equals(currentSelect.columns.get(j).colname)) {
+                                    colom_groupby.add(colom.get(i));
+                                    count_groupby++;
                                 }
-
                             }
+
                         }
-
                     }
-                    for(int j=0;j<currentSelect.columns.size();j++){
-                        if(!currentSelect.columns.get(j).is_func){
-                            count_select++;
-                        }
 
+                }
+                for (int j = 0; j < currentSelect.columns.size(); j++) {
+                    if (!currentSelect.columns.get(j).is_func) {
+                        count_select++;
                     }
-                    if(count_groupby!=colom.size() || count_groupby!=count_select){
+
+                }
+                if (count_groupby != colom.size() || count_groupby != count_select) {
 
 
-                        ErrorPrinter.printFullError(myparser, ctx.start,
-                                "error: In Group By Statment ",
-                                "symbol:   Type Table",
-                                "location: Function " + symbolTable.getCurrentScopeName()
-                        );
-                    }
-                }else if(ctx.group_by_clause()==null && iscol && isfun){
-
-                    ErrorPrinter.printFullError(myparser, ctx.start,
+                    ErrorPrinter.PrintError( ctx.start,
                             "error: In Group By Statment ",
-                            "symbol:   Type Table",
+                            
                             "location: Function " + symbolTable.getCurrentScopeName()
                     );
                 }
+            } else if (ctx.group_by_clause() == null && iscol && isfun) {
 
-                if(ctx.group_by_clause()!=null && ctx.having_clause() != null ){
+                ErrorPrinter.PrintError( ctx.start,
+                        "error: In Group By Statment ",
+                        
+                        "location: Function " + symbolTable.getCurrentScopeName()
+                );
+            }
 
-                    ArrayList<SelectCol> c = (ArrayList<SelectCol>) visit(ctx.having_clause());
+            if (ctx.group_by_clause() != null && ctx.having_clause() != null) {
 
-                    for(int i=0;i<c.size();i++){
+                ArrayList<SelectCol> c = (ArrayList<SelectCol>) visit(ctx.having_clause());
+
+                for (int i = 0; i < c.size(); i++) {
 
 
-                        if(!c.get(i).colname.equals("*")){
-                            if(!types.find_col_in_table(c.get(i).colname,table_name)){
+                    if (!c.get(i).colname.equals("*")) {
+                        if (!types.find_col_in_table(c.get(i).colname, table_name)) {
 
-                                ErrorPrinter.printFullError(myparser, ctx.start,
-                                        "error: Column :" + c.get(i).colname + " Not found! In Table " + table_name,
-                                        "symbol:   Type " + table_name,
-                                        "location: Select "
-                                );
-                            }
+                            ErrorPrinter.PrintError( ctx.start,
+                                    "error: Column :" + c.get(i).colname + " Not found! In Table " + table_name,
+                                   
+                                    "location: Select "
+                            );
                         }
                     }
                 }
+            }
 
 
+            symbolTable.exitScope();
 
 
-                symbolTable.exitScope();
-
-
-        }else{
-            //System.out.println("Error Table :" + table_name + " Not found!");
-            ErrorPrinter.printFullError(myparser, ctx.start,
+        } else {
+            ErrorPrinter.PrintError( ctx.start,
                     "error: Table :" + table_name + " Not found! ",
-                    "symbol:   Type Table",
+                   
                     "location: Function " + symbolTable.getCurrentScopeName()
             );
         }
@@ -434,42 +415,37 @@ public class myvisitor extends HplsqlBaseVisitor<Object> {
     @Override
     public Object visitNew_select_col(HplsqlParser.New_select_colContext ctx) {
         Object x = visitChildren(ctx);
-        //SelectCol b = (SelectCol)x;
-        ///System.out.println(b.aslis);
         return x;
-        //return super.visitNew_select_col(ctx);
     }
 
     @Override
     public Object visitCol_fun(HplsqlParser.Col_funContext ctx) {
         Object x = visitChildren(ctx);
 
-        return  x;
+        return x;
     }
 
     @Override
     public Object visitSelect_list_asterisk(HplsqlParser.Select_list_asteriskContext ctx) {
-        return new SelectCol("*",null,null);
-        //return super.visitSelect_list_asterisk(ctx);
+        return new SelectCol("*", null, null);
     }
 
     @Override
     public Object visitColom_name(HplsqlParser.Colom_nameContext ctx) {
         String col_name = ctx.ident().getText();
         SelectCol temp = null;
-        if(ctx.select_list_alias() != null){
+        if (ctx.select_list_alias() != null) {
 
-            Object aslis =  visitChildren(ctx);
-            temp = new SelectCol(col_name,null, (String) aslis);
-        }else {
+            Object aslis = visitChildren(ctx);
+            temp = new SelectCol(col_name, null, (String) aslis);
+        } else {
 
-            temp = new SelectCol(col_name,null, null);
+            temp = new SelectCol(col_name, null, null);
         }
 
-        return  temp;
+        return temp;
 
 
-        //return super.visitColom_name(ctx);
     }
 
     @Override
@@ -488,25 +464,20 @@ public class myvisitor extends HplsqlBaseVisitor<Object> {
         String table_name = ctx.ident().getText();
         String col_name = ctx.colom_name().ident().getText();
         Object aslis = null;
-        if(ctx.colom_name().select_list_alias() != null){
-             aslis =  visit(ctx.colom_name().select_list_alias());
-            //temp = new SelectCol(col_name,null, (String) aslis);
-        }else {
-            //temp = new SelectCol(col_name,null, null);
+        if (ctx.colom_name().select_list_alias() != null) {
+            aslis = visit(ctx.colom_name().select_list_alias());
+        } else {
         }
 
 
-        SelectCol temp = new SelectCol(col_name,table_name, (String) aslis);
-        return  temp;
-        //return super.visitTabledotcol(ctx);
+        SelectCol temp = new SelectCol(col_name, table_name, (String) aslis);
+        return temp;
     }
 
     @Override
     public Object visitCol_func(HplsqlParser.Col_funcContext ctx) {
 
         SelectCol temp = (SelectCol) visit(ctx.expr_agg_window_func());
-       // Object aslis =  visit(ctx.select_list_alias());
-        //temp.aslis = (String)aslis;
 
         return temp;
     }
@@ -514,41 +485,38 @@ public class myvisitor extends HplsqlBaseVisitor<Object> {
     @Override
     public Object visitExpr_agg_window_func(HplsqlParser.Expr_agg_window_funcContext ctx) {
 
-        SelectCol coloms = (SelectCol)visit(ctx.col_fun());
+        SelectCol coloms = (SelectCol) visit(ctx.col_fun());
 
         String func_name = ctx.getChild(0).getText();
-        //System.out.println(func_name);
         String paramiter = coloms.colname;
         String alais = null;
-        if(coloms.tablename!=null){
+        if (coloms.tablename != null) {
             alais = coloms.tablename;
         }
-        boolean isDistnict = ctx.expr_func_all_distinct() != null ? true :false;
-        SelectCol temp = new SelectCol(alais,func_name, paramiter,null,isDistnict);
-        return  temp;
+        boolean isDistnict = ctx.expr_func_all_distinct() != null ? true : false;
+        SelectCol temp = new SelectCol(alais, func_name, paramiter, null, isDistnict);
+        return temp;
 
 
-        //return super.visitExpr_agg_window_func(ctx);
     }
 
     @Override
     public Object visitGroup_by_clause(HplsqlParser.Group_by_clauseContext ctx) {
 
         ArrayList<Object> colom = new ArrayList<>();
-        if(ctx.expr_agg_window_func().size() != 0){
-            for(int i =0 ;i<ctx.expr_agg_window_func().size();i++){
-                ErrorPrinter.printFullError(myparser, ctx.start,
+        if (ctx.expr_agg_window_func().size() != 0) {
+            for (int i = 0; i < ctx.expr_agg_window_func().size(); i++) {
+                ErrorPrinter.PrintError( ctx.start,
                         "error: function :" + ctx.expr_agg_window_func().get(i).getText() + " should not contian in Group by ",
-                        "",
                         "location: select"
                 );
             }
         }
-        for(int i=0;i<ctx.ident().size();i++){
-            if(join){
-                ErrorPrinter.printFullError(myparser, ctx.start,
+        for (int i = 0; i < ctx.ident().size(); i++) {
+            if (join) {
+                ErrorPrinter.PrintError( ctx.start,
                         "error: In Select Statment!",
-                        "",
+                       
                         "location: select"
                 );
             }
@@ -556,22 +524,21 @@ public class myvisitor extends HplsqlBaseVisitor<Object> {
             colom.add(col);
 
         }
-        for(int i=0;i<ctx.tabledotcol().size();i++){
+        for (int i = 0; i < ctx.tabledotcol().size(); i++) {
             Record r = symbolTable.lookup(ctx.tabledotcol(i).ident().getText());
-            if(r==null){
-                ErrorPrinter.printFullError(myparser, ctx.start,
+            if (r == null) {
+                ErrorPrinter.PrintError( ctx.start,
                         "error: In Select Statment!",
-                        "",
+                       
                         "location: select"
                 );
-            }else {
+            } else {
                 String col = ctx.tabledotcol(i).colom_name().ident().getText();
-                if(types.find_col_in_table(col,r.getType())){
+                if (types.find_col_in_table(col, r.getType())) {
                     colom.add(col);
-                }else {
-                    ErrorPrinter.printFullError(myparser, ctx.start,
+                } else {
+                    ErrorPrinter.PrintError( ctx.start,
                             "error: Column :" + col + " Not found! In Table " + r.getType(),
-                            "symbol:   Type " + r.getType(),
                             "location: Function " + symbolTable.getCurrentScopeName()
                     );
 
@@ -587,23 +554,21 @@ public class myvisitor extends HplsqlBaseVisitor<Object> {
     public Object visitHaving_clause(HplsqlParser.Having_clauseContext ctx) {
         ArrayList<Object> c = new ArrayList<>();
 
-        for(int i=0;i<ctx.having_conditions().size();i++){
+        for (int i = 0; i < ctx.having_conditions().size(); i++) {
 
-            if(ctx.having_conditions(i).ident() != null){
+            if (ctx.having_conditions(i).ident() != null) {
 
-                ErrorPrinter.printFullError(myparser, ctx.start,
+                ErrorPrinter.PrintError( ctx.start,
                         "error: Having clause contains only grouping functions ",
-                        "",
                         "location: select"
                 );
-            }else if(ctx.having_conditions(i).expr_agg_window_func()!= null){
+            } else if (ctx.having_conditions(i).expr_agg_window_func() != null) {
 
-                // condidtion
                 String func_name = ctx.getChild(0).getText();
 
                 String paramiter = ctx.having_conditions(i).expr_agg_window_func().expr().get(0).getText();
-                boolean isDistnict = ctx.having_conditions(i).expr_agg_window_func().expr_func_all_distinct() != null ? true :false;
-                c.add(new SelectCol("",func_name, paramiter,null,isDistnict));
+                boolean isDistnict = ctx.having_conditions(i).expr_agg_window_func().expr_func_all_distinct() != null ? true : false;
+                c.add(new SelectCol("", func_name, paramiter, null, isDistnict));
 
             }
         }
@@ -625,37 +590,32 @@ public class myvisitor extends HplsqlBaseVisitor<Object> {
     public Object visitFunction_stmt(HplsqlParser.Function_stmtContext ctx) {
         isReturn = 0;
         numbOfIfElseFor = 0;
-        String type = ctx.dtype().getText(); // get type
-        String funcName = ctx.ident().getText(); // get ID
+        String type = ctx.dtype().getText();
+        String funcName = ctx.ident().getText();
 
-        if(!types.find_typ(type))
-        {
-            ErrorPrinter.printFullError(myparser, ctx.start,
-                    "error: cannot find Type. \n symbol:   Type "+type,
-                    "symbol:   Type " + type,
+        if (!types.find_typ(type)) {
+            ErrorPrinter.PrintError( ctx.start,
+                    "error: cannot find Type. \n symbol:   Type " + type,
                     "location: Function " + symbolTable.getCurrentScopeName());
         }
 
-        if(symbolTable.lookuplocaly(funcName)!=null){
-            ErrorPrinter.printSymbolAlreadyDefinedError(myparser, ctx.ident().start, "method", funcName, symbolTable.getCurrentScopeName());
+        if (symbolTable.lookuplocaly(funcName) != null) {
+            ErrorPrinter.varAlreadyDef( ctx.ident().start, "method", funcName, symbolTable.getCurrentScopeName());
         }
 
-        FunctionRecord currentFunc = new FunctionRecord(funcName,type);
+        FunctionRecord currentFunc = new FunctionRecord(funcName, type);
 
         symbolTable.put(funcName, currentFunc);
 
         symbolTable.enterScope();
-        // set scope name
         symbolTable.setCurrentScopeNameAndType(funcName, myvisitor.ScopeTypes.METHOD.toString());
 
-        // get paramiters
 
-       if(ctx.return_param() != null){
+        if (ctx.return_param() != null) {
 
-            ArrayList<Record>  paramiters = (ArrayList<Record>) visit(ctx.return_param());
+            ArrayList<Record> paramiters = (ArrayList<Record>) visit(ctx.return_param());
 
-            for(int i =0 ;i<paramiters.size();i++){
-             // System.out.println(paramiters.get(i).getId());
+            for (int i = 0; i < paramiters.size(); i++) {
                 currentFunc.addParameter(paramiters.get(i));
                 symbolTable.put(paramiters.get(i).getId(), paramiters.get(i));
             }
@@ -664,143 +624,18 @@ public class myvisitor extends HplsqlBaseVisitor<Object> {
 
 
         visit(ctx.cpp_smt());
-        if(ctx.return_stmt()!=null){
+        if (ctx.return_stmt() != null) {
             visit(ctx.return_stmt());
         }
-       /* if (ctx.cpp_smt().return_stmt() != null){
-            String returnValue = null;
-            boolean isInt = false;
-            boolean isFloat = false;
-            boolean isString = false;
-            boolean isVar = false;
-            if(ctx.cpp_smt().return_stmt().ident()!=null){
-                returnValue = ctx.cpp_smt().return_stmt().ident().getText();
-                if( !((returnValue.startsWith("\"") && returnValue.endsWith("\""))
-                        || (returnValue.startsWith("'") && returnValue.endsWith("'"))) ){
-                    if(symbolTable.lookup(returnValue)==null){
-                        ErrorPrinter.printFullError(myparser, ctx.start,
-                                "error: Variable :" + returnValue + " Not found! In Scope ",
-                                "",
-                                "" + symbolTable.getCurrentScope().getParent().getScopeName()
-                        );
-                    }else{
-                        Record ReturnVariable = symbolTable.lookup(returnValue);
-                        String ReturnVariableType = ReturnVariable.getType();
-                        if(ReturnVariable.getValue()==null){
-                            System.err.println("Warring for using unassigned variable " + ReturnVariable.getId());
-                        }
-                        isVar = true;
 
-                    }
+        if (ctx.return_stmt() == null) {
+            if (isReturn == numbOfIfElseFor) {
 
-                }else { isString = true;}
-            }else if(ctx.cpp_smt().return_stmt().L_INT()!=null){
-                returnValue = ctx.cpp_smt().return_stmt().L_INT().getText();
-                isInt = true;
-            }else if(ctx.cpp_smt().return_stmt().L_DEC()!=null){
-                returnValue = ctx.cpp_smt().return_stmt().L_DEC().getText();
-                isFloat = true;
-            }
-
-
-                if (type.equals("void")) {
-
-                    ErrorPrinter.printFullError(myparser, ctx.start,
-                            "error: Cannot return a value from a method with void result type",
-                            "symbol:   Type " + type,
-                            "location: Function " + symbolTable.getCurrentScopeName());
-
-            }else if(type.equals("int")){
-                    if(isString){
-
-                        ErrorPrinter.printFullError(myparser, ctx.start,
-                                "error: " + returnValue+  " Type must be ( int ) Not ( string )" ,
-                                "" ,
-                                "location: in Scope " + symbolTable.getCurrentScopeName()
-                        );
-                    }else if(isVar){
-                        Record Var = symbolTable.lookup(returnValue);
-                        String typeVar = Var.getType();
-                        if(!typeVar.equals("int")){
-                            ErrorPrinter.printFullError(myparser, ctx.start,
-                                    "error: Variable " + returnValue+  " Type must be ( int ) Not (" +  typeVar +" )" ,
-                                    "" ,
-                                    "location: in Scope " + symbolTable.getCurrentScopeName()
-                            );
-                        }
-                    }else if(isFloat){
-                        ErrorPrinter.printFullError(myparser, ctx.start,
-                                "error: " + returnValue+  " Type must be ( int ) Not ( float )" ,
-                                "" ,
-                                "location: in Scope " + symbolTable.getCurrentScopeName()
-                        );
-                    }
-
-
-            }else if(type.equals("string")){
-                    if(isInt){
-
-                        ErrorPrinter.printFullError(myparser, ctx.start,
-                                "error: " + returnValue+  " Type must be ( string ) Not ( int )" ,
-                                "" ,
-                                "location: in Scope " + symbolTable.getCurrentScopeName()
-                        );
-                    }else if(isVar){
-                        Record Var = symbolTable.lookup(returnValue);
-                        String typeVar = Var.getType();
-                        if(!typeVar.equals("string")){
-                            ErrorPrinter.printFullError(myparser, ctx.start,
-                                    "error: Variable " + returnValue+  " Type must be ( string ) Not (" +  typeVar +" )" ,
-                                    "" ,
-                                    "location: in Scope " + symbolTable.getCurrentScopeName()
-                            );
-                        }
-                    }else if(isFloat){
-                        ErrorPrinter.printFullError(myparser, ctx.start,
-                                "error: " + returnValue+  " Type must be ( string ) Not ( float )" ,
-                                "" ,
-                                "location: in Scope " + symbolTable.getCurrentScopeName()
-                        );
-                    }
-
-            }else if(type.equals("float")){
-
-                    if(isInt){
-
-                        ErrorPrinter.printFullError(myparser, ctx.start,
-                                "error: " + returnValue+  " Type must be ( float ) Not ( int )" ,
-                                "" ,
-                                "location: in Scope " + symbolTable.getCurrentScopeName()
-                        );
-                    }else if(isVar){
-                        Record Var = symbolTable.lookup(returnValue);
-                        String typeVar = Var.getType();
-                        if(!typeVar.equals("float")){
-                            ErrorPrinter.printFullError(myparser, ctx.start,
-                                    "error: Variable " + returnValue+  " Type must be ( float ) Not (" +  typeVar +" )" ,
-                                    "" ,
-                                    "location: in Scope " + symbolTable.getCurrentScopeName()
-                            );
-                        }
-                    }else if(isString){
-                        ErrorPrinter.printFullError(myparser, ctx.start,
-                                "error: " + returnValue+  " Type must be ( float ) Not ( string )" ,
-                                "" ,
-                                "location: in Scope " + symbolTable.getCurrentScopeName()
-                        );
-                    }
-
-            }
-
-        }else */
-       if (ctx.return_stmt() == null){
-            if(isReturn == numbOfIfElseFor){
-
-            }else {
-                if(!type.equals("void")){
-                    ErrorPrinter.printFullError(myparser, ctx.start,
+            } else {
+                if (!type.equals("void")) {
+                    ErrorPrinter.PrintError( ctx.start,
                             "error: Missing return statement",
-                            "symbol:   Type " + type,
+                            
                             "location: Function " + symbolTable.getCurrentScopeName());
                 }
 
@@ -808,13 +643,9 @@ public class myvisitor extends HplsqlBaseVisitor<Object> {
         }
 
 
-
-
-
-
         symbolTable.exitScope();
         return null;
-        //return super.visitFunction_stmt(ctx);
+
     }
 
     @Override
@@ -822,28 +653,26 @@ public class myvisitor extends HplsqlBaseVisitor<Object> {
 
         ArrayList<Record> paramiters = new ArrayList<>();
 
-        for(int i=0;i<ctx.return_param_item().size();i++){
+        for (int i = 0; i < ctx.return_param_item().size(); i++) {
 
-            String type = ctx.return_param_item(i).dtype().getText(); // get type
+            String type = ctx.return_param_item(i).dtype().getText();
 
-            if(!types.find_typ(type)){
-                //Print undefined type error
-                ErrorPrinter.printFullError(myparser, ctx.return_param_item(i).dtype().start,
-                        "error: cannot find Type. \n symbol:   Type "+type,
-                        "symbol:   Type " + type,
+            if (!types.find_typ(type)) {
+                ErrorPrinter.PrintError( ctx.return_param_item(i).dtype().start,
+                        "error: cannot find Type. \n symbol:   Type " + type,
+                        
                         "location: Function " + symbolTable.getCurrentScopeName()
                 );
             }
-            String name = ctx.return_param_item(i).ident().getText(); // get ID
+            String name = ctx.return_param_item(i).ident().getText();
 
 
-            Record col = new Record(name, type,"Paramiter");
+            Record col = new Record(name, type, "Paramiter");
             paramiters.add(col);
 
         }
         return paramiters;
 
-        //return super.visitReturn_param(ctx);
     }
 
     @Override
@@ -851,117 +680,115 @@ public class myvisitor extends HplsqlBaseVisitor<Object> {
 
         String funName = ctx.ident().getText();
 
-        if(symbolTable.lookup(funName)==null){
-            ErrorPrinter.printFullError(myparser, ctx.start,
+        if (symbolTable.lookup(funName) == null) {
+            ErrorPrinter.PrintError( ctx.start,
                     "error: Method :" + funName + " Not found! In Scope ",
-                    "",
+                    
                     "" + symbolTable.getCurrentScopeName()
             );
         }
         FunctionRecord func = (FunctionRecord) symbolTable.lookup(funName);
 
 
-        if(ctx.call_param() != null){
-            if(func.numberOfParameters() != ctx.call_param().call_param_item().size()){
-                ErrorPrinter.printFullError(myparser, ctx.start,
-                        "error: Number of Parmeters ",
-                        "" ,
+        if (ctx.call_param() != null) {
+            if (func.numberOfParameters() != ctx.call_param().call_param_item().size()) {
+                ErrorPrinter.PrintError( ctx.start,
+                        "error: Number of Parmeters ", 
                         "location: in Call Function " + funName
                 );
-            }else{
+            } else {
 
-                for(int i=0;i<ctx.call_param().call_param_item().size();i++){
-                    String p =null;
+                for (int i = 0; i < ctx.call_param().call_param_item().size(); i++) {
+                    String p = null;
                     String typeParam = "";
-                    if(ctx.call_param().call_param_item().get(i).ident() != null){
+                    if (ctx.call_param().call_param_item().get(i).ident() != null) {
 
                         p = ctx.call_param().call_param_item().get(i).ident().getText();
-                        if( (p.startsWith("\"") && p.endsWith("\"")) || (p.startsWith("'") && p.endsWith("'")) ){
+                        if ((p.startsWith("\"") && p.endsWith("\"")) || (p.startsWith("'") && p.endsWith("'"))) {
                             typeParam = "string";
-                        }else{
+                        } else {
                             typeParam = "var";
                         }
 
 
-                    }else if(ctx.call_param().call_param_item().get(i).number() != null){
+                    } else if (ctx.call_param().call_param_item().get(i).number() != null) {
 
                         p = ctx.call_param().call_param_item().get(i).number().getText();
 
-                        if(p.matches(numberREG)){
+                        if (p.matches(numberREG)) {
                             typeParam = "numb";
                         }
 
-                    }else{
-                        ErrorPrinter.printFullError(myparser, ctx.start,
+                    } else {
+                        ErrorPrinter.PrintError( ctx.start,
                                 "error:",
-                                "" ,
+                                
                                 "location: in Call Function " + funName
                         );
                     }
 
-                    switch (typeParam){
-                        case "numb":{
+                    switch (typeParam) {
+                        case "numb": {
 
-                            //System.out.println("number");
-                            if(func.getParamType(i).equals("int")){
+                            if (func.getParamType(i).equals("int")) {
 
-                                //System.out.println("yes");
 
-                            }else{
-                                ErrorPrinter.printFullError(myparser, ctx.start,
-                                        "error: Parameter "+ (i+1) +" Type must be ("+func.getParamType(i) + ") Not (int)" ,
-                                        "" ,
+                            } else {
+                                ErrorPrinter.PrintError( ctx.start,
+                                        "error: Parameter " + (i + 1) + " Type must be (" + func.getParamType(i) + ") Not (int)",
+                                        
                                         "location: in Call Function " + funName
                                 );
                             }
 
-                        }break;
-                        case "var":{
-                           // System.out.println("var");
-                            if(symbolTable.lookup(p) != null){ // var
+                        }
+                        break;
+                        case "var": {
+                            if (symbolTable.lookup(p) != null) { // var
 
                                 Record pp = symbolTable.lookup(p);
                                 System.out.println(pp.getType());
-                                if(func.getParamType(i).equals(pp.getType())){
+                                if (func.getParamType(i).equals(pp.getType())) {
 
-                                   // System.out.println("yes");
 
-                                }else{
-                                    ErrorPrinter.printFullError(myparser, ctx.start,
-                                            "error: Parameter "+ (i+1) +" Type must be ("+func.getParamType(i) + ") Not ("+ pp.getType() + ")" ,
-                                            "" ,
+                                } else {
+                                    ErrorPrinter.PrintError( ctx.start,
+                                            "error: Parameter " + (i + 1) + " Type must be (" + func.getParamType(i) + ") Not (" + pp.getType() + ")",
+                                            
                                             "location: in Call Function " + funName
                                     );
                                 }
 
-                            }else{
+                            } else {
 
-                                ErrorPrinter.printFullError(myparser, ctx.start,
+                                ErrorPrinter.PrintError( ctx.start,
                                         "error: Variable :" + p + " Not found! In Scope ",
-                                        "",
+                                        
                                         "" + symbolTable.getCurrentScopeName()
                                 );
 
                             }
 
 
-                        }break;
-                        case "string":{
+                        }
+                        break;
+                        case "string": {
                             System.out.println("string");
-                            if(func.getParamType(i).equals("string")){
+                            if (func.getParamType(i).equals("string")) {
 
-                                //System.out.println("yes");
 
-                            }else{
-                                ErrorPrinter.printFullError(myparser, ctx.start,
-                                        "error: Parameter "+ (i+1) +" Type must be ("+func.getParamType(i) + ") Not (string)" ,
-                                        "" ,
+                            } else {
+                                ErrorPrinter.PrintError( ctx.start,
+                                        "error: Parameter " + (i + 1) + " Type must be (" + func.getParamType(i) + ") Not (string)",
+                                        
                                         "location: in Call Function " + funName
                                 );
                             }
 
-                        }break;
-                        default: break;
+                        }
+                        break;
+                        default:
+                            break;
                     }
 
 
@@ -970,7 +797,6 @@ public class myvisitor extends HplsqlBaseVisitor<Object> {
             }
 
         }
-
 
 
         return null;
@@ -980,160 +806,155 @@ public class myvisitor extends HplsqlBaseVisitor<Object> {
     public Object visitCpp_var_decleration(HplsqlParser.Cpp_var_declerationContext ctx) {
         String typeName = ctx.dtype().getText();
         String varName = ctx.ident().getText();
-        if(!types.find_typ(typeName))
-        {
-            ErrorPrinter.printFullError(myparser, ctx.start,
-                    "error: cannot find Type. \n symbol:   Type "+typeName,
-                    "symbol:   Type " + typeName,
+        if (!types.find_typ(typeName)) {
+            ErrorPrinter.PrintError( ctx.start,
+                    "error: cannot find Type. \n symbol:   Type " + typeName,
+                    
                     "location: Function " + symbolTable.getCurrentScopeName());
         }
-        if(symbolTable.lookuplocaly(varName)!=null){
-            ErrorPrinter.printSymbolAlreadyDefinedError(myparser, ctx.ident().start, "variable", varName, ""+symbolTable.getCurrentScopeName());
+        if (symbolTable.lookuplocaly(varName) != null) {
+            ErrorPrinter.varAlreadyDef( ctx.ident().start, "variable", varName, "" + symbolTable.getCurrentScopeName());
         }
 
 
-        symbolTable.put(varName,new Record(varName,typeName,"variable",null));
+        symbolTable.put(varName, new Record(varName, typeName, "variable", null));
 
         return null;
     }
 
 
-    //@Override
     public Object visitCpp_assignment_stmt(HplsqlParser.Cpp_assignment_stmtContext ctx) {
 
 
-        String varName =  ctx.ident().get(0).getText();
-        //System.out.println(ctx.L_INT().getText());
-        if(symbolTable.lookup(varName)!=null){
+        String varName = ctx.ident().get(0).getText();
+        if (symbolTable.lookup(varName) != null) {
             Record var = symbolTable.lookup(varName);
             String varType = var.getType();
             String varEqual = null;
             boolean isString = false;
 
             String typeParam = "";
-            if(ctx.ident(1) != null){
+            if (ctx.ident(1) != null) {
 
                 varEqual = ctx.ident(1).getText();
-                if( (varEqual.startsWith("\"") && varEqual.endsWith("\"")) || (varEqual.startsWith("'") && varEqual.endsWith("'")) ){
+                if ((varEqual.startsWith("\"") && varEqual.endsWith("\"")) || (varEqual.startsWith("'") && varEqual.endsWith("'"))) {
                     typeParam = "string";
-                }else{
+                } else {
                     typeParam = "var";
                 }
 
 
-            }else if(ctx.number() != null){
+            } else if (ctx.number() != null) {
 
                 varEqual = ctx.number().getText();
 
-                if(varEqual.matches(numberREG)){
-                    if(ctx.number().L_INT() != null){
+                if (varEqual.matches(numberREG)) {
+                    if (ctx.number().L_INT() != null) {
                         typeParam = "int";
-                    }else{
+                    } else {
                         typeParam = "float";
                     }
 
                 }
 
-            }else if(ctx.call_stmt() != null ){
+            } else if (ctx.call_stmt() != null) {
 
                 typeParam = "call";
-            }else if(ctx.new_select_stmt() != null){
+            } else if (ctx.new_select_stmt() != null) {
                 typeParam = "select";
-            }else {
-                ErrorPrinter.printFullError(myparser, ctx.start,
+            } else {
+                ErrorPrinter.PrintError( ctx.start,
                         "error:",
-                        "" ,
+                        
                         "location: in ass"
                 );
             }
 
-            switch (typeParam){
-                case "int":{
+            switch (typeParam) {
+                case "int": {
 
-                    if(varType.equals("int")){
-
-                            var.setValue(varEqual);
-
-                    }else if(varType.equals("string")){
-                            // up cast
-                            var.setValue("\"" + varEqual + "\"");
-
-
-                    }else if(varType.equals("float")){
-                        var.setValue(varEqual + ".0");
-                        System.out.println(var.getValue());
-                    }else if(varType.equals("bool")){
-                        ErrorPrinter.printFullError(myparser, ctx.start,
-                                "error: Variable " + varName+  " must be ( integer ) Not ( boolean )" ,
-                                "" ,
-                                "location: in Scope " + symbolTable.getCurrentScopeName()
-                        );
-                    }
-
-
-
-                }break;
-                case "float":{
-
-                    if(varType.equals("int")){
-
-                        int i = varEqual.indexOf('.');
-                        varEqual = varEqual.substring(0,i);
+                    if (varType.equals("int")) {
 
                         var.setValue(varEqual);
 
-                        System.out.println(var.getValue());
-
-
-                    }else if(varType.equals("string")){
+                    } else if (varType.equals("string")) {
                         // up cast
                         var.setValue("\"" + varEqual + "\"");
 
 
-                    }else if(varType.equals("float")){
-
-                        var.setValue(varEqual);
-
-                    }else if(varType.equals("bool")){
-
-                        ErrorPrinter.printFullError(myparser, ctx.start,
-                                "error: Variable " + varName+  " must be ( float ) Not ( boolean )" ,
-                                "" ,
+                    } else if (varType.equals("float")) {
+                        var.setValue(varEqual + ".0");
+                        System.out.println(var.getValue());
+                    } else if (varType.equals("bool")) {
+                        ErrorPrinter.PrintError( ctx.start,
+                                "error: Variable " + varName + " must be ( integer ) Not ( boolean )",
+                                
                                 "location: in Scope " + symbolTable.getCurrentScopeName()
                         );
                     }
 
 
+                }
+                break;
+                case "float": {
+
+                    if (varType.equals("int")) {
+
+                        int i = varEqual.indexOf('.');
+                        varEqual = varEqual.substring(0, i);
+
+                        var.setValue(varEqual);
+
+                        System.out.println(var.getValue());
 
 
-                }break;
-                case "var":{
-                    // System.out.println("var");
-                    if(symbolTable.lookup(varEqual) != null){
+                    } else if (varType.equals("string")) {
+                        // up cast
+                        var.setValue("\"" + varEqual + "\"");
+
+
+                    } else if (varType.equals("float")) {
+
+                        var.setValue(varEqual);
+
+                    } else if (varType.equals("bool")) {
+
+                        ErrorPrinter.PrintError( ctx.start,
+                                "error: Variable " + varName + " must be ( float ) Not ( boolean )",
+                                
+                                "location: in Scope " + symbolTable.getCurrentScopeName()
+                        );
+                    }
+
+
+                }
+                break;
+                case "var": {
+                    if (symbolTable.lookup(varEqual) != null) {
                         // varible
                         Record ASVar = symbolTable.lookup(varEqual);
 
-                        if(ASVar.getValue() != null){
-                            if(ASVar.getType().equals(var.getType())){
+                        if (ASVar.getValue() != null) {
+                            if (ASVar.getType().equals(var.getType())) {
                                 var.setValue(ASVar.getValue());
-                            }else{
-                                ErrorPrinter.printFullError(myparser, ctx.start,
-                                        "error: Variable " + varName+  " Type must be ("+ASVar.getType() + ") Not ("+ var.getType() + ")" ,
-                                        "" ,
+                            } else {
+                                ErrorPrinter.PrintError( ctx.start,
+                                        "error: Variable " + varName + " Type must be (" + ASVar.getType() + ") Not (" + var.getType() + ")",
+                                        
                                         "location: in Scope " + symbolTable.getCurrentScopeName()
                                 );
                             }
 
-                            //           System.out.println("varrrrr " + var.getValue());
-                        }else{
+                        } else {
                             System.err.println("Warring for using unassigned variable " + varEqual);
                         }
 
                     }
 
 
-                }break;
-                case "string":{
+                }
+                break;
+                case "string": {
 /*
 
                     if(varType.equals("int")){
@@ -1159,7 +980,7 @@ public class myvisitor extends HplsqlBaseVisitor<Object> {
 
                     }else if(varType.equals("boolean")){
 
-                        ErrorPrinter.printFullError(myparser, ctx.start,
+                        ErrorPrinter.PrintError(myparser, ctx.start,
                                 "error: Variable " + varName+  " must be ( float ) Not ( boolean )" ,
                                 "" ,
                                 "location: in Scope " + symbolTable.getCurrentScopeName()
@@ -1167,50 +988,23 @@ public class myvisitor extends HplsqlBaseVisitor<Object> {
                     }
 */
 
-                }break;
-                case "select":{}break;
-                case "call" :{}break;
-                default: break;
+                }
+                break;
+                case "select": {
+                }
+                break;
+                case "call": {
+                }
+                break;
+                default:
+                    break;
             }
 
 
-           /* else{
-
-
-                //regular for number or string
-
-
-
-                if(varType.equals("int")){
-
-                    if(!isString){
-                        var.setValue(varEqual);
-                    }else{
-                        // up cast
-
-                    }
-
-                }else if(varType.equals("string")){
-                    if(isString){
-                        var.setValue(varEqual);
-                    }else{
-                        // up cast
-                        var.setValue("\"" + varEqual + "\"");
-
-                    }
-
-
-                }
-
-
-            }*/
-
-           // System.out.println(varName + " = " + var.getValue());
-
-        }else {
-            ErrorPrinter.printFullError(myparser, ctx.start,
+        } else {
+            ErrorPrinter.PrintError( ctx.start,
                     "error: Variable :" + varName + " Not found! In Scope ",
-                    "",
+                    
                     "" + symbolTable.getCurrentScopeName()
             );
         }
@@ -1230,117 +1024,115 @@ public class myvisitor extends HplsqlBaseVisitor<Object> {
 
     @Override
     public Object visitCpp_if_stmt(HplsqlParser.Cpp_if_stmtContext ctx) {
-        numbOfIfElseFor++ ;
+        numbOfIfElseFor++;
         symbolTable.enterScope();
         // set scope name
         symbolTable.setCurrentScopeNameAndType("IF STATMENT", ScopeTypes.IF_STATMENT.toString());
-        for(int i=0;i<ctx.ifex().size();i++){
+        for (int i = 0; i < ctx.ifex().size(); i++) {
 
-                String op = ctx.ifex(i).op().getText();
-                if(op.equals("+") || op.equals("-")|| op.equals("*") ||op.equals("/")){
-                    ErrorPrinter.printFullError(myparser, ctx.start,
-                            "error: Result Condition Must Be Boolean",
-                            "",
-                            "location: in Scope " + symbolTable.getCurrentScopeName()
-                    );
-                }
-                String exp1 = ctx.ifex(i).ident(0).getText();
-                String exp2 = null;
-                boolean isExp = false;
-                if(ctx.ifex(i).L_INT()!=null){
-                    exp2 = ctx.ifex(i).L_INT().getText();
-                }else if(ctx.ifex(i).ident(1)!=null){
+            String op = ctx.ifex(i).op().getText();
+            if (op.equals("+") || op.equals("-") || op.equals("*") || op.equals("/")) {
+                ErrorPrinter.PrintError( ctx.start,
+                        "error: Result Condition Must Be Boolean",
+                        
+                        "location: in Scope " + symbolTable.getCurrentScopeName()
+                );
+            }
+            String exp1 = ctx.ifex(i).ident(0).getText();
+            String exp2 = null;
+            boolean isExp = false;
+            if (ctx.ifex(i).L_INT() != null) {
+                exp2 = ctx.ifex(i).L_INT().getText();
+            } else if (ctx.ifex(i).ident(1) != null) {
 
-                    exp2 = ctx.ifex(i).ident(1).getText();
-                    isExp = true;
-                }
-                if(!isExp &&( (exp1.startsWith("\"") && exp1.endsWith("\"")) || (exp1.startsWith("'") && exp1.endsWith("'")) )){
-                    ErrorPrinter.printFullError(myparser, ctx.start,
-                            "error: Operator "+op+" Cannot Be Applied To Int , String",
-                            "",
+                exp2 = ctx.ifex(i).ident(1).getText();
+                isExp = true;
+            }
+            if (!isExp && ((exp1.startsWith("\"") && exp1.endsWith("\"")) || (exp1.startsWith("'") && exp1.endsWith("'")))) {
+                ErrorPrinter.PrintError( ctx.start,
+                        "error: Operator " + op + " Cannot Be Applied To Int , String", 
+                        "" + symbolTable.getCurrentScope().getParent().getScopeName()
+                );
+
+            }
+            if (((exp1.startsWith("\"") && exp1.endsWith("\"")) || (exp1.startsWith("'") && exp1.endsWith("'")))
+                    && (!op.equals("=="))) {
+
+                ErrorPrinter.PrintError( ctx.start,
+                        "error: Operator " + op + " Cannot Be Applied To Int , String",
+                        
+                        "" + symbolTable.getCurrentScope().getParent().getScopeName()
+                );
+
+            }
+
+            if (!((exp1.startsWith("\"") && exp1.endsWith("\"")) || (exp1.startsWith("'") && exp1.endsWith("'")))) {
+
+                if (symbolTable.lookup(exp1) == null) {
+                    ErrorPrinter.PrintError( ctx.start,
+                            "error: Variable :" + exp1 + " Not found! In Scope ",
+                            
                             "" + symbolTable.getCurrentScope().getParent().getScopeName()
                     );
-
                 }
-                if( ((exp1.startsWith("\"") && exp1.endsWith("\"")) || (exp1.startsWith("'") && exp1.endsWith("'")))
-                        && (!op.equals("=="))) {
-
-                    ErrorPrinter.printFullError(myparser, ctx.start,
-                            "error: Operator "+op+" Cannot Be Applied To Int , String",
-                            "",
-                            "" + symbolTable.getCurrentScope().getParent().getScopeName()
-                    );
-
-                }
-
-                if(!((exp1.startsWith("\"") && exp1.endsWith("\"")) || (exp1.startsWith("'") && exp1.endsWith("'")))) {
-
-                    if(symbolTable.lookup(exp1)==null){
-                        ErrorPrinter.printFullError(myparser, ctx.start,
-                                "error: Variable :" + exp1 + " Not found! In Scope ",
-                                "",
-                                "" + symbolTable.getCurrentScope().getParent().getScopeName()
-                        );
-                    }
-                }
+            }
 
             Record exper1 = symbolTable.lookup(exp1);
-            if(exper1 != null && exper1.getValue()==null){
+            if (exper1 != null && exper1.getValue() == null) {
                 System.err.println("Warring for using unassigned variable " + exper1.getId());
             }
 
-                if(isExp){
-                    if( ((exp2.startsWith("\"") && exp2.endsWith("\"")) || (exp2.startsWith("'") && exp2.endsWith("'")))
-                            && (!op.equals("=="))) {
+            if (isExp) {
+                if (((exp2.startsWith("\"") && exp2.endsWith("\"")) || (exp2.startsWith("'") && exp2.endsWith("'")))
+                        && (!op.equals("=="))) {
 
-                        ErrorPrinter.printFullError(myparser, ctx.start,
-                                "error: Operator "+op+" Cannot Be Applied To Int , String",
-                                "",
-                                "" + symbolTable.getCurrentScope().getParent().getScopeName()
-                        );
-
-                    }
-                    if(!((exp2.startsWith("\"") && exp2.endsWith("\"")) || (exp2.startsWith("'") && exp2.endsWith("'")))) {
-                        if(symbolTable.lookup(exp2)==null){
-                            ErrorPrinter.printFullError(myparser, ctx.start,
-                                    "error: Variable :" + exp2 + " Not found! In Scope ",
-                                    "",
-                                    "" + symbolTable.getCurrentScope().getParent().getScopeName()
-                            );
-                        }
-                    }
-
-                        Record exper2 = symbolTable.lookup(exp2);
-                        if(exper2 != null && exper2.getValue()==null){
-                            System.err.println("Warring for using unassigned variable " + exper2.getId());
-                        }
-                        if(exper1 != null && exper2 != null) {
-                            if (!exper1.getType().equals(exper2.getType())) {
-                                ErrorPrinter.printFullError(myparser, ctx.start,
-                                        "error: Operator " + op + " Cannot Be Applied To " + exper1.getType() + "," + exper2.getType(),
-                                        "",
-                                        "location: in Scope " + symbolTable.getCurrentScopeName()
-                                );
-                            }
-                        }
-
-
+                    ErrorPrinter.PrintError( ctx.start,
+                            "error: Operator " + op + " Cannot Be Applied To Int , String",
+                            
+                            "" + symbolTable.getCurrentScope().getParent().getScopeName()
+                    );
 
                 }
+                if (!((exp2.startsWith("\"") && exp2.endsWith("\"")) || (exp2.startsWith("'") && exp2.endsWith("'")))) {
+                    if (symbolTable.lookup(exp2) == null) {
+                        ErrorPrinter.PrintError( ctx.start,
+                                "error: Variable :" + exp2 + " Not found! In Scope ",
+                                
+                                "" + symbolTable.getCurrentScope().getParent().getScopeName()
+                        );
+                    }
+                }
+
+                Record exper2 = symbolTable.lookup(exp2);
+                if (exper2 != null && exper2.getValue() == null) {
+                    System.err.println("Warring for using unassigned variable " + exper2.getId());
+                }
+                if (exper1 != null && exper2 != null) {
+                    if (!exper1.getType().equals(exper2.getType())) {
+                        ErrorPrinter.PrintError( ctx.start,
+                                "error: Operator " + op + " Cannot Be Applied To " + exper1.getType() + "," + exper2.getType(),
+                                
+                                "location: in Scope " + symbolTable.getCurrentScopeName()
+                        );
+                    }
+                }
+
+
+            }
 
 
         }
 
         visit(ctx.cpp_smt());
 
-        for(int i=0;i<ctx.def_else_if().size();i++){
+        for (int i = 0; i < ctx.def_else_if().size(); i++) {
             visit(ctx.def_else_if(i).cpp_if_stmt());
 
         }
-        if(ctx.def_else()!=null){
+        if (ctx.def_else() != null) {
             visit(ctx.def_else());
         }
-       if(ctx.return_stmt()!=null){
+        if (ctx.return_stmt() != null) {
             visit(ctx.return_stmt());
             isReturn++;
         }
@@ -1352,9 +1144,9 @@ public class myvisitor extends HplsqlBaseVisitor<Object> {
 
     @Override
     public Object visitDef_else(HplsqlParser.Def_elseContext ctx) {
-        numbOfIfElseFor++ ;
+        numbOfIfElseFor++;
         visit(ctx.cpp_smt());
-        if(ctx.return_stmt()!=null){
+        if (ctx.return_stmt() != null) {
             visit(ctx.return_stmt());
             isReturn++;
         }
@@ -1364,16 +1156,16 @@ public class myvisitor extends HplsqlBaseVisitor<Object> {
     @Override
     public Object visitReturn_stmt(HplsqlParser.Return_stmtContext ctx) {
         Scope parentScope = symbolTable.getCurrentScope();
-        while(!parentScope.getScopeType().equals("method")){
+        while (!parentScope.getScopeType().equals("method")) {
 
-            if(parentScope.getParent() != null){
+            if (parentScope.getParent() != null) {
                 parentScope = parentScope.getParent();
-            }else
+            } else
                 break;
 
         }
 
-        if(parentScope.getScopeType().equals("method")){
+        if (parentScope.getScopeType().equals("method")) {
 
             String methodName = parentScope.getScopeName();
             Record methodRecord = symbolTable.lookup(methodName);
@@ -1384,31 +1176,33 @@ public class myvisitor extends HplsqlBaseVisitor<Object> {
             boolean isFloat = false;
             boolean isString = false;
             boolean isVar = false;
-            if(ctx.ident()!=null){
+            if (ctx.ident() != null) {
                 returnValue = ctx.ident().getText();
-                if( !((returnValue.startsWith("\"") && returnValue.endsWith("\""))
-                        || (returnValue.startsWith("'") && returnValue.endsWith("'"))) ){
-                    if(symbolTable.lookup(returnValue)==null){
-                        ErrorPrinter.printFullError(myparser, ctx.start,
+                if (!((returnValue.startsWith("\"") && returnValue.endsWith("\""))
+                        || (returnValue.startsWith("'") && returnValue.endsWith("'")))) {
+                    if (symbolTable.lookup(returnValue) == null) {
+                        ErrorPrinter.PrintError( ctx.start,
                                 "error: Variable :" + returnValue + " Not found! In Scope ",
-                                "",
+                                
                                 "" + symbolTable.getCurrentScope().getParent().getScopeName()
                         );
-                    }else{
+                    } else {
                         Record ReturnVariable = symbolTable.lookup(returnValue);
                         String ReturnVariableType = ReturnVariable.getType();
-                        if(ReturnVariable.getValue()==null){
+                        if (ReturnVariable.getValue() == null) {
                             System.err.println("Warring for using unassigned variable " + ReturnVariable.getId());
                         }
                         isVar = true;
 
                     }
 
-                }else { isString = true;}
-            }else if(ctx.L_INT()!=null){
+                } else {
+                    isString = true;
+                }
+            } else if (ctx.L_INT() != null) {
                 returnValue = ctx.L_INT().getText();
                 isInt = true;
-            }else if(ctx.L_DEC()!=null){
+            } else if (ctx.L_DEC() != null) {
                 returnValue = ctx.L_DEC().getText();
                 isFloat = true;
             }
@@ -1416,93 +1210,92 @@ public class myvisitor extends HplsqlBaseVisitor<Object> {
 
             if (type.equals("void")) {
 
-                ErrorPrinter.printFullError(myparser, ctx.start,
+                ErrorPrinter.PrintError( ctx.start,
                         "error: Cannot return a value from a method with void result type",
-                        "symbol:   Type " + type,
+                        
                         "location: Function " + symbolTable.getCurrentScopeName());
 
-            }else if(type.equals("int")){
-                if(isString){
+            } else if (type.equals("int")) {
+                if (isString) {
 
-                    ErrorPrinter.printFullError(myparser, ctx.start,
-                            "error: " + returnValue+  " Type must be ( int ) Not ( string )" ,
-                            "" ,
+                    ErrorPrinter.PrintError( ctx.start,
+                            "error: " + returnValue + " Type must be ( int ) Not ( string )",
+                            
                             "location: in Scope " + symbolTable.getCurrentScopeName()
                     );
-                }else if(isVar){
+                } else if (isVar) {
                     Record Var = symbolTable.lookup(returnValue);
                     String typeVar = Var.getType();
-                    if(!typeVar.equals("int")){
-                        ErrorPrinter.printFullError(myparser, ctx.start,
-                                "error: Variable " + returnValue+  " Type must be ( int ) Not (" +  typeVar +" )" ,
-                                "" ,
+                    if (!typeVar.equals("int")) {
+                        ErrorPrinter.PrintError( ctx.start,
+                                "error: Variable " + returnValue + " Type must be ( int ) Not (" + typeVar + " )",
+                                
                                 "location: in Scope " + symbolTable.getCurrentScopeName()
                         );
                     }
-                }else if(isFloat){
-                    ErrorPrinter.printFullError(myparser, ctx.start,
-                            "error: " + returnValue+  " Type must be ( int ) Not ( float )" ,
-                            "" ,
+                } else if (isFloat) {
+                    ErrorPrinter.PrintError( ctx.start,
+                            "error: " + returnValue + " Type must be ( int ) Not ( float )",
+                            
                             "location: in Scope " + symbolTable.getCurrentScopeName()
                     );
                 }
 
 
-            }else if(type.equals("string")){
-                if(isInt){
+            } else if (type.equals("string")) {
+                if (isInt) {
 
-                    ErrorPrinter.printFullError(myparser, ctx.start,
-                            "error: " + returnValue+  " Type must be ( string ) Not ( int )" ,
-                            "" ,
+                    ErrorPrinter.PrintError( ctx.start,
+                            "error: " + returnValue + " Type must be ( string ) Not ( int )",
+                            
                             "location: in Scope " + symbolTable.getCurrentScopeName()
                     );
-                }else if(isVar){
+                } else if (isVar) {
                     Record Var = symbolTable.lookup(returnValue);
                     String typeVar = Var.getType();
-                    if(!typeVar.equals("string")){
-                        ErrorPrinter.printFullError(myparser, ctx.start,
-                                "error: Variable " + returnValue+  " Type must be ( string ) Not (" +  typeVar +" )" ,
-                                "" ,
+                    if (!typeVar.equals("string")) {
+                        ErrorPrinter.PrintError( ctx.start,
+                                "error: Variable " + returnValue + " Type must be ( string ) Not (" + typeVar + " )",
+                                
                                 "location: in Scope " + symbolTable.getCurrentScopeName()
                         );
                     }
-                }else if(isFloat){
-                    ErrorPrinter.printFullError(myparser, ctx.start,
-                            "error: " + returnValue+  " Type must be ( string ) Not ( float )" ,
-                            "" ,
+                } else if (isFloat) {
+                    ErrorPrinter.PrintError( ctx.start,
+                            "error: " + returnValue + " Type must be ( string ) Not ( float )",
+                            
                             "location: in Scope " + symbolTable.getCurrentScopeName()
                     );
                 }
 
-            }else if(type.equals("float")){
+            } else if (type.equals("float")) {
 
-                if(isInt){
+                if (isInt) {
 
-                    ErrorPrinter.printFullError(myparser, ctx.start,
-                            "error: " + returnValue+  " Type must be ( float ) Not ( int )" ,
-                            "" ,
+                    ErrorPrinter.PrintError( ctx.start,
+                            "error: " + returnValue + " Type must be ( float ) Not ( int )",
+                            
                             "location: in Scope " + symbolTable.getCurrentScopeName()
                     );
-                }else if(isVar){
+                } else if (isVar) {
                     Record Var = symbolTable.lookup(returnValue);
                     String typeVar = Var.getType();
-                    if(!typeVar.equals("float")){
-                        ErrorPrinter.printFullError(myparser, ctx.start,
-                                "error: Variable " + returnValue+  " Type must be ( float ) Not (" +  typeVar +" )" ,
-                                "" ,
+                    if (!typeVar.equals("float")) {
+                        ErrorPrinter.PrintError( ctx.start,
+                                "error: Variable " + returnValue + " Type must be ( float ) Not (" + typeVar + " )",
+                                
                                 "location: in Scope " + symbolTable.getCurrentScopeName()
                         );
                     }
-                }else if(isString){
-                    ErrorPrinter.printFullError(myparser, ctx.start,
-                            "error: " + returnValue+  " Type must be ( float ) Not ( string )" ,
-                            "" ,
+                } else if (isString) {
+                    ErrorPrinter.PrintError( ctx.start,
+                            "error: " + returnValue + " Type must be ( float ) Not ( string )",
+                            
                             "location: in Scope " + symbolTable.getCurrentScopeName()
                     );
                 }
 
             }
-
 
 
         }
@@ -1515,7 +1308,7 @@ public class myvisitor extends HplsqlBaseVisitor<Object> {
 
     @Override
     public Object visitCpp_for_stmt(HplsqlParser.Cpp_for_stmtContext ctx) {
-        numbOfIfElseFor++ ;
+        numbOfIfElseFor++;
         symbolTable.enterScope();
         // set scope name
         symbolTable.setCurrentScopeNameAndType("FOR LOOP", ScopeTypes.Loop.toString());
@@ -1523,7 +1316,7 @@ public class myvisitor extends HplsqlBaseVisitor<Object> {
         visit(ctx.forcond());
         visit(ctx.for_inc_dec());
         visit(ctx.cpp_smt());
-        if(ctx.return_stmt()!=null){
+        if (ctx.return_stmt() != null) {
             visit(ctx.return_stmt());
             isReturn++;
         }
@@ -1537,69 +1330,65 @@ public class myvisitor extends HplsqlBaseVisitor<Object> {
         String varname = ctx.ident(0).getText();
         String varEqual = null;
         boolean isString = false;
-        if(ctx.ident(1) != null){
+        if (ctx.ident(1) != null) {
             //String
             varEqual = ctx.ident().get(1).getText();
             isString = true;
-        }else if(ctx.L_INT() != null ){
+        } else if (ctx.L_INT() != null) {
             //Number
             varEqual = (String) ctx.L_INT().getText();
         }
 
-        if(ctx.dtype()==null){
-            if(symbolTable.lookup(varname)==null){
-                ErrorPrinter.printFullError(myparser, ctx.start,
+        if (ctx.dtype() == null) {
+            if (symbolTable.lookup(varname) == null) {
+                ErrorPrinter.PrintError( ctx.start,
                         "error: Variable :" + varname + " Not found! In Scope ",
-                        "",
+                        
                         "" + symbolTable.getCurrentScopeName()
                 );
 
             }
 
-        }else{
+        } else {
             String type = ctx.dtype().getText();
 
-            if(!types.find_typ(type))
-            {
-                ErrorPrinter.printFullError(myparser, ctx.start,
-                        "error: cannot find Type. \n symbol:   Type "+type,
-                        "symbol:   Type " + type,
+            if (!types.find_typ(type)) {
+                ErrorPrinter.PrintError( ctx.start,
+                        "error: cannot find Type. \n symbol:   Type " + type,
                         "location: Function " + symbolTable.getCurrentScopeName());
             }
-            if(symbolTable.getCurrentScope().getParent().lookuplocaly(varname)!=null){
-                ErrorPrinter.printSymbolAlreadyDefinedError(myparser, ctx.ident(0).start, "variable", varname, ""+symbolTable.getCurrentScope().getParent().getScopeName());
+            if (symbolTable.getCurrentScope().getParent().lookuplocaly(varname) != null) {
+                ErrorPrinter.varAlreadyDef( ctx.ident(0).start, "variable", varname, "" + symbolTable.getCurrentScope().getParent().getScopeName());
             }
 
-            symbolTable.put(varname,new Record(varname,type,"variable",null));
+            symbolTable.put(varname, new Record(varname, type, "variable", null));
 
 
         }
         Record var = symbolTable.lookup(varname);
 
-        if(isString && !((varEqual.startsWith("\"") && varEqual.endsWith("\""))
-                || (varEqual.startsWith("'") && varEqual.endsWith("'")))){
+        if (isString && !((varEqual.startsWith("\"") && varEqual.endsWith("\""))
+                || (varEqual.startsWith("'") && varEqual.endsWith("'")))) {
 //var
-            if(symbolTable.lookup(varEqual) != null){
+            if (symbolTable.lookup(varEqual) != null) {
                 // varible
                 Record ASVar = symbolTable.lookup(varEqual);
 
-                if(ASVar.getValue() != null){
-                    if(ASVar.getType().equals(var.getType())){
+                if (ASVar.getValue() != null) {
+                    if (ASVar.getType().equals(var.getType())) {
                         var.setValue(ASVar.getValue());
-                    }else{
-                        ErrorPrinter.printFullError(myparser, ctx.start,
-                                "error: Variable " + varname+  " Type must be ("+ASVar.getType() + ") Not ("+ var.getType() + ")" ,
-                                "" ,
-                                "location: in Scope " + symbolTable.getCurrentScopeName()
+                    } else {
+                        ErrorPrinter.PrintError( ctx.start,
+                                "error: Variable " + varname + " Type must be (" + ASVar.getType() + ") Not (" + var.getType() + ")",
+                                                                "location: in Scope " + symbolTable.getCurrentScopeName()
                         );
                     }
 
-                    //           System.out.println("varrrrr " + var.getValue());
-                }else{
+                } else {
                     System.err.println("Warring for using unassigned variable " + varEqual);
                 }
 
-            }else{
+            } else {
 
 
                 //regular for number or string
@@ -1607,19 +1396,19 @@ public class myvisitor extends HplsqlBaseVisitor<Object> {
                 String varType = var.getType();
 
 
-                if(varType.equals("int")){
+                if (varType.equals("int")) {
 
-                    if(!isString){
+                    if (!isString) {
                         var.setValue(varEqual);
 
-                    }else{
+                    } else {
                         // up cast
                     }
 
-                }else if(varType.equals("string")){
-                    if(isString){
+                } else if (varType.equals("string")) {
+                    if (isString) {
                         var.setValue(varEqual);
-                    }else{
+                    } else {
                         // up cast
                         //var.setValue("\"" + varEqual + "\"");
 
@@ -1632,28 +1421,28 @@ public class myvisitor extends HplsqlBaseVisitor<Object> {
             }
 
 
-        }else if(isString && ((varEqual.startsWith("\"") && varEqual.endsWith("\""))
-                || (varEqual.startsWith("'") && varEqual.endsWith("'")))){
-            if(var.getType().equals("string")){
+        } else if (isString && ((varEqual.startsWith("\"") && varEqual.endsWith("\""))
+                || (varEqual.startsWith("'") && varEqual.endsWith("'")))) {
+            if (var.getType().equals("string")) {
                 var.setValue(varEqual);
-            }else {
+            } else {
 
-                ErrorPrinter.printFullError(myparser, ctx.start,
-                        "error: Variable " + varname+  " Type must be (String) Not ("+ var.getType() + ")" ,
-                        "" ,
+                ErrorPrinter.PrintError( ctx.start,
+                        "error: Variable " + varname + " Type must be (String) Not (" + var.getType() + ")",
+                        
                         "location: in Scope " + symbolTable.getCurrentScopeName()
                 );
 
             }
-        }else if(!isString){
+        } else if (!isString) {
             // number
-            if(var.getType().equals("int")){
+            if (var.getType().equals("int")) {
                 var.setValue(varEqual);
-            }else {
+            } else {
 
-                ErrorPrinter.printFullError(myparser, ctx.start,
-                        "error: Variable " + varname+  " Type must be (Int) Not ("+ var.getType() + ")" ,
-                        "" ,
+                ErrorPrinter.PrintError( ctx.start,
+                        "error: Variable " + varname + " Type must be (Int) Not (" + var.getType() + ")",
+                        
                         "location: in Scope " + symbolTable.getCurrentScopeName()
                 );
 
@@ -1662,8 +1451,7 @@ public class myvisitor extends HplsqlBaseVisitor<Object> {
         }
 
 
-
-       System.out.println(var.getValue() + " = " + var.getValue());
+        System.out.println(var.getValue() + " = " + var.getValue());
         return null;
     }
 
@@ -1674,83 +1462,80 @@ public class myvisitor extends HplsqlBaseVisitor<Object> {
         String exp1 = ctx.ident(0).getText();
         String exp2 = null;
         boolean isExp = false;
-        if(ctx.L_INT()!=null){
+        if (ctx.L_INT() != null) {
             exp2 = ctx.L_INT().getText();
-        }else if(ctx.ident(1)!=null){
+        } else if (ctx.ident(1) != null) {
 
             exp2 = ctx.ident(1).getText();
             isExp = true;
         }
-        if(!isExp &&( (exp1.startsWith("\"") && exp1.endsWith("\"")) || (exp1.startsWith("'") && exp1.endsWith("'")) )){
-            ErrorPrinter.printFullError(myparser, ctx.start,
-                    "error: Operator "+op+" Cannot Be Applied To Int , String",
-                    "",
+        if (!isExp && ((exp1.startsWith("\"") && exp1.endsWith("\"")) || (exp1.startsWith("'") && exp1.endsWith("'")))) {
+            ErrorPrinter.PrintError( ctx.start,
+                    "error: Operator " + op + " Cannot Be Applied To Int , String",
+                    
                     "" + symbolTable.getCurrentScope().getParent().getScopeName()
             );
 
         }
-        if( ((exp1.startsWith("\"") && exp1.endsWith("\"")) || (exp1.startsWith("'") && exp1.endsWith("'")))
+        if (((exp1.startsWith("\"") && exp1.endsWith("\"")) || (exp1.startsWith("'") && exp1.endsWith("'")))
                 && (!op.equals("=="))) {
 
-            ErrorPrinter.printFullError(myparser, ctx.start,
-                    "error: Operator "+op+" Cannot Be Applied To Int , String",
-                    "",
+            ErrorPrinter.PrintError( ctx.start,
+                    "error: Operator " + op + " Cannot Be Applied To Int , String",
+                    
                     "" + symbolTable.getCurrentScope().getParent().getScopeName()
             );
 
         }
 
-        if(!((exp1.startsWith("\"") && exp1.endsWith("\"")) || (exp1.startsWith("'") && exp1.endsWith("'")))) {
+        if (!((exp1.startsWith("\"") && exp1.endsWith("\"")) || (exp1.startsWith("'") && exp1.endsWith("'")))) {
 
-            if(symbolTable.lookup(exp1)==null){
-                ErrorPrinter.printFullError(myparser, ctx.start,
+            if (symbolTable.lookup(exp1) == null) {
+                ErrorPrinter.PrintError( ctx.start,
                         "error: Variable :" + exp1 + " Not found! In Scope ",
-                        "",
+                          
                         "" + symbolTable.getCurrentScope().getParent().getScopeName()
                 );
             }
         }
 
         Record exper1 = symbolTable.lookup(exp1);
-        if(exper1 != null && exper1.getValue()==null){
+        if (exper1 != null && exper1.getValue() == null) {
             System.err.println("Warring for using unassigned variable " + exper1.getId());
         }
 
-        if(isExp){
-            if( ((exp2.startsWith("\"") && exp2.endsWith("\"")) || (exp2.startsWith("'") && exp2.endsWith("'")))
+        if (isExp) {
+            if (((exp2.startsWith("\"") && exp2.endsWith("\"")) || (exp2.startsWith("'") && exp2.endsWith("'")))
                     && (!op.equals("=="))) {
 
-                ErrorPrinter.printFullError(myparser, ctx.start,
-                        "error: Operator "+op+" Cannot Be Applied To Int , String",
-                        "",
+                ErrorPrinter.PrintError( ctx.start,
+                        "error: Operator " + op + " Cannot Be Applied To Int , String",
                         "" + symbolTable.getCurrentScope().getParent().getScopeName()
                 );
 
             }
-            if(!((exp2.startsWith("\"") && exp2.endsWith("\"")) || (exp2.startsWith("'") && exp2.endsWith("'")))) {
-                if(symbolTable.lookup(exp2)==null){
-                    ErrorPrinter.printFullError(myparser, ctx.start,
+            if (!((exp2.startsWith("\"") && exp2.endsWith("\"")) || (exp2.startsWith("'") && exp2.endsWith("'")))) {
+                if (symbolTable.lookup(exp2) == null) {
+                    ErrorPrinter.PrintError( ctx.start,
                             "error: Variable :" + exp2 + " Not found! In Scope ",
-                            "",
+                          
                             "" + symbolTable.getCurrentScope().getParent().getScopeName()
                     );
                 }
             }
 
             Record exper2 = symbolTable.lookup(exp2);
-            if(exper2 != null && exper2.getValue()==null){
+            if (exper2 != null && exper2.getValue() == null) {
                 System.err.println("Warring for using unassigned variable " + exper2.getId());
             }
-            if(exper1 != null && exper2 != null) {
+            if (exper1 != null && exper2 != null) {
                 if (!exper1.getType().equals(exper2.getType())) {
-                    ErrorPrinter.printFullError(myparser, ctx.start,
+                    ErrorPrinter.PrintError( ctx.start,
                             "error: Operator " + op + " Cannot Be Applied To " + exper1.getType() + "," + exper2.getType(),
-                            "",
                             "location: in Scope " + symbolTable.getCurrentScopeName()
                     );
                 }
             }
-
 
 
         }
@@ -1762,20 +1547,20 @@ public class myvisitor extends HplsqlBaseVisitor<Object> {
     public Object visitFor_inc_dec(HplsqlParser.For_inc_decContext ctx) {
 
         String exp = ctx.ident().getText();
-        if(!((exp.startsWith("\"") && exp.endsWith("\"")) || (exp.startsWith("'") && exp.endsWith("'")))){
+        if (!((exp.startsWith("\"") && exp.endsWith("\"")) || (exp.startsWith("'") && exp.endsWith("'")))) {
 
-            if(symbolTable.lookup(exp)==null){
-                ErrorPrinter.printFullError(myparser, ctx.start,
+            if (symbolTable.lookup(exp) == null) {
+                ErrorPrinter.PrintError( ctx.start,
                         "error: Variable :" + exp + " Not found! In Scope ",
-                        "",
+                  
                         "" + symbolTable.getCurrentScope().getParent().getScopeName()
                 );
             }
             Record exper = symbolTable.lookup(exp);
-            if(!exper.getType().equals("int")){
-                ErrorPrinter.printFullError(myparser, ctx.start,
-                        "error: Variable " + exper.getId()+  " Type must be (int) Not ("+ exper.getType() + ")" ,
-                        "" ,
+            if (!exper.getType().equals("int")) {
+                ErrorPrinter.PrintError( ctx.start,
+                        "error: Variable " + exper.getId() + " Type must be (int) Not (" + exper.getType() + ")",
+                       
                         "location: in Scope " + symbolTable.getCurrentScopeName()
                 );
             }

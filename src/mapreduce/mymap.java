@@ -18,8 +18,6 @@ public class mymap implements Serializable {
     }
 
 
-
-
     public int getKey() {
         return key;
     }

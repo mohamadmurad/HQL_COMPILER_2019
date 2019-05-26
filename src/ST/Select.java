@@ -11,8 +11,9 @@ public class Select extends Record {
     //public ArrayList<Experition> expretion;
     //public ArrayList<String> Orderby;
 
-    public Select(String id, String type,String tablename) {
-        super(id, type); this.tableSource = tablename;
+    public Select(String id, String type, String tablename) {
+        super(id, type);
+        this.tableSource = tablename;
     }
 
     public void setColumn(ArrayList<SelectCol> col) {

@@ -17,13 +17,13 @@ public class sum {
     static String lineSeparator = System.getProperty("line.separator");
 
     static String tableLocation = "temperature";
-    static String tableSpilt  = ",";
+    static String tableSpilt = ",";
 
     public static void main(String[] args) {
 
         initFIleDir();
         File tableDir = new File(tableLocation);
-        if(tableDir.exists() && tableDir.isDirectory()){
+        if (tableDir.exists() && tableDir.isDirectory()) {
 
             try {
                 map_reduce(tableDir.list());
@@ -36,7 +36,7 @@ public class sum {
     }
 
 
-    public static void initFIleDir(){
+    public static void initFIleDir() {
         File stockDir = new File(tempdirectory);
 
         try {
@@ -47,7 +47,7 @@ public class sum {
         } catch (SecurityException Se) {
 
             System.out.println("Error while creating directory in Java:" + Se);
-        }catch (IOException e) {
+        } catch (IOException e) {
 
             e.printStackTrace();
         }
@@ -58,10 +58,12 @@ public class sum {
     public static void map_reduce(String[] FilesName) throws IOException {
 
 
-        File stockDir1 = new File(tempdirectory+File.separator+"temperature");
-        if(!stockDir1.exists()){stockDir1.mkdir();}
+        File stockDir1 = new File(tempdirectory + File.separator + "temperature");
+        if (!stockDir1.exists()) {
+            stockDir1.mkdir();
+        }
 
-        for(String name : FilesName){
+        for (String name : FilesName) {
             mapper1(name);
         }
 
@@ -71,20 +73,20 @@ public class sum {
             @Override
             public int operation(ArrayList<Integer> c) {
                 int sum = 0;
-                for(int i=0;i<c.size();i++){
+                for (int i = 0; i < c.size(); i++) {
 
-                    sum+=c.get(i);
+                    sum += c.get(i);
                 }
                 return sum;
             }
         });
 
 
-       // String re1 = concatReducer(red1,red2,tempdirectory+File.separator+"temperature"+File.separator+"red1",tempdirectory+File.separator+"temperature"+File.separator+"red2");
+        // String re1 = concatReducer(red1,red2,tempdirectory+File.separator+"temperature"+File.separator+"red1",tempdirectory+File.separator+"temperature"+File.separator+"red2");
 
-      //  System.out.println(re1);
+        //  System.out.println(re1);
 
-       // String absolutePath = tempdirectory + File.separator +re1;
+        // String absolutePath = tempdirectory + File.separator +re1;
        /* try(BufferedReader br = new BufferedReader(new FileReader(absolutePath))) {
 
             String line;
@@ -106,33 +108,34 @@ public class sum {
     }
 
 
-    public static void mapper1(String filename){
+    public static void mapper1(String filename) {
 
-        String maperPath = tempdirectory+File.separator+"temperature"+File.separator+"map1";
+        String maperPath = tempdirectory + File.separator + "temperature" + File.separator + "map1";
 
         File stockDir1 = new File(maperPath);
-        if(!stockDir1.exists()){stockDir1.mkdir();}
+        if (!stockDir1.exists()) {
+            stockDir1.mkdir();
+        }
 
-        try (BufferedReader br = new BufferedReader(new FileReader(tableLocation+File.separator+filename))) {
-            String line =  br.readLine();
-            while ((line ) != null) {
+        try (BufferedReader br = new BufferedReader(new FileReader(tableLocation + File.separator + filename))) {
+            String line = br.readLine();
+            while ((line) != null) {
 
                 String[] country = line.split(tableSpilt);
 
                 String FileName = filename + "1.txt";
                 String absolutePath = maperPath + File.separator + FileName;
 
-                try(FileOutputStream fileOutputStream = new FileOutputStream(absolutePath,true)) {
+                try (FileOutputStream fileOutputStream = new FileOutputStream(absolutePath, true)) {
 
-                    String fileContent = country[0] +","+country[1] + "/" + country[2];
+                    String fileContent = country[0] + "," + country[1] + "/" + country[2];
 
                     fileOutputStream.write(fileContent.getBytes());
 
-                    line =  br.readLine();
-                    if(line != null){
+                    line = br.readLine();
+                    if (line != null) {
                         fileOutputStream.write(lineSeparator.getBytes());
                     }
-
 
 
                     fileOutputStream.flush();
@@ -154,40 +157,42 @@ public class sum {
 
     }
 
-    public static  void shuffle1() throws IOException {
-        String maperPath = tempdirectory+File.separator+"temperature"+File.separator+"map1";
-        String shuffPath = tempdirectory+File.separator+"temperature"+File.separator+"shuff1";
+    public static void shuffle1() throws IOException {
+        String maperPath = tempdirectory + File.separator + "temperature" + File.separator + "map1";
+        String shuffPath = tempdirectory + File.separator + "temperature" + File.separator + "shuff1";
 
         File stockDir1 = new File(shuffPath);
-        if(!stockDir1.exists()){stockDir1.mkdir();}
+        if (!stockDir1.exists()) {
+            stockDir1.mkdir();
+        }
 
-        Map<ArrayList<Integer>,ArrayList<Integer>> mmm = new HashMap<>();
+        Map<ArrayList<Integer>, ArrayList<Integer>> mmm = new HashMap<>();
 
         File stockDir = new File(maperPath);
         String[] list = stockDir.list();
-        for(String name : list){
+        for (String name : list) {
             String absolutePath = maperPath + File.separator + name;
-            try(BufferedReader br = new BufferedReader(new FileReader(absolutePath))) {
+            try (BufferedReader br = new BufferedReader(new FileReader(absolutePath))) {
 
                 String line;
 
-                while ((line = br.readLine()) != null){
+                while ((line = br.readLine()) != null) {
                     String[] KeyAndVal = line.split("/");
                     String[] Keys = KeyAndVal[0].split(",");
                     ArrayList<Integer> ALKeys = new ArrayList<>();
-                    for(String k :Keys){
+                    for (String k : Keys) {
                         ALKeys.add(Integer.parseInt(k));
                     }
 
 
-                    if(mmm.containsKey(ALKeys)){
+                    if (mmm.containsKey(ALKeys)) {
                         mmm.get(ALKeys).add(Integer.parseInt(KeyAndVal[1]));
 
-                    }else {
+                    } else {
 
                         ArrayList<Integer> dd = new ArrayList<>();
                         dd.add(Integer.parseInt(KeyAndVal[1]));
-                        mmm.put(ALKeys,dd);
+                        mmm.put(ALKeys, dd);
                     }
                 }
 
@@ -200,29 +205,28 @@ public class sum {
             }
 
 
-
         }
 
-        String shuffl = shuffPath + File.separator +"shufflResult1.txt";
+        String shuffl = shuffPath + File.separator + "shufflResult1.txt";
 
-        try(BufferedWriter fileOutputStream = new BufferedWriter(new FileWriter(shuffl,true))) {
+        try (BufferedWriter fileOutputStream = new BufferedWriter(new FileWriter(shuffl, true))) {
 
 
             for (Map.Entry<ArrayList<Integer>, ArrayList<Integer>> entry : mmm.entrySet()) {
-                System.out.println(entry.getKey()+" : "+entry.getValue());
+                System.out.println(entry.getKey() + " : " + entry.getValue());
                 String output = "";
 
-                for(int key : entry.getKey()){
+                for (int key : entry.getKey()) {
                     output += key + ",";
                 }
-                output +="/";
-                output = output.replaceFirst(",/","/");
+                output += "/";
+                output = output.replaceFirst(",/", "/");
 
-                for(int val :entry.getValue()){
-                    output+=","+val;
+                for (int val : entry.getValue()) {
+                    output += "," + val;
                 }
                 output += System.lineSeparator();
-                output = output.replaceFirst("/,","/");
+                output = output.replaceFirst("/,", "/");
                 fileOutputStream.write(output);
 
             }
@@ -238,38 +242,40 @@ public class sum {
     }
 
 
-    public static String reducer1(MyFunction obj1){
-        String shuffPath = tempdirectory+File.separator+"temperature"+File.separator+"shuff1";
-        String redusPath = tempdirectory+File.separator+"temperature"+File.separator+"red1";
+    public static String reducer1(MyFunction obj1) {
+        String shuffPath = tempdirectory + File.separator + "temperature" + File.separator + "shuff1";
+        String redusPath = tempdirectory + File.separator + "temperature" + File.separator + "red1";
         String FileName = "redu1.txt";
         File stockDir1 = new File(redusPath);
-        if(!stockDir1.exists()){stockDir1.mkdir();}
+        if (!stockDir1.exists()) {
+            stockDir1.mkdir();
+        }
 
         File stockDir = new File(shuffPath);
         String[] list = stockDir.list();
-        for(String name : list){
+        for (String name : list) {
 
-            String shuffl = shuffPath + File.separator +name;
+            String shuffl = shuffPath + File.separator + name;
             try (BufferedReader br = new BufferedReader(new FileReader(shuffl))) {
 
                 String line;
 
-                while ((line = br.readLine()) != null){
+                while ((line = br.readLine()) != null) {
 
                     String[] KeyAndVal = line.split("/");
 
                     String[] vlas = KeyAndVal[1].split(",");
                     ArrayList<Integer> values = new ArrayList<>();
 
-                    for(String s : vlas){
+                    for (String s : vlas) {
                         values.add(Integer.parseInt(s));
                     }
 
                     int opResult1 = obj1.operation(values);
 
-                    String reduce = redusPath + File.separator +FileName;
-                    try(BufferedWriter fileOutputStream = new BufferedWriter(new FileWriter(reduce,true))) {
-                        fileOutputStream.write(KeyAndVal[0] + "/" + opResult1+ System.lineSeparator());
+                    String reduce = redusPath + File.separator + FileName;
+                    try (BufferedWriter fileOutputStream = new BufferedWriter(new FileWriter(reduce, true))) {
+                        fileOutputStream.write(KeyAndVal[0] + "/" + opResult1 + System.lineSeparator());
                         fileOutputStream.close();
                     }
 
@@ -290,17 +296,17 @@ public class sum {
     }
 
     public static void delete(File file)
-            throws IOException{
+            throws IOException {
 
-        if(file.isDirectory()){
+        if (file.isDirectory()) {
 
             //directory is empty, then delete it
-            if(file.list().length==0){
+            if (file.list().length == 0) {
 
                 file.delete();
 
 
-            }else{
+            } else {
 
                 //list all the directory contents
                 String files[] = file.list();
@@ -314,13 +320,13 @@ public class sum {
                 }
 
                 //check the directory again, if empty then delete it
-                if(file.list().length==0){
+                if (file.list().length == 0) {
                     file.delete();
 
                 }
             }
 
-        }else{
+        } else {
             //if file, then delete it
             file.delete();
         }
